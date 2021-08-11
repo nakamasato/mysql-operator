@@ -1,0 +1,8 @@
+apiVersion: cache.nakamasato.com/v1alpha1
+kind: MySQL
+metadata:
+  name: mysql-sample
+spec:
+  host: localhost
+  admin_user: root
+  admin_password: password

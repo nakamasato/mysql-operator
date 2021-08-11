@@ -9,6 +9,32 @@ rules:
 - apiGroups:
   - cache.nakamasato.com
   resources:
+  - mysqls
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cache.nakamasato.com
+  resources:
+  - mysqls/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cache.nakamasato.com
+  resources:
+  - mysqls/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cache.nakamasato.com
+  resources:
   - mysqlusers
   verbs:
   - create
