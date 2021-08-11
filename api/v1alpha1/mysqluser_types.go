@@ -28,8 +28,7 @@ type MySQLUserSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of MySQLUser. Edit mysqluser_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Name string `json:"name"`
 }
 
 // MySQLUserStatus defines the observed state of MySQLUser
