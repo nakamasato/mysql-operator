@@ -1,0 +1,7 @@
+apiVersion: cache.nakamasato.com/v1alpha1
+kind: MySQLUser
+metadata:
+  name: mysqluser-sample
+spec:
+  # Add fields here
+  foo: bar
