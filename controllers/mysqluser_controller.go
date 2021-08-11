@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,9 +48,20 @@ type MySQLUserReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
-	// your logic here
+	mysqlUser := &cachev1alpha1.MySQLUser{}
+	err := r.Get(ctx, req.NamespacedName, mysqlUser)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("Fetch MySQLUser instance. MySQLUser not found.")
+			return ctrl.Result{}, err
+		}
+
+		log.Error(err, "Fetch MySQLUser instance. Failed to get MySQLUser.")
+		return ctrl.Result{}, err
+	}
+	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
 
 	return ctrl.Result{}, nil
 }
