@@ -28,7 +28,8 @@ type MySQLUserSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	MysqlName string `json:"mysqlName"`
 }
 
 // MySQLUserStatus defines the observed state of MySQLUser

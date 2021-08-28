@@ -25,6 +25,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"database/sql"
+	"fmt"
+
+	_ "github.com/go-sql-driver/mysql"
+
 	cachev1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
 )
 
@@ -50,6 +55,7 @@ type MySQLUserReconciler struct {
 func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	// Fetch MySQLUser
 	mysqlUser := &cachev1alpha1.MySQLUser{}
 	err := r.Get(ctx, req.NamespacedName, mysqlUser)
 	if err != nil {
@@ -62,6 +68,39 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+
+	// Fetch MySQL
+	var mysql cachev1alpha1.MySQL
+	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: "mysql-sample"} // hard-coded
+	if err := r.Get(ctx, mysqlNamespacedName, &mysql); err != nil {
+		log.Error(err, "unable to fetch MySQL")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	log.Info("Fetched MySQL instance.")
+
+	// Connect to MySQL
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close() // 関数がリターンする直前に呼び出される
+
+	err = db.QueryRow("SELECT * FROM mysql.user WHERE User = ?", 1).Scan(&mysqlUser.Name)
+	switch {
+	case err == sql.ErrNoRows:
+		fmt.Println("レコードが存在しません")
+		log.Info("mysql.user doesn't exist. will be created.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+		// stmtInsert, err := db.Prepare("INSERT INTO users(name) VALUES(?)")
+		// if err != nil {
+		// 	panic(err.Error())
+		// }
+		// defer stmtInsert.Close()
+
+	case err != nil:
+		panic(err.Error())
+	default:
+		log.Info("default.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+	}
 
 	return ctrl.Result{}, nil
 }
