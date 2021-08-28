@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"database/sql"
-	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -57,13 +56,27 @@ type MySQLUserReconciler struct {
 func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	// Connect to MySQL
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	mysqlName := "mysql-sample" // TODO: extract from mysqlUser.mysqlName
+
 	// Fetch MySQLUser
 	mysqlUser := &cachev1alpha1.MySQLUser{}
-	err := r.Get(ctx, req.NamespacedName, mysqlUser)
+	err = r.Get(ctx, req.NamespacedName, mysqlUser)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Fetch MySQLUser instance. MySQLUser not found.")
-			return ctrl.Result{}, err
+			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+			// Delete MySQL user
+			_, err = db.Exec("DROP USER IF EXISTS '" + req.Name + "'@'%';")
+			if err != nil {
+				panic(err.Error())
+			}
+			return ctrl.Result{}, nil
 		}
 
 		log.Error(err, "Fetch MySQLUser instance. Failed to get MySQLUser.")
@@ -73,7 +86,6 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Fetch MySQL
 	var mysql cachev1alpha1.MySQL
-	mysqlName := "mysql-sample" // TODO: extract from mysqlUser.mysqlName
 	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlName}
 	if err := r.Get(ctx, mysqlNamespacedName, &mysql); err != nil {
 		log.Error(err, "unable to fetch MySQL")
@@ -81,47 +93,32 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	log.Info("Fetched MySQL instance.")
 
-	// Connect to MySQL
-	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/")
+	// Create MySQL user if not exists with password `password`
+	log.Info("Create MySQL user if not.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+	password := "password" // TODO: generate a random password
+	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUser.Name + "'@'%' IDENTIFIED BY '" + password + "';")
 	if err != nil {
 		panic(err.Error())
 	}
-	defer db.Close()
 
-	// Create MySQL user if not exists with password `password`
-	err = db.QueryRow("SELECT * FROM mysql.user WHERE User = ?", 1).Scan(&mysqlUser.Name)
-	switch {
-	case err == sql.ErrNoRows:
-		fmt.Println("レコードが存在しません")
-		log.Info("mysql.user doesn't exist. will be created.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
-		password := "password" // TODO: generate a random password
-		_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUser.Name + "'@'%' IDENTIFIED BY '" + password + "';")
-		if err != nil {
-			panic(err.Error())
-		}
-		// create Secret with prefix `mysql-` + `<mysqlName>`
-		secretName := "mysql-" + mysqlName + "-" + mysqlUser.Name
-		data := make(map[string][]byte)
-		data["password"] = []byte(password)
-		secret := &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      secretName,
-				Namespace: req.Namespace,
-			},
-		}
-		if _, err := ctrl.CreateOrUpdate(ctx, r.Client, secret, func() error {
-			secret.Data = data
-			log.Info("Successfully created Secret.")
-			return nil
-		}); err != nil {
-			log.Error(err, "Error creating or updating Secret.")
-			return ctrl.Result{}, err
-		}
-
-	case err != nil:
-		panic(err.Error())
-	default:
-		log.Info("default.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+	// Create Secret with prefix `mysql-` + `<mysqlName>`
+	data := make(map[string][]byte)
+	data["password"] = []byte(password)
+	secretName := "mysql-" + mysqlName + "-" + mysqlUser.Name
+	secret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: req.Namespace,
+		},
+	}
+	ctrl.SetControllerReference(mysqlUser, secret, r.Scheme) // Set owner of this secret
+	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, secret, func() error {
+		secret.Data = data
+		log.Info("Successfully created Secret.")
+		return nil
+	}); err != nil {
+		log.Error(err, "Error creating or updating Secret.")
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
