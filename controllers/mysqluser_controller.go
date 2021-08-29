@@ -111,7 +111,11 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			Namespace: req.Namespace,
 		},
 	}
-	ctrl.SetControllerReference(mysqlUser, secret, r.Scheme) // Set owner of this secret
+	err = ctrl.SetControllerReference(mysqlUser, secret, r.Scheme) // Set owner of this Secret
+	if err != nil {
+		log.Error(err, "Failed to SetControllerReference for Secret.")
+		return ctrl.Result{}, err
+	}
 	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, secret, func() error {
 		secret.Data = data
 		log.Info("Successfully created Secret.")
