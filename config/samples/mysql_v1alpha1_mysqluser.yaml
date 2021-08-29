@@ -1,4 +1,4 @@
-apiVersion: cache.nakamasato.com/v1alpha1
+apiVersion: mysql.nakamasato.com/v1alpha1
 kind: MySQLUser
 metadata:
   name: nakamasato

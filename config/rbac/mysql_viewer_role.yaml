@@ -5,7 +5,7 @@ metadata:
   name: mysql-viewer-role
 rules:
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqls
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqls/status
   verbs:

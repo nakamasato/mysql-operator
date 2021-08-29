@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	cachev1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
+	mysqlv1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
 )
 
 // MySQLReconciler reconciles a MySQL object
@@ -33,9 +33,9 @@ type MySQLReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=cache.nakamasato.com,resources=mysqls,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cache.nakamasato.com,resources=mysqls/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cache.nakamasato.com,resources=mysqls/finalizers,verbs=update
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -57,6 +57,6 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 // SetupWithManager sets up the controller with the Manager.
 func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cachev1alpha1.MySQL{}).
+		For(&mysqlv1alpha1.MySQL{}).
 		Complete(r)
 }

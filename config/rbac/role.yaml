@@ -7,7 +7,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqls
   verbs:
@@ -19,13 +19,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqls/finalizers
   verbs:
   - update
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqls/status
   verbs:
@@ -33,7 +33,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqlusers
   verbs:
@@ -45,13 +45,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqlusers/finalizers
   verbs:
   - update
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqlusers/status
   verbs:

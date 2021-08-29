@@ -12,7 +12,7 @@ resources:
     namespaced: true
   controller: true
   domain: nakamasato.com
-  group: cache
+  group: mysql
   kind: MySQLUser
   path: github.com/nakamasato/mysql-user-operator/api/v1alpha1
   version: v1alpha1
@@ -21,7 +21,7 @@ resources:
     namespaced: true
   controller: true
   domain: nakamasato.com
-  group: cache
+  group: mysql
   kind: MySQL
   path: github.com/nakamasato/mysql-user-operator/api/v1alpha1
   version: v1alpha1
