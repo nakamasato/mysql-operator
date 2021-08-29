@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
-  name: mysqls.cache.nakamasato.com
+  name: mysqlusers.mysql.nakamasato.com
 spec:
-  group: cache.nakamasato.com
+  group: mysql.nakamasato.com
   names:
-    kind: MySQL
-    listKind: MySQLList
-    plural: mysqls
-    singular: mysql
+    kind: MySQLUser
+    listKind: MySQLUserList
+    plural: mysqlusers
+    singular: mysqluser
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MySQL is the Schema for the mysqls API
+        description: MySQLUser is the Schema for the mysqlusers API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,22 +34,18 @@ spec:
           metadata:
             type: object
           spec:
-            description: MySQLSpec defines the desired state of MySQL
+            description: MySQLUserSpec defines the desired state of MySQLUser
             properties:
-              admin_password:
+              mysqlName:
                 type: string
-              admin_user:
-                type: string
-              host:
-                description: Foo is an example field of MySQL. Edit mysql_types.go
-                  to remove/update
+              name:
                 type: string
             required:
-            - admin_password
-            - admin_user
+            - mysqlName
+            - name
             type: object
           status:
-            description: MySQLStatus defines the observed state of MySQL
+            description: MySQLUserStatus defines the observed state of MySQLUser
             type: object
         type: object
     served: true

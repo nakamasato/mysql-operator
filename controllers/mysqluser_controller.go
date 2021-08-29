@@ -31,7 +31,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	cachev1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
+	mysqlv1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
 )
 
 // MySQLUserReconciler reconciles a MySQLUser object
@@ -40,9 +40,9 @@ type MySQLUserReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=cache.nakamasato.com,resources=mysqlusers,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cache.nakamasato.com,resources=mysqlusers/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cache.nakamasato.com,resources=mysqlusers/finalizers,verbs=update
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -66,7 +66,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	mysqlName := "mysql-sample" // TODO: extract from mysqlUser.mysqlName
 
 	// Fetch MySQLUser
-	mysqlUser := &cachev1alpha1.MySQLUser{}
+	mysqlUser := &mysqlv1alpha1.MySQLUser{}
 	err = r.Get(ctx, req.NamespacedName, mysqlUser)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -85,7 +85,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
 
 	// Fetch MySQL
-	var mysql cachev1alpha1.MySQL
+	var mysql mysqlv1alpha1.MySQL
 	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlName}
 	if err := r.Get(ctx, mysqlNamespacedName, &mysql); err != nil {
 		log.Error(err, "unable to fetch MySQL")
@@ -127,6 +127,6 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 // SetupWithManager sets up the controller with the Manager.
 func (r *MySQLUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cachev1alpha1.MySQLUser{}).
+		For(&mysqlv1alpha1.MySQLUser{}).
 		Complete(r)
 }

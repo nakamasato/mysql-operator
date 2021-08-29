@@ -5,7 +5,7 @@ metadata:
   name: mysql-editor-role
 rules:
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqls
   verbs:
@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.nakamasato.com
+  - mysql.nakamasato.com
   resources:
   - mysqls/status
   verbs:
