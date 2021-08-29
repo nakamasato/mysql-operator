@@ -1,7 +1,10 @@
 # MySQL Operator
 
-This is a Kubernetes operator created with go-based operator-sdk, which manages MySQL databases, schema, users, permissions for existing MySQL clusters. This operator DOES NOT manage MySQL cluster like other MySQL operator. This operator is created to automate manual operation to manage MySQL cluster.
+This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.operatorframework.io/docs/building-operators/golang/), which manages MySQL databases, schema, users, permissions for existing MySQL clusters. This operator DOES NOT manage MySQL cluster like other MySQL operator.
 
+## Versions
+
+- Go: 1.15+
 ## Components
 
 - `MySQL`: MySQL cluster
