@@ -57,13 +57,13 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log := log.FromContext(ctx)
 
 	// Connect to MySQL
-	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/")
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/") // TODO: #7 get credentials from MySQL instance.
 	if err != nil {
 		panic(err.Error())
 	}
 	defer db.Close()
 
-	mysqlName := "mysql-sample" // TODO: extract from mysqlUser.mysqlName
+	mysqlName := "mysql-sample" // TODO: #6 extract from mysqlUser.mysqlName
 
 	// Fetch MySQLUser
 	mysqlUser := &mysqlv1alpha1.MySQLUser{}
@@ -95,7 +95,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Create MySQL user if not exists with password `password`
 	log.Info("Create MySQL user if not.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
-	password := "password" // TODO: generate a random password
+	password := "password" // TODO: #5 generate a random password
 	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUser.Name + "'@'%' IDENTIFIED BY '" + password + "';")
 	if err != nil {
 		panic(err.Error())
