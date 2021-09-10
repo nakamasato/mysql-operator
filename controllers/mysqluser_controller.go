@@ -29,10 +29,15 @@ import (
 
 	"database/sql"
 
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/go-logr/logr"
 	_ "github.com/go-sql-driver/mysql"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
 )
+
+const mysqlUserFinalizer = "mysql.nakamasato.com/finalizer"
 
 // MySQLUserReconciler reconciles a MySQLUser object
 type MySQLUserReconciler struct {
@@ -71,11 +76,6 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
-			// Delete MySQL user
-			_, err = db.Exec("DROP USER IF EXISTS '" + req.Name + "'@'%';")
-			if err != nil {
-				panic(err.Error())
-			}
 			return ctrl.Result{}, nil
 		}
 
@@ -83,6 +83,35 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+
+	isMysqlUserMarkedToBeDeleted := mysqlUser.GetDeletionTimestamp() != nil
+	if isMysqlUserMarkedToBeDeleted {
+		if controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
+			// Run finalization logic for mysqlUserFinalizer. If the
+			// finalization logic fails, don't remove the finalizer so
+			// that we can retry during the next reconciliation.
+			if err := r.finalizeMySQLUser(log, mysqlUser); err != nil {
+				return ctrl.Result{}, err
+			}
+			// Remove mysqlUserFinalizer. Once all finalizers have been
+			// removed, the object will be deleted.
+			controllerutil.RemoveFinalizer(mysqlUser, mysqlUserFinalizer)
+			err := r.Update(ctx, mysqlUser)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Add finalizer for this CR
+	if !controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
+		controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer)
+		err = r.Update(ctx, mysqlUser)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 
 	// Fetch MySQL
 	var mysql mysqlv1alpha1.MySQL
@@ -133,4 +162,24 @@ func (r *MySQLUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlv1alpha1.MySQLUser{}).
 		Complete(r)
+}
+
+func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysqlv1alpha1.MySQLUser) error {
+	// 1. Get the referenced MySQL instance.
+	// 2. Connect to MySQL.
+	// 3. Delete the MySQL user.
+
+	// TODO: get from mysqlUser.Spec.MysqlName
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+	_, err = db.Exec("DROP USER IF EXISTS '" + mysqlUser.Name + "'@'%';")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	log.Info("Successfully finalized mysqlUser")
+	return nil
 }

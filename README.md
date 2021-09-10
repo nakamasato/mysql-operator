@@ -85,6 +85,18 @@ TBD
 
         </details>
 
+1. Clean up
+
+```
+make uninstall
+```
+
 # Code Style
 
 - [golangci-lint](https://golangci-lint.run)
+
+# References
+## Finalizers
+- https://book.kubebuilder.io/reference/using-finalizers.html
+- https://zdyxry.github.io/2019/09/13/Kubernetes-%E5%AE%9E%E6%88%98-Operator-Finalizers/
+- https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/
