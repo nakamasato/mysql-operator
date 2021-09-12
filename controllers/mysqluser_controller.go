@@ -88,6 +88,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Connect to MySQL
 	db, err := r.getMySQLDB(log, mysql)
+	if err != nil {
+		panic(err.Error())
+	}
 	defer db.Close()
 
 	// Finalize if DeletionTimestamp exists
@@ -182,9 +185,5 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 }
 
 func (r *MySQLUserReconciler) getMySQLDB(log logr.Logger, mysql *mysqlv1alpha1.MySQL) (*sql.DB, error) {
-	db, err := sql.Open("mysql", mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
-	if err != nil {
-		panic(err.Error())
-	}
-	return db, err
+	return sql.Open("mysql", mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
 }
