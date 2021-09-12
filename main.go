@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	mysqlv1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
-	"github.com/nakamasato/mysql-user-operator/controllers"
+	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	"github.com/nakamasato/mysql-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
