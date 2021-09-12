@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
-	mysqlv1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
+	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 )
 
 const mysqlFinalizer = "mysql.nakamasato.com/finalizer"

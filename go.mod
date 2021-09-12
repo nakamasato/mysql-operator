@@ -1,4 +1,4 @@
-module github.com/nakamasato/mysql-user-operator
+module github.com/nakamasato/mysql-operator
 
 go 1.16
 

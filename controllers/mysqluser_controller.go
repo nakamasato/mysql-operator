@@ -34,7 +34,7 @@ import (
 	"github.com/go-logr/logr"
 	_ "github.com/go-sql-driver/mysql"
 
-	mysqlv1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
+	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 )
 
 const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"

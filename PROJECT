@@ -4,8 +4,8 @@ layout:
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: mysql-user-operator
-repo: github.com/nakamasato/mysql-user-operator
+projectName: mysql-operator
+repo: github.com/nakamasato/mysql-operator
 resources:
 - api:
     crdVersion: v1
@@ -14,7 +14,7 @@ resources:
   domain: nakamasato.com
   group: mysql
   kind: MySQLUser
-  path: github.com/nakamasato/mysql-user-operator/api/v1alpha1
+  path: github.com/nakamasato/mysql-operator/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -23,6 +23,6 @@ resources:
   domain: nakamasato.com
   group: mysql
   kind: MySQL
-  path: github.com/nakamasato/mysql-user-operator/api/v1alpha1
+  path: github.com/nakamasato/mysql-operator/api/v1alpha1
   version: v1alpha1
 version: "3"
