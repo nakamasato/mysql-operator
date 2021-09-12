@@ -37,7 +37,7 @@ import (
 	mysqlv1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
 )
 
-const mysqlUserFinalizer = "mysql.nakamasato.com/finalizer"
+const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
 
 // MySQLUserReconciler reconciles a MySQLUser object
 type MySQLUserReconciler struct {
@@ -61,18 +61,9 @@ type MySQLUserReconciler struct {
 func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	// Connect to MySQL
-	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/") // TODO: #7 get credentials from MySQL instance.
-	if err != nil {
-		panic(err.Error())
-	}
-	defer db.Close()
-
-	mysqlName := "mysql-sample" // TODO: #6 extract from mysqlUser.mysqlName
-
 	// Fetch MySQLUser
 	mysqlUser := &mysqlv1alpha1.MySQLUser{}
-	err = r.Get(ctx, req.NamespacedName, mysqlUser)
+	err := r.Get(ctx, req.NamespacedName, mysqlUser)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
@@ -84,6 +75,25 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
 
+	mysqlName := mysqlUser.Spec.MysqlName
+
+	// Fetch MySQL
+	var mysql mysqlv1alpha1.MySQL
+	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlUser.Spec.MysqlName}
+	if err := r.Get(ctx, mysqlNamespacedName, &mysql); err != nil {
+		log.Error(err, "unable to fetch MySQL")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	log.Info("Fetched MySQL instance.")
+
+	// Connect to MySQL
+	db, err := sql.Open("mysql", mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	// Finalize if DeletionTimestamp exists
 	isMysqlUserMarkedToBeDeleted := mysqlUser.GetDeletionTimestamp() != nil
 	if isMysqlUserMarkedToBeDeleted {
 		if controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
@@ -112,15 +122,6 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return ctrl.Result{}, err
 		}
 	}
-
-	// Fetch MySQL
-	var mysql mysqlv1alpha1.MySQL
-	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlName}
-	if err := r.Get(ctx, mysqlNamespacedName, &mysql); err != nil {
-		log.Error(err, "unable to fetch MySQL")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-	log.Info("Fetched MySQL instance.")
 
 	// Create MySQL user if not exists with password `password`
 	log.Info("Create MySQL user if not.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
