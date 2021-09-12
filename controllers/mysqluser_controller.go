@@ -170,7 +170,7 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 	// 2. Connect to MySQL.
 	// 3. Delete the MySQL user.
 
-	// TODO: get from mysqlUser.Spec.MysqlName
+	// TODO: #12 get from mysqlUser.Spec.MysqlName
 	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/")
 	if err != nil {
 		panic(err.Error())
