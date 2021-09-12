@@ -78,16 +78,16 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	mysqlName := mysqlUser.Spec.MysqlName
 
 	// Fetch MySQL
-	var mysql mysqlv1alpha1.MySQL
+	mysql := &mysqlv1alpha1.MySQL{}
 	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlUser.Spec.MysqlName}
-	if err := r.Get(ctx, mysqlNamespacedName, &mysql); err != nil {
+	if err := r.Get(ctx, mysqlNamespacedName, mysql); err != nil {
 		log.Error(err, "unable to fetch MySQL")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log.Info("Fetched MySQL instance.")
 
 	// Connect to MySQL
-	db, err := sql.Open("mysql", mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
+	db, err := r.getMySQLDB(log, mysql)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -100,7 +100,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// Run finalization logic for mysqlUserFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.finalizeMySQLUser(log, mysqlUser); err != nil {
+			if err := r.finalizeMySQLUser(log, mysqlUser, mysql); err != nil {
 				return ctrl.Result{}, err
 			}
 			// Remove mysqlUserFinalizer. Once all finalizers have been
@@ -165,13 +165,12 @@ func (r *MySQLUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysqlv1alpha1.MySQLUser) error {
+func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1alpha1.MySQL) error {
 	// 1. Get the referenced MySQL instance.
 	// 2. Connect to MySQL.
 	// 3. Delete the MySQL user.
 
-	// TODO: get from mysqlUser.Spec.MysqlName
-	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/")
+	db, err := r.getMySQLDB(log, mysql)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -183,4 +182,8 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 
 	log.Info("Successfully finalized mysqlUser")
 	return nil
+}
+
+func (r *MySQLUserReconciler) getMySQLDB(log logr.Logger, mysql *mysqlv1alpha1.MySQL) (*sql.DB, error) {
+	return sql.Open("mysql", mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
 }

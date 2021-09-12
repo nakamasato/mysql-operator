@@ -75,7 +75,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			// Run finalization logic for mysqlFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			referencedNum, err := r.countReferencesByMySQLUser(ctx, log, mysql);
+			referencedNum, err := r.countReferencesByMySQLUser(ctx, log, mysql)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
