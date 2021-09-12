@@ -19,13 +19,18 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/go-logr/logr"
 	mysqlv1alpha1 "github.com/nakamasato/mysql-user-operator/api/v1alpha1"
 )
+
+const mysqlFinalizer = "mysql.nakamasato.com/finalizer"
 
 // MySQLReconciler reconciles a MySQL object
 type MySQLReconciler struct {
@@ -47,9 +52,55 @@ type MySQLReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
-	// your logic here
+	// Fetch MySQL
+	mysql := &mysqlv1alpha1.MySQL{}
+	err := r.Get(ctx, req.NamespacedName, mysql)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("Fetch MySQL instance. MySQL not found.", "mysql.Name", mysql.Name, "mysql.Namespace", mysql.Namespace)
+			return ctrl.Result{}, nil
+		}
+
+		log.Error(err, "Fetch MySQL instance. Failed to get MySQL.")
+		return ctrl.Result{}, err
+	}
+
+	// Finalize if DeletionTimestamp exists
+	isMysqlUserMarkedToBeDeleted := mysql.GetDeletionTimestamp() != nil
+	if isMysqlUserMarkedToBeDeleted {
+		log.Info("MySQL instance is marked to be deleted.")
+		if controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
+			// Run finalization logic for mysqlFinalizer. If the
+			// finalization logic fails, don't remove the finalizer so
+			// that we can retry during the next reconciliation.
+			if err := r.finalizeMySQLDeletion(ctx, log, mysql); err != nil {
+				return ctrl.Result{}, err
+			}
+			// Remove mysqlFinalizer. Once all finalizers have been
+			// removed, the object will be deleted.
+			// controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) // comment out until implementing proper finalizer to clean up corresponding mysqlusers
+			// err := r.Update(ctx, mysql)
+			// if err != nil {
+			// 	return ctrl.Result{}, err
+			// }
+			return ctrl.Result{
+				Requeue:      true,
+				RequeueAfter: 0,
+			}, nil // https://github.com/operator-framework/operator-sdk/issues/4209#issuecomment-729916367
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Add finalizer for this CR
+	if !controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
+		controllerutil.AddFinalizer(mysql, mysqlFinalizer)
+		err = r.Update(ctx, mysql)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -59,4 +110,33 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlv1alpha1.MySQL{}).
 		Complete(r)
+}
+
+func (r *MySQLReconciler) finalizeMySQLDeletion(ctx context.Context, log logr.Logger, mysql *mysqlv1alpha1.MySQL) error {
+	// 1. Get the referenced MySQLUser instances.
+	// 2. Delete them.
+	mysqlUserList := &mysqlv1alpha1.MySQLUserList{}
+	err := r.List(ctx, mysqlUserList)
+	if err != nil {
+		return err
+	}
+	mysqlUserCount := 0
+	for _, mysqlUser := range mysqlUserList.Items {
+		if mysqlUser.Spec.MysqlName == mysql.Name {
+			mysqlUserCount++
+		}
+	}
+	if mysqlUserCount == 0 {
+		controllerutil.RemoveFinalizer(mysql, mysqlFinalizer)
+		err := r.Update(ctx, mysql)
+		if err != nil {
+			return err
+		}
+		log.Info("Successfully removed finalizer")
+		return nil
+	} else {
+		log.Info("Cannot remove mysql '%s' finalizer as is referenced by %d mysqlUsers", mysql.Name, mysqlUserCount)
+		// TODO: #10 need to requeue if mysql being deleted is still referenced by mysqlUser
+	}
+	return nil
 }
