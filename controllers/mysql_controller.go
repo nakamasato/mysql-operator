@@ -75,20 +75,25 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			// Run finalization logic for mysqlFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.finalizeMySQLDeletion(ctx, log, mysql); err != nil {
+			referencedNum, err := r.countReferencesByMySQLUser(ctx, log, mysql);
+			if err != nil {
 				return ctrl.Result{}, err
+			}
+
+			// if referencedNum is greater than zero, requeue it.
+			if referencedNum > 0 {
+				return ctrl.Result{
+					Requeue:      true,
+					RequeueAfter: 0,
+				}, nil // https://github.com/operator-framework/operator-sdk/issues/4209#issuecomment-729916367
 			}
 			// Remove mysqlFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
-			// controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) // comment out until implementing proper finalizer to clean up corresponding mysqlusers
-			// err := r.Update(ctx, mysql)
-			// if err != nil {
-			// 	return ctrl.Result{}, err
-			// }
-			return ctrl.Result{
-				Requeue:      true,
-				RequeueAfter: 0,
-			}, nil // https://github.com/operator-framework/operator-sdk/issues/4209#issuecomment-729916367
+			controllerutil.RemoveFinalizer(mysql, mysqlFinalizer)
+			err = r.Update(ctx, mysql)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
 		}
 		return ctrl.Result{}, err
 	}
@@ -112,31 +117,25 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MySQLReconciler) finalizeMySQLDeletion(ctx context.Context, log logr.Logger, mysql *mysqlv1alpha1.MySQL) error {
+func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, log logr.Logger, mysql *mysqlv1alpha1.MySQL) (int, error) {
 	// 1. Get the referenced MySQLUser instances.
-	// 2. Delete them.
+	// 2. Return the number of referencing MySQLUser.
 	mysqlUserList := &mysqlv1alpha1.MySQLUserList{}
 	err := r.List(ctx, mysqlUserList)
-	if err != nil {
-		return err
-	}
 	mysqlUserCount := 0
+	if err != nil {
+		return mysqlUserCount, err
+	}
+
 	for _, mysqlUser := range mysqlUserList.Items {
 		if mysqlUser.Spec.MysqlName == mysql.Name {
 			mysqlUserCount++
 		}
 	}
 	if mysqlUserCount == 0 {
-		controllerutil.RemoveFinalizer(mysql, mysqlFinalizer)
-		err := r.Update(ctx, mysql)
-		if err != nil {
-			return err
-		}
-		log.Info("Successfully removed finalizer")
-		return nil
+		return mysqlUserCount, nil
 	} else {
 		log.Info("Cannot remove mysql '%s' finalizer as is referenced by %d mysqlUsers", mysql.Name, mysqlUserCount)
-		// TODO: #10 need to requeue if mysql being deleted is still referenced by mysqlUser
+		return mysqlUserCount, nil
 	}
-	return nil
 }
