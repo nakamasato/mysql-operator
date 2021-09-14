@@ -56,7 +56,7 @@ var _ = Describe("MySQLUser controller", func() {
 			mysqlUser := &mysqlv1alpha1.MySQLUser{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: MySQLUserNamespace},
-				Spec:       mysqlv1alpha1.MySQLUserSpec{Name: MySQLUserName, MysqlName: "test-mysql"},
+				Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: "test-mysql"},
 				Status:     mysqlv1alpha1.MySQLUserStatus{},
 			}
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())

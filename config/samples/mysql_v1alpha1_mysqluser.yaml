@@ -3,5 +3,4 @@ kind: MySQLUser
 metadata:
   name: nakamasato
 spec:
-  name: nakamasato
   mysqlName: mysql-sample
