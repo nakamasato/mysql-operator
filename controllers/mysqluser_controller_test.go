@@ -48,10 +48,6 @@ var _ = Describe("MySQLUser controller", func() {
 	const (
 		MySQLUserName      = "test-mysql-user"
 		MySQLUserNamespace = "default"
-
-		timeout  = time.Second * 10
-		duration = time.Second * 10
-		interval = time.Millisecond * 250
 	)
 
 	Context("When updating MySQLUser Status", func() {
