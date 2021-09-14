@@ -66,14 +66,14 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err := r.Get(ctx, req.NamespacedName, mysqlUser)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
 			return ctrl.Result{}, nil
 		}
 
 		log.Error(err, "Fetch MySQLUser instance. Failed to get MySQLUser.")
 		return ctrl.Result{}, err
 	}
-	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
 
 	mysqlName := mysqlUser.Spec.MysqlName
 
@@ -124,9 +124,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// Create MySQL user if not exists with password `password`
-	log.Info("Create MySQL user if not.", "mysqlUser.Name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+	log.Info("Create MySQL user if not.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
 	password := "password" // TODO: #5 generate a random password
-	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUser.Name + "'@'%' IDENTIFIED BY '" + password + "';")
+	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'%' IDENTIFIED BY '" + password + "';")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -134,7 +134,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// Create Secret with prefix `mysql-` + `<mysqlName>`
 	data := make(map[string][]byte)
 	data["password"] = []byte(password)
-	secretName := "mysql-" + mysqlName + "-" + mysqlUser.Name
+	secretName := "mysql-" + mysqlName + "-" + mysqlUser.ObjectMeta.Name
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
@@ -175,7 +175,7 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 		panic(err.Error())
 	}
 	defer db.Close()
-	_, err = db.Exec("DROP USER IF EXISTS '" + mysqlUser.Name + "'@'%';")
+	_, err = db.Exec("DROP USER IF EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'%';")
 	if err != nil {
 		panic(err.Error())
 	}

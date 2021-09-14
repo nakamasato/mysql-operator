@@ -38,11 +38,8 @@ spec:
             properties:
               mysqlName:
                 type: string
-              name:
-                type: string
             required:
             - mysqlName
-            - name
             type: object
           status:
             description: MySQLUserStatus defines the observed state of MySQLUser
