@@ -47,10 +47,6 @@ var _ = Describe("MySQL controller", func() {
 	const (
 		MySQLName      = "test-mysql"
 		MySQLNamespace = "default"
-
-		timeout  = time.Second * 10
-		duration = time.Second * 10
-		interval = time.Millisecond * 250
 	)
 
 	Context("When updating MySQL Status", func() {
