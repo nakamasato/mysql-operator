@@ -28,7 +28,7 @@ type MySQLUserSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Name      string `json:"name"`
+	Name      string `json:"name"` // TODO: #16 remove redundant field `Name`
 	MysqlName string `json:"mysqlName"`
 }
 
