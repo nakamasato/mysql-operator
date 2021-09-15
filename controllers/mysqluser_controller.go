@@ -68,7 +68,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err := r.Get(ctx, req.NamespacedName, mysqlUser)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "req.NamespacedName", req.NamespacedName)
 			return ctrl.Result{}, nil
 		}
 
@@ -76,7 +76,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
-
+	mysqlUserName := mysqlUser.ObjectMeta.Name
 	mysqlName := mysqlUser.Spec.MysqlName
 
 	// Fetch MySQL
@@ -90,8 +90,13 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Connect to MySQL
 	db, err := r.getMySQLDB(log, mysql)
+	if err != nil {
+		panic(err.Error()) // actually doesn't return error https://github.com/go-sql-driver/mysql/wiki/Examples#a-word-on-sqlopen
+	}
+	err = db.Ping()
 	if err != nil { // TODO: #23 add error info to status
-		panic(err.Error())
+		log.Error(err, "Failed to connect to MySQL.", "mysqlName", mysqlName)
+		return ctrl.Result{}, err //requeue
 	}
 	defer db.Close()
 
@@ -126,7 +131,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// Get password from Secret if exists. Otherwise, generate new one.
-	secretName := getSecretName(mysqlName, mysqlUser.ObjectMeta.Name)
+	secretName := getSecretName(mysqlName, mysqlUserName)
 	secret := &v1.Secret{}
 	err = r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: secretName}, secret)
 	var password string
@@ -134,17 +139,18 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if errors.IsNotFound(err) { // Secret doesn't exists -> generate password
 			password = generateRandomString(16)
 		} else {
-			return ctrl.Result{}, err // -> error
+			return ctrl.Result{}, err // error -> requeue
 		}
 	} else { // exists -> get password from Secret
 		password = string(secret.Data["password"])
 	}
 
 	// Create MySQL user if not exists with the password set above.
-	log.Info("Create MySQL user if not.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
-	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'%' IDENTIFIED BY '" + password + "';")
+	log.Info("Create MySQL user if not.", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
+	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUserName + "'@'%' IDENTIFIED BY '" + password + "';")
 	if err != nil {
-		panic(err.Error())
+		log.Error(err, "Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
+		return ctrl.Result{}, err //requeue
 	}
 
 	// CreateOrUpdate Secret TODO: #24 separate a function to create Secret for MySQLUser
@@ -187,12 +193,13 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 
 	db, err := r.getMySQLDB(log, mysql)
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
 	defer db.Close()
 	_, err = db.Exec("DROP USER IF EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'%';")
 	if err != nil {
-		panic(err.Error())
+		log.Error(err, "Failed to drop MySQL user.", "mysqlUser", mysqlUser.ObjectMeta.Name)
+		return err
 	}
 
 	log.Info("Successfully finalized mysqlUser")
