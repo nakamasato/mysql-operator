@@ -55,6 +55,11 @@ TBD
         ```
         kubectl get secret mysql-mysql-sample-nakamasato -o yaml
         ```
+    1. You can connect to MySQL with the generated user.
+        ```
+        docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+        ```
+
 1. Delete `MySQLUser`
     ```
     kubectl delete -k config/samples
