@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"math/rand"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -88,7 +90,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Connect to MySQL
 	db, err := r.getMySQLDB(log, mysql)
-	if err != nil {
+	if err != nil { // TODO: #23 add error info to status
 		panic(err.Error())
 	}
 	defer db.Close()
@@ -123,19 +125,32 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 	}
 
-	// Create MySQL user if not exists with password `password`
+	// Get password from Secret if exists. Otherwise, generate new one.
+	secretName := getSecretName(mysqlName, mysqlUser.ObjectMeta.Name)
+	secret := &v1.Secret{}
+	err = r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: secretName}, secret)
+	var password string
+	if err != nil {
+		if errors.IsNotFound(err) { // Secret doesn't exists -> generate password
+			password = generateRandomString(16)
+		} else {
+			return ctrl.Result{}, err // -> error
+		}
+	} else { // exists -> get password from Secret
+		password = string(secret.Data["password"])
+	}
+
+	// Create MySQL user if not exists with the password set above.
 	log.Info("Create MySQL user if not.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
-	password := "password" // TODO: #5 generate a random password
 	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'%' IDENTIFIED BY '" + password + "';")
 	if err != nil {
 		panic(err.Error())
 	}
 
-	// Create Secret with prefix `mysql-` + `<mysqlName>`
+	// CreateOrUpdate Secret TODO: #24 separate a function to create Secret for MySQLUser
 	data := make(map[string][]byte)
 	data["password"] = []byte(password)
-	secretName := "mysql-" + mysqlName + "-" + mysqlUser.ObjectMeta.Name
-	secret := &v1.Secret{
+	secret = &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: req.Namespace,
@@ -186,4 +201,19 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 
 func (r *MySQLUserReconciler) getMySQLDB(log logr.Logger, mysql *mysqlv1alpha1.MySQL) (*sql.DB, error) {
 	return sql.Open("mysql", mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
+}
+
+func generateRandomString(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+	s := make([]rune, n)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(s)
+}
+
+func getSecretName(mysqlName string, mysqlUserName string) string {
+	str := []string{"mysql", mysqlName, mysqlUserName}
+	return strings.Join(str, "-")
 }
