@@ -21,6 +21,7 @@ import (
 	"math/rand"
 	"strings"
 
+	"github.com/redhat-cop/operator-utils/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +44,8 @@ const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
 
 // MySQLUserReconciler reconciles a MySQLUser object
 type MySQLUserReconciler struct {
-	client.Client
+	util.ReconcilerBase
+	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
@@ -65,7 +67,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Fetch MySQLUser
 	mysqlUser := &mysqlv1alpha1.MySQLUser{}
-	err := r.Get(ctx, req.NamespacedName, mysqlUser)
+	err := r.GetClient().Get(ctx, req.NamespacedName, mysqlUser)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "req.NamespacedName", req.NamespacedName)
@@ -82,21 +84,24 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// Fetch MySQL
 	mysql := &mysqlv1alpha1.MySQL{}
 	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlUser.Spec.MysqlName}
-	if err := r.Get(ctx, mysqlNamespacedName, mysql); err != nil {
+	if err := r.GetClient().Get(ctx, mysqlNamespacedName, mysql); err != nil {
 		log.Error(err, "unable to fetch MySQL")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		// return ctrl.Result{}, client.IgnoreNotFound(err)
+		return r.ManageError(ctx, mysqlUser, err)
 	}
 	log.Info("Fetched MySQL instance.")
 
 	// Connect to MySQL
 	db, err := r.getMySQLDB(log, mysql)
 	if err != nil {
-		panic(err.Error()) // actually doesn't return error https://github.com/go-sql-driver/mysql/wiki/Examples#a-word-on-sqlopen
+		return r.ManageError(ctx, mysqlUser, err)
+		// actually doesn't return error https://github.com/go-sql-driver/mysql/wiki/Examples#a-word-on-sqlopen
 	}
 	err = db.Ping()
 	if err != nil { // TODO: #23 add error info to status
 		log.Error(err, "Failed to connect to MySQL.", "mysqlName", mysqlName)
-		return ctrl.Result{}, err //requeue
+		// return ctrl.Result{}, err //requeue
+		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
 	defer db.Close()
 
@@ -108,38 +113,41 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
 			if err := r.finalizeMySQLUser(log, mysqlUser, mysql); err != nil {
-				return ctrl.Result{}, err
+				// return ctrl.Result{}, err
+				return r.ManageError(ctx, mysqlUser, err) // requeue
 			}
 			// Remove mysqlUserFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
 			controllerutil.RemoveFinalizer(mysqlUser, mysqlUserFinalizer)
-			err := r.Update(ctx, mysqlUser)
+			err := r.GetClient().Update(ctx, mysqlUser)
 			if err != nil {
-				return ctrl.Result{}, err
+				// return ctrl.Result{}, err
+				return r.ManageError(ctx, mysqlUser, err) // requeue
 			}
 		}
-		return ctrl.Result{}, err
+		// return ctrl.Result{}, err
+		return r.ManageSuccess(ctx, mysqlUser) // should return success when not having the finalizer
 	}
 
 	// Add finalizer for this CR
 	if !controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
 		controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer)
-		err = r.Update(ctx, mysqlUser)
+		err = r.GetClient().Update(ctx, mysqlUser)
 		if err != nil {
-			return ctrl.Result{}, err
+			return r.ManageError(ctx, mysqlUser, err) // requeue
 		}
 	}
 
 	// Get password from Secret if exists. Otherwise, generate new one.
 	secretName := getSecretName(mysqlName, mysqlUserName)
 	secret := &v1.Secret{}
-	err = r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: secretName}, secret)
+	err = r.GetClient().Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: secretName}, secret)
 	var password string
 	if err != nil {
 		if errors.IsNotFound(err) { // Secret doesn't exists -> generate password
 			password = generateRandomString(16)
 		} else {
-			return ctrl.Result{}, err // error -> requeue
+			return r.ManageError(ctx, mysqlUser, err) // requeue
 		}
 	} else { // exists -> get password from Secret
 		password = string(secret.Data["password"])
@@ -150,7 +158,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUserName + "'@'%' IDENTIFIED BY '" + password + "';")
 	if err != nil {
 		log.Error(err, "Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
-		return ctrl.Result{}, err //requeue
+		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
 
 	// CreateOrUpdate Secret TODO: #24 separate a function to create Secret for MySQLUser
@@ -165,18 +173,19 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err = ctrl.SetControllerReference(mysqlUser, secret, r.Scheme) // Set owner of this Secret
 	if err != nil {
 		log.Error(err, "Failed to SetControllerReference for Secret.")
-		return ctrl.Result{}, err
+		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
-	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, secret, func() error {
+	if _, err := ctrl.CreateOrUpdate(ctx, r.GetClient(), secret, func() error {
 		secret.Data = data
 		log.Info("Successfully created Secret.")
 		return nil
 	}); err != nil {
 		log.Error(err, "Error creating or updating Secret.")
-		return ctrl.Result{}, err
+		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
 
-	return ctrl.Result{}, nil
+	// return ctrl.Result{}, nil
+	return r.ManageSuccess(ctx, mysqlUser)
 }
 
 // SetupWithManager sets up the controller with the Manager.

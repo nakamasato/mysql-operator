@@ -33,6 +33,7 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	"github.com/nakamasato/mysql-operator/controllers"
+	"github.com/redhat-cop/operator-utils/pkg/util"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -79,8 +80,9 @@ func main() {
 	}
 
 	if err = (&controllers.MySQLUserReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		ReconcilerBase: util.NewFromManager(mgr, mgr.GetEventRecorderFor("mysqluser_controller")),
+		Log:            ctrl.Log.WithName("controllers").WithName("MySQLUser"),
+		Scheme:         mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQLUser")
 		os.Exit(1)
