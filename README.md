@@ -105,3 +105,10 @@ make uninstall
 - https://book.kubebuilder.io/reference/using-finalizers.html
 - https://zdyxry.github.io/2019/09/13/Kubernetes-%E5%AE%9E%E6%88%98-Operator-Finalizers/
 - https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/
+## Testing
+- https://blog.bullgare.com/2021/02/mocking-for-unit-tests-and-e2e-tests-in-golang/
+
+## Managing errors:
+https://cloud.redhat.com/blog/kubernetes-operators-best-practices
+1. Return the error in the status of the object.
+1. Generate an event describing the error.
