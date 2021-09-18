@@ -155,7 +155,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Create MySQL user if not exists with the password set above.
 	log.Info("Create MySQL user if not.", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
-	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUserName + "'@'%' IDENTIFIED BY '" + password + "';")
+	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUserName + "'@'" + mysqlUser.Spec.Host + "' IDENTIFIED BY '" + password + "';")
 	if err != nil {
 		log.Error(err, "Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
 		return r.ManageError(ctx, mysqlUser, err) // requeue

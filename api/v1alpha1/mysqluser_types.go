@@ -29,6 +29,7 @@ type MySQLUserSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	MysqlName string `json:"mysqlName"`
+	Host      string `json:"host"`
 }
 
 // MySQLUserStatus defines the observed state of MySQLUser
