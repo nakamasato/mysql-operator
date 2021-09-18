@@ -1,0 +1,8 @@
+apiVersion: mysql.nakamasato.com/v1alpha1
+kind: MySQL
+metadata:
+  name: mysql-sample
+spec:
+  host: mysql.default.svc.cluster.local
+  admin_user: root
+  admin_password: password

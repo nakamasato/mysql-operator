@@ -1,0 +1,5 @@
+resources:
+  - mysql_v1alpha1_mysqluser.yaml
+  - mysql_v1alpha1_mysql.yaml
+  - mysql-deployment.yaml
+  - mysql-service.yaml
