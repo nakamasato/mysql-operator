@@ -161,27 +161,10 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
 
-	// CreateOrUpdate Secret TODO: #24 separate a function to create Secret for MySQLUser
-	data := make(map[string][]byte)
-	data["password"] = []byte(password)
-	secret = &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: req.Namespace,
-		},
-	}
-	err = ctrl.SetControllerReference(mysqlUser, secret, r.Scheme) // Set owner of this Secret
+	err = r.createSecret(ctx, log, password, secretName, mysqlUser.Namespace, mysqlUser)
+	// TODO: #35 add test if mysql user is successfully created but secret is failed to create
 	if err != nil {
-		log.Error(err, "Failed to SetControllerReference for Secret.")
-		return r.ManageError(ctx, mysqlUser, err) // requeue
-	}
-	if _, err := ctrl.CreateOrUpdate(ctx, r.GetClient(), secret, func() error {
-		secret.Data = data
-		log.Info("Successfully created Secret.")
-		return nil
-	}); err != nil {
-		log.Error(err, "Error creating or updating Secret.")
-		return r.ManageError(ctx, mysqlUser, err) // requeue
+		return r.ManageError(ctx, mysqlUser, err)
 	}
 
 	// return ctrl.Result{}, nil
@@ -232,4 +215,29 @@ func generateRandomString(n int) string {
 func getSecretName(mysqlName string, mysqlUserName string) string {
 	str := []string{"mysql", mysqlName, mysqlUserName}
 	return strings.Join(str, "-")
+}
+
+func (r *MySQLUserReconciler) createSecret(ctx context.Context, log logr.Logger, password string, secretName string, namespace string, mysqlUser *mysqlv1alpha1.MySQLUser) error {
+	data := make(map[string][]byte)
+	data["password"] = []byte(password)
+	secret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+		},
+	}
+	err := ctrl.SetControllerReference(mysqlUser, secret, r.Scheme) // Set owner of this Secret
+	if err != nil {
+		log.Error(err, "Failed to SetControllerReference for Secret.")
+		return err
+	}
+	if _, err := ctrl.CreateOrUpdate(ctx, r.GetClient(), secret, func() error {
+		secret.Data = data
+		log.Info("Successfully created Secret.")
+		return nil
+	}); err != nil {
+		log.Error(err, "Error creating or updating Secret.")
+		return err
+	}
+	return nil
 }
