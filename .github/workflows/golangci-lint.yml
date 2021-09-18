@@ -1,6 +1,8 @@
 name: golangci-lint
 on:
   pull_request:
+    paths:
+      - '**.go'
 jobs:
   golangci:
     name: lint
