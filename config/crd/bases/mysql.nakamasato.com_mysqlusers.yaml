@@ -36,9 +36,12 @@ spec:
           spec:
             description: MySQLUserSpec defines the desired state of MySQLUser
             properties:
+              host:
+                type: string
               mysqlName:
                 type: string
             required:
+            - host
             - mysqlName
             type: object
           status:

@@ -4,3 +4,4 @@ metadata:
   name: nakamasato
 spec:
   mysqlName: mysql-sample
+  host: '%'
