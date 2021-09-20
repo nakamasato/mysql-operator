@@ -86,7 +86,8 @@
 make uninstall
 ```
 
-# Scorecard
+# Test
+## Scorecard
 
 Statically validate your operator bundle.
 
@@ -105,6 +106,26 @@ Default tests:
 More:
 - [custom test example](https://github.com/operator-framework/operator-sdk/blob/09c3aa14625965af9f22f513cd5c891471dbded2/images/custom-scorecard-tests/main.go)
 - [Writing Custom Scorecard Tests](https://sdk.operatorframework.io/docs/testing-operators/scorecard/custom-tests/)
+
+## kuttl
+
+https://kuttl.dev/docs/
+
+Prerequisite:
+- Kubernetes Cluster
+- kubectl
+
+1. Install kuttl plugin
+
+    ```
+    kubectl krew install kuttl
+    ```
+
+1. Run kuttl test
+
+    ```
+    kubectl kuttl test --start-kind=true ./tests/e2e/
+    ```
 
 # OLM (ToDo)
 # Reference
