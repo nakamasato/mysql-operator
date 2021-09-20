@@ -1,0 +1,238 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "mysql.nakamasato.com/v1alpha1",
+          "kind": "MySQL",
+          "metadata": {
+            "name": "mysql-sample"
+          },
+          "spec": {
+            "admin_password": "password",
+            "admin_user": "root",
+            "host": "localhost"
+          }
+        },
+        {
+          "apiVersion": "mysql.nakamasato.com/v1alpha1",
+          "kind": "MySQLUser",
+          "metadata": {
+            "name": "nakamasato"
+          },
+          "spec": {
+            "mysqlName": "mysql-sample"
+          }
+        }
+      ]
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.11.0
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+  name: mysql-operator.v0.0.1
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: MySQL is the Schema for the mysqls API
+      displayName: My SQL
+      kind: MySQL
+      name: mysqls.mysql.nakamasato.com
+      version: v1alpha1
+    - description: MySQLUser is the Schema for the mysqlusers API
+      displayName: My SQLUser
+      kind: MySQLUser
+      name: mysqlusers.mysql.nakamasato.com
+      version: v1alpha1
+  description: Manage MySQL user
+  displayName: nakamasat-mysql-operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - mysql.nakamasato.com
+          resources:
+          - mysqls
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - mysql.nakamasato.com
+          resources:
+          - mysqls/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - mysql.nakamasato.com
+          resources:
+          - mysqls/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - mysql.nakamasato.com
+          resources:
+          - mysqlusers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - mysql.nakamasato.com
+          resources:
+          - mysqlusers/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - mysql.nakamasato.com
+          resources:
+          - mysqlusers/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: mysql-operator-controller-manager
+      deployments:
+      - name: mysql-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                  protocol: TCP
+                resources: {}
+              - args:
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
+                command:
+                - /manager
+                image: ghcr.io/nakamasato/mysql-operator:latest
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 100Mi
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: mysql-operator-controller-manager
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: mysql-operator-controller-manager
+    strategy: deployment
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - mysql
+  - mysql-operator
+  links:
+  - name: Mysql Operator
+    url: https://mysql-operator.domain
+  maintainers:
+  - email: masatonaka1989@gmail.com
+    name: nakamasato
+  maturity: alpha
+  provider:
+    name: nakamasato
+  version: 0.0.1

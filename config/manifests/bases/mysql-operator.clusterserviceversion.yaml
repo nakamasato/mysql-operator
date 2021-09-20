@@ -1,0 +1,53 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: mysql-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: MySQL is the Schema for the mysqls API
+      displayName: My SQL
+      kind: MySQL
+      name: mysqls.mysql.nakamasato.com
+      version: v1alpha1
+    - description: MySQLUser is the Schema for the mysqlusers API
+      displayName: My SQLUser
+      kind: MySQLUser
+      name: mysqlusers.mysql.nakamasato.com
+      version: v1alpha1
+  description: Manage MySQL user
+  displayName: nakamasat-mysql-operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - mysql
+  - mysql-operator
+  links:
+  - name: Mysql Operator
+    url: https://mysql-operator.domain
+  maintainers:
+  - email: masatonaka1989@gmail.com
+    name: nakamasato
+  maturity: alpha
+  provider:
+    name: nakamasato
+  version: 0.0.0
