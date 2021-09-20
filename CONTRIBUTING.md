@@ -123,8 +123,16 @@ Prerequisite:
 
 1. Run kuttl test
 
+    Run tests against the Kubernetes cluster with default kubeconfig:
+
     ```
-    kubectl kuttl test --start-kind=true ./tests/e2e/
+    kubectl kuttl test ./bundle/tests/scorecard/kuttl
+    ```
+
+    Run tests against `kind` cluster:
+
+    ```
+    kubectl kuttl test --start-kind=true ./bundle/tests/scorecard/kuttl
     ```
 
 # OLM (ToDo)
