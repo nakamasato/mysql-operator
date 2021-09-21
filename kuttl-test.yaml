@@ -1,0 +1,16 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+parallel: 4
+startKIND: false
+timeout: 120
+# crdDir: config/crd # doesn't support kustomize?
+namespace: default
+testDirs:
+  - tests/e2e/
+startControlPlane: false
+kindNodeCache: true
+kindContainers:
+  - mysql-operator:latest
+commands:
+  - command: make deploy IMG=mysql-operator VERSION=latest # Using local image
+    name: deploy operator
