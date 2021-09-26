@@ -23,3 +23,9 @@ testbin/*
 *.swp
 *.swo
 *~
+
+# kind logs
+kind-logs-*
+
+# kubeconfig
+kubeconfig

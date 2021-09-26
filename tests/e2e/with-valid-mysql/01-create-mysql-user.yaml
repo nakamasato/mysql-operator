@@ -1,0 +1,5 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: kubectl apply -k ../../../config/samples-on-k8s
+    namespaced: true

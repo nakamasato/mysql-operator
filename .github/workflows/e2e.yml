@@ -1,0 +1,59 @@
+name: e2e
+on:
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      KIND_VERSION: v0.11.0
+    steps:
+      - uses: actions/checkout@master
+
+      # https://kind.sigs.k8s.io/docs/user/quick-start/
+      - name: kind - install
+        run: |
+          wget -q -O ./kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+          kind version
+
+      # - name: kind - create cluster
+      #   run: |
+      #     kind create cluster
+
+      # - name: kind - test cluster
+      #   run: |
+      #     kubectl cluster-info
+      #     kubectl get pods -n kube-system
+      #     echo "current-context:" $(kubectl config current-context)
+      #     echo "environment-kubeconfig:" ${KUBECONFIG}
+
+      # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+      - name: krew - install
+        run: |
+          (
+            set -x; cd "$(mktemp -d)" &&
+            OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+            ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+            curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" &&
+            tar zxvf krew.tar.gz &&
+            KREW=./krew-"${OS}_${ARCH}" &&
+            "$KREW" install krew
+          )
+
+      # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#adding-a-system-path
+      - name: krew - set PATH
+        run: echo "${KREW_ROOT:-$HOME/.krew}/bin:$PATH" >> $GITHUB_PATH
+
+      # https://kuttl.dev/docs/cli.html#setup-the-kuttl-kubectl-plugin
+      - name: kuttl - install
+        run: |
+          kubectl krew install kuttl
+          kubectl kuttl -v
+
+      - name: docker - build
+        run: docker build -t mysql-operator:latest .
+
+      - name: e2e
+        run: kubectl kuttl test
