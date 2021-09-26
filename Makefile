@@ -201,3 +201,8 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+kuttl:
+	kubectl kuttl test
+
+e2e: docker-build kuttl
