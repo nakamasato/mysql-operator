@@ -310,6 +310,7 @@ What the e2e tests:
 
 ## Testing
 - https://blog.bullgare.com/2021/02/mocking-for-unit-tests-and-e2e-tests-in-golang/
+- https://int128.hatenablog.com/entry/2020/02/05/114940
 
 ## Managing errors:
 https://cloud.redhat.com/blog/kubernetes-operators-best-practices
