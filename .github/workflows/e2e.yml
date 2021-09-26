@@ -6,13 +6,21 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     env:
-      KREW_VERSION: v0.3.3
+      KIND_VERSION: v0.11.0
     steps:
       - uses: actions/checkout@master
 
-      - uses: engineerd/setup-kind@v0.5.0
-        with:
-          version: "v0.11.1"
+      # https://github.com/engineerd/setup-kind -> To use Makefile, replaced with kind installation step
+      # - uses: engineerd/setup-kind@v0.5.0
+      #   with:
+      #     version: ${{ env.KIND_VERSION }}
+
+      - name: Install kind
+        run: |
+          wget -q -O ./kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+          kind version
 
       - name: Test kind
         run: |
@@ -21,13 +29,20 @@ jobs:
           echo "current-context:" $(kubectl config current-context)
           echo "environment-kubeconfig:" ${KUBECONFIG}
 
-      - name: Install krew
+      # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+      - name: Install krew latest
         run: |
-          set -euo pipefail
-          cd "$(mktemp -d)"
-          curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/download/${KREW_VERSION}/krew.{tar.gz,yaml}"
-          tar zxvf krew.tar.gz
-          ./krew-linux_amd64 install --manifest=krew.yaml --archive=krew.tar.gz
+          (
+            set -x; cd "$(mktemp -d)" &&
+            OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+            ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+            curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" &&
+            tar zxvf krew.tar.gz &&
+            KREW=./krew-"${OS}_${ARCH}" &&
+            "$KREW" install krew
+          )
+          export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+          kubectl krew install kuttl
 
       - name: Install kuttl
         run: |
