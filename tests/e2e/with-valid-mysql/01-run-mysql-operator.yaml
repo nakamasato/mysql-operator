@@ -1,5 +1,5 @@
-# apiVersion: kuttl.dev/v1beta1
-# kind: TestStep
-# commands:
-#   - command: cd ../../../ && make run
-#     background: true
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: cd ../../../ && make run
+    background: true
