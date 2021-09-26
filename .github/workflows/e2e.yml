@@ -34,7 +34,7 @@ jobs:
           echo "environment-kubeconfig:" ${KUBECONFIG}
 
       # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
-      - name: Install krew latest
+      - name: krew - install
         run: |
           (
             set -x; cd "$(mktemp -d)" &&
@@ -48,7 +48,7 @@ jobs:
           export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
           kubectl krew install kuttl
 
-      - name: Install kuttl
+      - name: kuttl - install
         run: |
           export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
           kubectl krew install kuttl
