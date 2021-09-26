@@ -3,6 +3,6 @@ kind: MySQL
 metadata:
   name: mysql-sample
 spec:
-  host: mysql.default.svc.cluster.local # TODO: dial tcp: lookup mysql on 10.96.0.10:53: no such host
+  host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
   admin_user: root
   admin_password: password

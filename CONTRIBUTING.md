@@ -2,7 +2,9 @@
 
 - [golangci-lint](https://golangci-lint.run)
 
-# How to develop in local
+# Run mysql-operator
+
+## Local
 
 1. Run MySQL with Docker.
     ```
@@ -26,17 +28,13 @@
         <details><summary>details</summary>
 
         ```sql
-        mysql> select User, Host from mysql.user;
-        +---------------+-----------+
-        | User          | Host      |
-        +---------------+-----------+
-        | nakamasato    | %         |
-        | root          | %         |
-        | mysql.session | localhost |
-        | mysql.sys     | localhost |
-        | root          | localhost |
-        +---------------+-----------+
-        5 rows in set (0.00 sec)
+        select User, Host, password_last_changed, password_expired, password_lifetime from mysql.user where User = 'nakamasato';
+        +------------+------+-----------------------+------------------+-------------------+
+        | User       | Host | password_last_changed | password_expired | password_lifetime |
+        +------------+------+-----------------------+------------------+-------------------+
+        | nakamasato | %    | 2021-09-26 20:15:06   | N                |              NULL |
+        +------------+------+-----------------------+------------------+-------------------+
+        1 row in set (0.00 sec)
         ```
 
         </details>
@@ -85,6 +83,58 @@
 ```
 make uninstall
 ```
+
+## Local kubernetes
+
+1. Build Docker image.
+
+    ```
+    docker build -t mysql-operator .
+    ```
+
+    If you're using `kind` for your local Kubernetes, you need to load your image to the cluster: `kind load docker-image mysql-operator`. If you're using Kubernetes in Docker Desktop, you can use your local image.
+
+1. Deploy the CRDs and operator.
+
+    ```
+    make deploy IMG=mysql-operator
+    ```
+
+    You can check the operator installed in `mysql-operator-system` namespace.
+
+    ```
+    kubectl get po -n mysql-operator-system
+    NAME                                                 READY   STATUS    RESTARTS   AGE
+    mysql-operator-controller-manager-5bc69f545b-fcxst   2/2     Running   0          51s
+    ```
+
+1. Deploy test MySQL cluster and `MySQL` and `MySQLUser` resources.
+
+    ```
+    kubectl apply -k config/samples-on-k8s
+    ```
+
+1. Check `Secret` and MySQL user.
+
+    Secret:
+
+    ```
+    kubectl get secret mysql-mysql-sample-nakamasato
+    NAME                            TYPE     DATA   AGE
+    mysql-mysql-sample-nakamasato   Opaque   1      109s
+    ```
+
+    MySQL user:
+
+    ```
+    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'select User, Host from mysql.user where User = "nakamasato";'
+    mysql: [Warning] Using a password on the command line interface can be insecure.
+    +------------+------+
+    | User       | Host |
+    +------------+------+
+    | nakamasato | %    |
+    +------------+------+
+    ```
 
 # Test
 ## Scorecard
