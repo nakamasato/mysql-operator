@@ -28,10 +28,11 @@ jobs:
           curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/download/${KREW_VERSION}/krew.{tar.gz,yaml}"
           tar zxvf krew.tar.gz
           ./krew-linux_amd64 install --manifest=krew.yaml --archive=krew.tar.gz
-          export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
       - name: Install kuttl
-        run: kubectl krew install kuttl
+        run: |
+          export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+          kubectl krew install kuttl
 
       - name: e2e
         run: kubectl kuttl test
