@@ -41,8 +41,11 @@ jobs:
             KREW=./krew-"${OS}_${ARCH}" &&
             "$KREW" install krew
           )
+
+      - name: krew - set PATH
+        run:
+          # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#adding-a-system-path
           echo "${KREW_ROOT:-$HOME/.krew}/bin:$PATH" >> $GITHUB_PATH
-          kubectl krew version
 
       # https://kuttl.dev/docs/cli.html#setup-the-kuttl-kubectl-plugin
       - name: kuttl - install
