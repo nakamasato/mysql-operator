@@ -1,6 +1,4 @@
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: mysql
-# status:
-#   readyReplicas: 1
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-mysql-sample-nakamasato

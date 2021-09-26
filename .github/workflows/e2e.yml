@@ -42,10 +42,9 @@ jobs:
             "$KREW" install krew
           )
 
+      # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#adding-a-system-path
       - name: krew - set PATH
-        run:
-          # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#adding-a-system-path
-          echo "${KREW_ROOT:-$HOME/.krew}/bin:$PATH" >> $GITHUB_PATH
+        run: echo "${KREW_ROOT:-$HOME/.krew}/bin:$PATH" >> $GITHUB_PATH
 
       # https://kuttl.dev/docs/cli.html#setup-the-kuttl-kubectl-plugin
       - name: kuttl - install
@@ -54,10 +53,7 @@ jobs:
           kubectl kuttl -v
 
       - name: docker - build
-        run: |
-          docker build -t mysql-operator:latest .
-          # kind load docker-image mysql-operator:latest
+        run: docker build -t mysql-operator:latest .
 
       - name: e2e
-        run: |
-          kubectl kuttl test
+        run: kubectl kuttl test
