@@ -18,16 +18,16 @@ jobs:
           sudo mv ./kind /usr/local/bin/kind
           kind version
 
-      - name: kind - create cluster
-        run: |
-          kind create cluster
+      # - name: kind - create cluster
+      #   run: |
+      #     kind create cluster
 
-      - name: kind - test cluster
-        run: |
-          kubectl cluster-info
-          kubectl get pods -n kube-system
-          echo "current-context:" $(kubectl config current-context)
-          echo "environment-kubeconfig:" ${KUBECONFIG}
+      # - name: kind - test cluster
+      #   run: |
+      #     kubectl cluster-info
+      #     kubectl get pods -n kube-system
+      #     echo "current-context:" $(kubectl config current-context)
+      #     echo "environment-kubeconfig:" ${KUBECONFIG}
 
       # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
       - name: krew - install
