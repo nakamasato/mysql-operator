@@ -1,6 +1,11 @@
 name: e2e
 on:
   pull_request:
+    paths:
+      - containers/**
+      - config/crd/**
+      - tests/e2e/**
+      - kuttl-test.yaml
 
 jobs:
   e2e:
@@ -17,17 +22,6 @@ jobs:
           chmod +x ./kind
           sudo mv ./kind /usr/local/bin/kind
           kind version
-
-      # - name: kind - create cluster
-      #   run: |
-      #     kind create cluster
-
-      # - name: kind - test cluster
-      #   run: |
-      #     kubectl cluster-info
-      #     kubectl get pods -n kube-system
-      #     echo "current-context:" $(kubectl config current-context)
-      #     echo "environment-kubeconfig:" ${KUBECONFIG}
 
       # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
       - name: krew - install
