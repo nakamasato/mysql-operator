@@ -45,13 +45,12 @@ jobs:
             KREW=./krew-"${OS}_${ARCH}" &&
             "$KREW" install krew
           )
-          export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-          kubectl krew install kuttl
 
       - name: kuttl - install
         run: |
           export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
           kubectl krew install kuttl
+          kubectl kuttl -v
 
       - name: e2e
         run: kubectl kuttl test
