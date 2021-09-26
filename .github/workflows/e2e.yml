@@ -41,16 +41,15 @@ jobs:
             KREW=./krew-"${OS}_${ARCH}" &&
             "$KREW" install krew
           )
+          echo "${KREW_ROOT:-$HOME/.krew}/bin:$PATH" >> $GITHUB_PATH
           kubectl krew version
 
       # https://kuttl.dev/docs/cli.html#setup-the-kuttl-kubectl-plugin
       - name: kuttl - install
         run: |
-          export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
           kubectl krew install kuttl
           kubectl kuttl -v
 
       - name: e2e
         run: |
-          export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
           kubectl kuttl test
