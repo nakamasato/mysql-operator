@@ -54,7 +54,9 @@ jobs:
           kubectl kuttl -v
 
       - name: docker - build
-        run: docker build -t mysql-operator .
+        run: |
+          docker build -t mysql-operator:latest .
+          kind load docker-image mysql-operator:latest
 
       - name: e2e
         run: |
