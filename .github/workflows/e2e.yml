@@ -3,7 +3,7 @@ on:
   pull_request:
 
 jobs:
-  kind:
+  e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -17,6 +17,4 @@ jobs:
           echo "current-context:" $(kubectl config current-context)
           echo "environment-kubeconfig:" ${KUBECONFIG}
 
-      - uses: shivanshs9/setup-k8s-operator-sdk@v1
-        with:
-          version: "1.11.0"
+      - run: kubectl kuttl test
