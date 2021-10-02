@@ -46,8 +46,5 @@ jobs:
           kubectl krew install kuttl
           kubectl kuttl -v
 
-      - name: docker - build
-        run: docker build -t mysql-operator:latest .
-
       - name: e2e
-        run: kubectl kuttl test
+        run: make e2e
