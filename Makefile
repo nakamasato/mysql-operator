@@ -205,4 +205,6 @@ catalog-push: ## Push a catalog image.
 kuttl:
 	kubectl kuttl test
 
-e2e: docker-build kuttl
+e2e:
+	docker build -t ${IMG} .
+	kuttl
