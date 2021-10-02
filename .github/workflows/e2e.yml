@@ -6,7 +6,6 @@ on:
       - config/crd/**
       - tests/e2e/**
       - kuttl-test.yaml
-      - Makefile
 
 jobs:
   e2e:
