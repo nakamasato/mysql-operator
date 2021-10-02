@@ -207,4 +207,4 @@ kuttl:
 
 e2e:
 	docker build -t mysql-operator .
-	$(MAKE) kuttl
+	kubectl kuttl test
