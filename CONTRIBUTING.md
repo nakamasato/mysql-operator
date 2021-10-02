@@ -272,11 +272,11 @@ Internally, it runs as follows:
 
 Prerequisite
 - [kind](https://kind.sigs.k8s.io/)
-- Run `docker build -t mysql-operator .` to build `mysql-operator:latest`
+
 
 
 ```
-kubectl kuttl test
+make e2e
 ```
 
 <details>
