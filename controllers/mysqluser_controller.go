@@ -45,8 +45,9 @@ const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
 // MySQLUserReconciler reconciles a MySQLUser object
 type MySQLUserReconciler struct {
 	util.ReconcilerBase
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log                logr.Logger
+	Scheme             *runtime.Scheme
+	MySQLClientFactory MySQLClientFactory
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers,verbs=get;list;watch;create;update;patch;delete

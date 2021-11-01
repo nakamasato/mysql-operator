@@ -11,18 +11,43 @@ type MySQLConfig struct {
 	Host          string
 }
 
-type MySQLClient struct {
-	db *sql.DB
-	// log logr.Logger
+type MySQLClient interface {
+	Exec(query string) error
+	Ping() error
+	Close()
 }
+
+type mysqlClient struct {
+	db *sql.DB
+}
+
+type fakeMysqlCLient struct {
+}
+
+func NewFakeMySQLClient(cfg MySQLConfig) MySQLClient {
+	return &fakeMysqlCLient{}
+}
+
+func (mc fakeMysqlCLient) Exec(query string) error {
+	return nil
+}
+
+func (mc fakeMysqlCLient) Ping() error {
+	return nil
+}
+
+func (mc fakeMysqlCLient) Close() {
+}
+
+type MySQLClientFactory func(cfg MySQLConfig) MySQLClient
 
 func NewMySQLClient(config MySQLConfig) MySQLClient {
 	db, _ := sql.Open("mysql", config.AdminUser+":"+config.AdminPassword+"@tcp("+config.Host+":3306)/")
 	// TODO error handling
-	return MySQLClient{db: db}
+	return &mysqlClient{db: db}
 }
 
-func (mc MySQLClient) Exec(query string) error {
+func (mc mysqlClient) Exec(query string) error {
 	var log = logf.Log.WithName("mysql")
 	_, err := mc.db.Exec(query)
 	if err != nil {
@@ -32,10 +57,10 @@ func (mc MySQLClient) Exec(query string) error {
 	return nil
 }
 
-func (mc MySQLClient) Ping() error {
+func (mc mysqlClient) Ping() error {
 	return mc.db.Ping()
 }
 
-func (mc MySQLClient) Close() {
+func (mc mysqlClient) Close() {
 	mc.db.Close()
 }
