@@ -1,4 +1,4 @@
-package controllers
+package mysql
 
 import (
 	"database/sql"
@@ -6,9 +6,9 @@ import (
 )
 
 type MySQLConfig struct {
-	adminUser     string
-	adminPassword string
-	host          string
+	AdminUser     string
+	AdminPassword string
+	Host          string
 }
 
 type MySQLClient struct {
@@ -17,7 +17,7 @@ type MySQLClient struct {
 }
 
 func NewMySQLClient(config MySQLConfig) MySQLClient {
-	db, _ := sql.Open("mysql", config.adminUser+":"+config.adminPassword+"@tcp("+config.host+":3306)/")
+	db, _ := sql.Open("mysql", config.AdminUser+":"+config.AdminPassword+"@tcp("+config.Host+":3306)/")
 	// TODO error handling
 	return MySQLClient{db: db}
 }

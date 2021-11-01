@@ -36,6 +36,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+
+	mysqlutil "github.com/nakamasato/mysql-operator/internal/mysql"
 )
 
 const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
@@ -91,12 +93,12 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("Fetched MySQL instance.")
 
 	// Connect to MySQL
-	cfg := MySQLConfig{
-		adminUser:     mysql.Spec.AdminUser,
-		adminPassword: mysql.Spec.AdminPassword,
-		host:          mysql.Spec.Host,
+	cfg := mysqlutil.MySQLConfig{
+		AdminUser:     mysql.Spec.AdminUser,
+		AdminPassword: mysql.Spec.AdminPassword,
+		Host:          mysql.Spec.Host,
 	}
-	mysqlClient := NewMySQLClient(cfg)
+	mysqlClient := mysqlutil.NewMySQLClient(cfg)
 	err = mysqlClient.Ping()
 	if err != nil { // TODO: #23 add error info to status
 		log.Error(err, "Failed to connect to MySQL.", "mysqlName", mysqlName)
@@ -184,12 +186,12 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 	// 2. Connect to MySQL.
 	// 3. Delete the MySQL user.
 
-	cfg := MySQLConfig{
-		adminUser:     mysql.Spec.AdminUser,
-		adminPassword: mysql.Spec.AdminPassword,
-		host:          mysql.Spec.Host,
+	cfg := mysqlutil.MySQLConfig{
+		AdminUser:     mysql.Spec.AdminUser,
+		AdminPassword: mysql.Spec.AdminPassword,
+		Host:          mysql.Spec.Host,
 	}
-	mysqlClient := NewMySQLClient(cfg)
+	mysqlClient := mysqlutil.NewMySQLClient(cfg)
 	err := mysqlClient.Ping()
 	if err != nil {
 		return err
