@@ -179,7 +179,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *MySQLUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlv1alpha1.MySQLUser{}).
-		Owns(&v1.Secret{}).
+		// Owns(&v1.Secret{}).
 		Complete(r)
 }
 
