@@ -430,5 +430,5 @@ What the e2e tests:
 
 ## Managing errors:
 https://cloud.redhat.com/blog/kubernetes-operators-best-practices
-1. Return the error in the status of the object.
+1. Return the error in the status of the object. https://pkg.go.dev/github.com/shivanshs9/operator-utils@v1.0.1#section-readme
 1. Generate an event describing the error.

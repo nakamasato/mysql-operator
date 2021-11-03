@@ -67,12 +67,13 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "dfc6d3c2.nakamasato.com",
+		Scheme:                     scheme,
+		MetricsBindAddress:         metricsAddr,
+		Port:                       9443,
+		HealthProbeBindAddress:     probeAddr,
+		LeaderElection:             enableLeaderElection,
+		LeaderElectionID:           "dfc6d3c2.nakamasato.com",
+		LeaderElectionResourceLock: "configmaps",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -80,9 +81,8 @@ func main() {
 	}
 
 	if err = (&controllers.MySQLUserReconciler{
-		ReconcilerBase: util.NewFromManager(mgr, mgr.GetEventRecorderFor("mysqluser_controller")),
+		ReconcilerBase: util.NewReconcilerBase(mgr.GetClient(), mgr.GetScheme(), mgr.GetConfig(), mgr.GetEventRecorderFor("mysqluser_controller"), mgr.GetAPIReader()),
 		Log:            ctrl.Log.WithName("controllers").WithName("MySQLUser"),
-		Scheme:         mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQLUser")
 		os.Exit(1)

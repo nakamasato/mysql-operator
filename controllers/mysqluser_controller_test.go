@@ -5,6 +5,7 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo"
+	"github.com/redhat-cop/operator-utils/pkg/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/gomega"
@@ -20,14 +21,17 @@ var _ = Describe("MySQLUser controller", func() {
 	var stopFunc func()
 
 	BeforeEach(func() {
+		// k8sManager
 		k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 			Scheme: scheme.Scheme,
 		})
 		Expect(err).ToNot(HaveOccurred())
+		Expect(err).To(Succeed())
 
-		err = (&MySQLReconciler{
-			Client: k8sManager.GetClient(),
-			Scheme: k8sManager.GetScheme(),
+		err = (&MySQLUserReconciler{
+			ReconcilerBase: util.NewReconcilerBase(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetConfig(), k8sManager.GetEventRecorderFor("mysqluser_controller"), k8sManager.GetAPIReader()),
+			Log:            nil,
+			Scheme:         k8sManager.GetScheme(),
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
