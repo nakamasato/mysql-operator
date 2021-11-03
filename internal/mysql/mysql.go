@@ -12,7 +12,7 @@ type MySQLConfig struct {
 }
 
 type MySQLClient interface {
-	Exec(query string) error
+	Exec(query string, args ...interface{}) error
 	Ping() error
 	Close()
 }
@@ -28,7 +28,7 @@ func NewFakeMySQLClient(cfg MySQLConfig) MySQLClient {
 	return &fakeMysqlCLient{}
 }
 
-func (mc fakeMysqlCLient) Exec(query string) error {
+func (mc fakeMysqlCLient) Exec(query string, args ...interface{}) error {
 	return nil
 }
 
@@ -47,7 +47,7 @@ func NewMySQLClient(config MySQLConfig) MySQLClient {
 	return &mysqlClient{db: db}
 }
 
-func (mc mysqlClient) Exec(query string) error {
+func (mc mysqlClient) Exec(query string, args ...interface{}) error {
 	var log = logf.Log.WithName("mysql")
 	_, err := mc.db.Exec(query)
 	if err != nil {
