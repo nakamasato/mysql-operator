@@ -30,14 +30,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"database/sql"
-
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/go-logr/logr"
 	_ "github.com/go-sql-driver/mysql"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+
+	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
 
 const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
@@ -45,8 +45,9 @@ const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
 // MySQLUserReconciler reconciles a MySQLUser object
 type MySQLUserReconciler struct {
 	util.ReconcilerBase
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log                logr.Logger
+	Scheme             *runtime.Scheme
+	MySQLClientFactory MySQLClientFactory
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers,verbs=get;list;watch;create;update;patch;delete
@@ -93,18 +94,20 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("Fetched MySQL instance.")
 
 	// Connect to MySQL
-	db, err := r.getMySQLDB(log, mysql)
-	if err != nil {
-		return r.ManageError(ctx, mysqlUser, err)
-		// actually doesn't return error https://github.com/go-sql-driver/mysql/wiki/Examples#a-word-on-sqlopen
+	cfg := MySQLConfig{
+		AdminUser:     mysql.Spec.AdminUser,
+		AdminPassword: mysql.Spec.AdminPassword,
+		Host:          mysql.Spec.Host,
 	}
-	err = db.Ping()
+	mysqlClient := NewMySQLClient(cfg)
+	err = mysqlClient.Ping()
 	if err != nil { // TODO: #23 add error info to status
 		log.Error(err, "Failed to connect to MySQL.", "mysqlName", mysqlName)
 		// return ctrl.Result{}, err //requeue
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
-	defer db.Close()
+
+	defer mysqlClient.Close()
 
 	// Finalize if DeletionTimestamp exists
 	isMysqlUserMarkedToBeDeleted := mysqlUser.GetDeletionTimestamp() != nil
@@ -156,7 +159,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// Create MySQL user if not exists with the password set above.
 	log.Info("Create MySQL user if not.", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
-	_, err = db.Exec("CREATE USER IF NOT EXISTS '" + mysqlUserName + "'@'" + mysqlUser.Spec.Host + "' IDENTIFIED BY '" + password + "';")
+	err = mysqlClient.Exec("CREATE USER IF NOT EXISTS '" + mysqlUserName + "'@'" + mysqlUser.Spec.Host + "' IDENTIFIED BY '" + password + "';")
 	if err != nil {
 		log.Error(err, "Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
 		return r.ManageError(ctx, mysqlUser, err) // requeue
@@ -184,12 +187,20 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 	// 2. Connect to MySQL.
 	// 3. Delete the MySQL user.
 
-	db, err := r.getMySQLDB(log, mysql)
+	cfg := MySQLConfig{
+		AdminUser:     mysql.Spec.AdminUser,
+		AdminPassword: mysql.Spec.AdminPassword,
+		Host:          mysql.Spec.Host,
+	}
+	mysqlClient := NewMySQLClient(cfg)
+	err := mysqlClient.Ping()
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-	_, err = db.Exec("DROP USER IF EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'%';")
+
+	defer mysqlClient.Close()
+
+	err = mysqlClient.Exec("DROP USER IF EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'%';")
 	if err != nil {
 		log.Error(err, "Failed to drop MySQL user.", "mysqlUser", mysqlUser.ObjectMeta.Name)
 		return err
@@ -197,10 +208,6 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 
 	log.Info("Successfully finalized mysqlUser")
 	return nil
-}
-
-func (r *MySQLUserReconciler) getMySQLDB(log logr.Logger, mysql *mysqlv1alpha1.MySQL) (*sql.DB, error) {
-	return sql.Open("mysql", mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
 }
 
 func generateRandomString(n int) string {

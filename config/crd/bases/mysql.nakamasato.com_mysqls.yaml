@@ -37,12 +37,14 @@ spec:
             description: MySQLSpec defines the desired state of MySQL
             properties:
               admin_password:
+                description: AdminPassword is MySQL password to connect target MySQL
+                  cluster.
                 type: string
               admin_user:
+                description: AdminUser is MySQL user to connect target MySQL cluster.
                 type: string
               host:
-                description: Foo is an example field of MySQL. Edit mysql_types.go
-                  to remove/update
+                description: Host is MySQL host of target MySQL cluster.
                 type: string
             required:
             - admin_password

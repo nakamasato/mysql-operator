@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
 
 var _ = Describe("MySQLUser controller", func() {
@@ -21,17 +22,16 @@ var _ = Describe("MySQLUser controller", func() {
 	var stopFunc func()
 
 	BeforeEach(func() {
-		// k8sManager
 		k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 			Scheme: scheme.Scheme,
 		})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(err).To(Succeed())
 
 		err = (&MySQLUserReconciler{
 			ReconcilerBase: util.NewReconcilerBase(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetConfig(), k8sManager.GetEventRecorderFor("mysqluser_controller"), k8sManager.GetAPIReader()),
-			Log:            nil,
-			Scheme:         k8sManager.GetScheme(),
+			Log:                nil,
+			Scheme:             k8sManager.GetScheme(),
+			MySQLClientFactory: NewFakeMySQLClient,
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 

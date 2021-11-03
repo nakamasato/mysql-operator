@@ -28,9 +28,11 @@ type MySQLSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of MySQL. Edit mysql_types.go to remove/update
-	Host          string `json:"host,omitempty"`
-	AdminUser     string `json:"admin_user"`
+	// Host is MySQL host of target MySQL cluster.
+	Host string `json:"host,omitempty"`
+	// AdminUser is MySQL user to connect target MySQL cluster.
+	AdminUser string `json:"admin_user"`
+	// AdminPassword is MySQL password to connect target MySQL cluster.
 	AdminPassword string `json:"admin_password"`
 }
 
