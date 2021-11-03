@@ -21,13 +21,15 @@ var _ = Describe("MySQLUser controller", func() {
 	var stopFunc func()
 
 	BeforeEach(func() {
+		// k8sManager
 		k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 			Scheme: scheme.Scheme,
 		})
 		Expect(err).ToNot(HaveOccurred())
+		Expect(err).To(Succeed())
 
 		err = (&MySQLUserReconciler{
-			ReconcilerBase: util.ReconcilerBase{},
+			ReconcilerBase: util.NewReconcilerBase(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetConfig(), k8sManager.GetEventRecorderFor("My_controller"), k8sManager.GetAPIReader()),
 			Log:            nil,
 			Scheme:         k8sManager.GetScheme(),
 		}).SetupWithManager(k8sManager)
