@@ -66,7 +66,10 @@ var _ = Describe("MySQL controller", func() {
 			createdMySQL := &mysqlv1alpha1.MySQL{}
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, lookUpKey, createdMySQL)
-				return err == nil
+				if err != nil {
+					return false
+				}
+				return true
 			}, timeout, interval).Should(BeTrue())
 			Expect(createdMySQL.Spec.Host).Should(Equal("localhost"))
 		})
