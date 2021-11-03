@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -45,8 +46,10 @@ var _ = Describe("MySQL controller", func() {
 	})
 
 	const (
-		MySQLName      = "test-mysql"
+		MySQLName      = "sample-mysql"
 		MySQLNamespace = "default"
+		timeout        = time.Second * 10
+		interval       = time.Millisecond * 250
 	)
 
 	Context("When updating MySQL Status", func() {
@@ -58,6 +61,14 @@ var _ = Describe("MySQL controller", func() {
 				Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
+
+			lookUpKey := types.NamespacedName{Name: MySQLName, Namespace: MySQLNamespace}
+			createdMySQL := &mysqlv1alpha1.MySQL{}
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, lookUpKey, createdMySQL)
+				return err == nil
+			}, timeout, interval).Should(BeTrue())
+			Expect(createdMySQL.Spec.Host).Should(Equal("localhost"))
 		})
 	})
 })

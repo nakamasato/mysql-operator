@@ -82,7 +82,7 @@ func main() {
 	}
 
 	if err = (&controllers.MySQLUserReconciler{
-		ReconcilerBase: util.NewReconcilerBase(mgr.GetClient(), mgr.GetScheme(), mgr.GetConfig(), mgr.GetEventRecorderFor("mysqluser_controller"), mgr.GetAPIReader()),
+		ReconcilerBase:     util.NewReconcilerBase(mgr.GetClient(), mgr.GetScheme(), mgr.GetConfig(), mgr.GetEventRecorderFor("mysqluser_controller"), mgr.GetAPIReader()),
 		Log:                ctrl.Log.WithName("controllers").WithName("MySQLUser"),
 		Scheme:             mgr.GetScheme(),
 		MySQLClientFactory: mysql.NewMySQLClient,
