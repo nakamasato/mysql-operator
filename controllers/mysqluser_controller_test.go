@@ -28,7 +28,7 @@ var _ = Describe("MySQLUser controller", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		err = (&MySQLUserReconciler{
-			ReconcilerBase:     util.ReconcilerBase{},
+			ReconcilerBase: util.NewReconcilerBase(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetConfig(), k8sManager.GetEventRecorderFor("mysqluser_controller"), k8sManager.GetAPIReader()),
 			Log:                nil,
 			Scheme:             k8sManager.GetScheme(),
 			MySQLClientFactory: NewFakeMySQLClient,
