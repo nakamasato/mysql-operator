@@ -29,7 +29,7 @@ var _ = Describe("MySQLUser controller", func() {
 		Expect(err).To(Succeed())
 
 		err = (&MySQLUserReconciler{
-			ReconcilerBase: util.NewReconcilerBase(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetConfig(), k8sManager.GetEventRecorderFor("My_controller"), k8sManager.GetAPIReader()),
+			ReconcilerBase: util.NewReconcilerBase(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetConfig(), k8sManager.GetEventRecorderFor("mysqluser_controller"), k8sManager.GetAPIReader()),
 			Log:            nil,
 			Scheme:         k8sManager.GetScheme(),
 		}).SetupWithManager(k8sManager)
