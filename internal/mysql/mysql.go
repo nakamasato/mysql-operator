@@ -5,6 +5,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const driverName = "mysql"
+
 type MySQLConfig struct {
 	AdminUser     string
 	AdminPassword string
@@ -12,7 +14,7 @@ type MySQLConfig struct {
 }
 
 type MySQLClient interface {
-	Exec(query string) error
+	Exec(query string, args ...interface{}) error
 	Ping() error
 	Close()
 }
@@ -28,7 +30,7 @@ func NewFakeMySQLClient(cfg MySQLConfig) MySQLClient {
 	return &fakeMysqlCLient{}
 }
 
-func (mc fakeMysqlCLient) Exec(query string) error {
+func (mc fakeMysqlCLient) Exec(query string, args ...interface{}) error {
 	return nil
 }
 
@@ -42,14 +44,18 @@ func (mc fakeMysqlCLient) Close() {
 type MySQLClientFactory func(cfg MySQLConfig) MySQLClient
 
 func NewMySQLClient(config MySQLConfig) MySQLClient {
-	db, _ := sql.Open("mysql", config.AdminUser+":"+config.AdminPassword+"@tcp("+config.Host+":3306)/")
+	dataSourceName := config.AdminUser+":"+config.AdminPassword+"@tcp("+config.Host+":3306)/"
+	db, _ := sql.Open(
+		driverName,
+		dataSourceName,
+	)
 	// TODO error handling
 	return &mysqlClient{db: db}
 }
 
-func (mc mysqlClient) Exec(query string) error {
+func (mc mysqlClient) Exec(query string, args ...interface{}) error {
 	var log = logf.Log.WithName("mysql")
-	_, err := mc.db.Exec(query)
+	_, err := mc.db.Exec(query, args)
 	if err != nil {
 		log.Error(err, "Failed to execute query", query)
 		return err
