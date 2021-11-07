@@ -128,6 +128,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				// return ctrl.Result{}, err
 				return r.ManageError(ctx, mysqlUser, err) // requeue
 			}
+			return ctrl.Result{}, nil
 		}
 		// return ctrl.Result{}, err
 		return r.ManageSuccess(ctx, mysqlUser) // should return success when not having the finalizer

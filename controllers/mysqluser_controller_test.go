@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -11,6 +12,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 
@@ -63,29 +65,81 @@ var _ = Describe("MySQLUser controller", func() {
 		Namespace     = "default"
 	)
 
-	Context("In normal case", func() {
-		It("Should create Secret", func() {
-			By("By creating a new MySQL")
+	When("Creating a MySQLUser", func() {
+		AfterEach(func() {
+			fmt.Println("AfterEach")
+		})
+		Context("With an available MySQL", func() {
+			It("Should create Secret", func() {
+				By("By creating a new MySQL")
+				mysql := &mysqlv1alpha1.MySQL{
+					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
+					ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
+					Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
+				}
+				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
+
+				By("By creating a new MySQLUser")
+				mysqlUser := &mysqlv1alpha1.MySQLUser{
+					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
+					ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
+					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+					Status:     mysqlv1alpha1.MySQLUserStatus{},
+				}
+				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+				secret := &v1.Secret{}
+				Eventually(func() error {
+					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: "mysql-test-mysql-" + MySQLUserName}, secret)
+				}).Should(Succeed())
+			})
+		})
+	})
+
+	When("Deleting a MySQLUser", func() {
+		BeforeEach(func() {
+			// Create resources
 			mysql := &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
 				Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
 			}
-			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
+			k8sClient.Create(ctx, mysql)
 
-			By("By creating a new MySQLUser")
 			mysqlUser := &mysqlv1alpha1.MySQLUser{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
 				Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
 				Status:     mysqlv1alpha1.MySQLUserStatus{},
 			}
-			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+			k8sClient.Create(ctx, mysqlUser)
 
-			secret := &v1.Secret{}
-			Eventually(func() error {
-				return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: "mysql-test-mysql-" + MySQLUserName}, secret)
-			}).Should(Succeed())
+		})
+		Context("With an available MySQL", func() {
+			It("Should delete Secret", func() {
+
+				mysqlUser := &mysqlv1alpha1.MySQLUser{
+					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
+					ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
+					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+					Status:     mysqlv1alpha1.MySQLUserStatus{},
+				}
+				Expect(k8sClient.Delete(ctx, mysqlUser)).To(Succeed())
+
+				mysqlUser = &mysqlv1alpha1.MySQLUser{}
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					return errors.IsNotFound(err) // MySQLUser should not exist
+				}).Should(BeTrue())
+
+				// Cannot test if Secret is deleted as garbage collection is done by kubelet
+				secret := &v1.Secret{}
+				secretName := getSecretName(MySQLName, MySQLUserName)
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: secretName}, secret)
+					return errors.IsNotFound(err) // Secret should not exist
+				}).Should(BeTrue())
+			})
 		})
 	})
 })
