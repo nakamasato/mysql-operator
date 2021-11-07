@@ -104,7 +104,7 @@ var _ = Describe("MySQLUser controller", func() {
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
 				Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
 			}
-			k8sClient.Create(ctx, mysql)
+			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 
 			mysqlUser := &mysqlv1alpha1.MySQLUser{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
@@ -112,7 +112,7 @@ var _ = Describe("MySQLUser controller", func() {
 				Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
 				Status:     mysqlv1alpha1.MySQLUserStatus{},
 			}
-			k8sClient.Create(ctx, mysqlUser)
+			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
 		})
 		Context("With an available MySQL", func() {
