@@ -20,6 +20,12 @@ import (
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
 
+const (
+	MySQLName     = "test-mysql"
+	MySQLUserName = "test-mysql-user"
+	Namespace     = "default"
+)
+
 var _ = Describe("MySQLUser controller", func() {
 
 	ctx := context.Background()
@@ -59,15 +65,24 @@ var _ = Describe("MySQLUser controller", func() {
 		time.Sleep(100 * time.Millisecond)
 	})
 
-	const (
-		MySQLName     = "test-mysql"
-		MySQLUserName = "test-mysql-user"
-		Namespace     = "default"
+	var (
+		mysqlUser mysqlv1alpha1.MySQLUser
 	)
 
 	When("Creating a MySQLUser", func() {
 		AfterEach(func() {
 			fmt.Println("AfterEach")
+			// Cleanup resources
+			err := k8sClient.DeleteAllOf(context.TODO(), &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
+			// Delete resource even if it's deleted or has finalizer on it
+			if k8sClient.Get(context.TODO(), client.ObjectKey{Name: MySQLUserName, Namespace: Namespace}, &mysqlUser) == nil {
+				mysqlUser.Finalizers = []string{}
+				k8sClient.Update(context.TODO(), &mysqlUser)
+			}
+			Eventually(func() error {
+				return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, &mysqlUser)
+			}).ShouldNot(Succeed())
 		})
 		Context("With an available MySQL", func() {
 			It("Should create Secret", func() {
@@ -98,6 +113,16 @@ var _ = Describe("MySQLUser controller", func() {
 
 	When("Deleting a MySQLUser", func() {
 		BeforeEach(func() {
+			// Clean up MySQLUser
+			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
+			// Clean up MySQL
+			err = k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
+			// Clean up Secret
+			err = k8sClient.DeleteAllOf(ctx, &v1.Secret{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
+
 			// Create resources
 			mysql := &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
@@ -118,6 +143,7 @@ var _ = Describe("MySQLUser controller", func() {
 		Context("With an available MySQL", func() {
 			It("Should delete Secret", func() {
 
+				By("By deleting a MySQLUser")
 				mysqlUser := &mysqlv1alpha1.MySQLUser{
 					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
 					ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
