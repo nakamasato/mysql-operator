@@ -66,22 +66,24 @@ var _ = Describe("MySQLUser controller", func() {
 	})
 
 	var (
-		mysqlUser mysqlv1alpha1.MySQLUser
+		mysqlUser *mysqlv1alpha1.MySQLUser
 	)
 
 	When("Creating a MySQLUser", func() {
 		AfterEach(func() {
 			fmt.Println("AfterEach")
 			// Cleanup resources
-			err := k8sClient.DeleteAllOf(context.TODO(), &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
+			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
 			Expect(err).NotTo(HaveOccurred())
-			// Delete resource even if it's deleted or has finalizer on it
-			if k8sClient.Get(context.TODO(), client.ObjectKey{Name: MySQLUserName, Namespace: Namespace}, &mysqlUser) == nil {
+			// Delete resource
+			Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
+			// Remove finalizers
+			if k8sClient.Get(ctx, client.ObjectKey{Name: MySQLUserName, Namespace: Namespace}, mysqlUser) == nil {
 				mysqlUser.Finalizers = []string{}
-				k8sClient.Update(context.TODO(), &mysqlUser)
+				Eventually(k8sClient.Update(ctx, mysqlUser)).Should(Succeed())
 			}
 			Eventually(func() error {
-				return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, &mysqlUser)
+				return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
 			}).ShouldNot(Succeed())
 		})
 		Context("With an available MySQL", func() {
@@ -95,7 +97,7 @@ var _ = Describe("MySQLUser controller", func() {
 				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 
 				By("By creating a new MySQLUser")
-				mysqlUser := &mysqlv1alpha1.MySQLUser{
+				mysqlUser = &mysqlv1alpha1.MySQLUser{
 					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
 					ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
 					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
@@ -131,7 +133,7 @@ var _ = Describe("MySQLUser controller", func() {
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 
-			mysqlUser := &mysqlv1alpha1.MySQLUser{
+			mysqlUser = &mysqlv1alpha1.MySQLUser{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
 				Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
@@ -144,7 +146,7 @@ var _ = Describe("MySQLUser controller", func() {
 			It("Should delete Secret", func() {
 
 				By("By deleting a MySQLUser")
-				mysqlUser := &mysqlv1alpha1.MySQLUser{
+				mysqlUser = &mysqlv1alpha1.MySQLUser{
 					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
 					ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
 					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
@@ -158,7 +160,6 @@ var _ = Describe("MySQLUser controller", func() {
 					return errors.IsNotFound(err) // MySQLUser should not exist
 				}).Should(BeTrue())
 
-				// Cannot test if Secret is deleted as garbage collection is done by kubelet
 				secret := &v1.Secret{}
 				secretName := getSecretName(MySQLName, MySQLUserName)
 				Eventually(func() bool {
