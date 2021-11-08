@@ -65,6 +65,7 @@ var _ = Describe("MySQLUser controller", func() {
 	})
 
 	var (
+		mysql     *mysqlv1alpha1.MySQL
 		mysqlUser *mysqlv1alpha1.MySQLUser
 	)
 
@@ -87,7 +88,7 @@ var _ = Describe("MySQLUser controller", func() {
 		Context("With an available MySQL", func() {
 			It("Should create Secret", func() {
 				By("By creating a new MySQL")
-				mysql := &mysqlv1alpha1.MySQL{
+				mysql = &mysqlv1alpha1.MySQL{
 					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
 					ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
 					Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
@@ -97,7 +98,7 @@ var _ = Describe("MySQLUser controller", func() {
 				By("By creating a new MySQLUser")
 				mysqlUser = &mysqlv1alpha1.MySQLUser{
 					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
-					ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
+					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
 					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
 					Status:     mysqlv1alpha1.MySQLUserStatus{},
 				}
@@ -105,7 +106,7 @@ var _ = Describe("MySQLUser controller", func() {
 
 				secret := &v1.Secret{}
 				Eventually(func() error {
-					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: "mysql-test-mysql-" + MySQLUserName}, secret)
+					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
 				}).Should(Succeed())
 			})
 		})
@@ -124,7 +125,7 @@ var _ = Describe("MySQLUser controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// Create resources
-			mysql := &mysqlv1alpha1.MySQL{
+			mysql = &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
 				Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
@@ -140,13 +141,28 @@ var _ = Describe("MySQLUser controller", func() {
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
 		})
+		// AfterEach(func() {
+		// 	// Cleanup resources
+		// 	err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+		// 	Expect(err).NotTo(HaveOccurred())
+		// 	// Delete resource
+		// 	Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
+		// 	// Remove finalizers
+		// 	if k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql) == nil {
+		// 		mysqlUser.Finalizers = []string{}
+		// 		Eventually(k8sClient.Update(ctx, mysql)).Should(Succeed())
+		// 	}
+		// 	Eventually(func() error {
+		// 		return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
+		// 	}).ShouldNot(Succeed())
+		// })
 		Context("With an available MySQL", func() {
 			It("Should delete Secret", func() {
 
 				By("By deleting a MySQLUser")
 				mysqlUser = &mysqlv1alpha1.MySQLUser{
 					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
-					ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
+					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
 					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
 					Status:     mysqlv1alpha1.MySQLUserStatus{},
 				}
