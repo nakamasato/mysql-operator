@@ -71,7 +71,6 @@ var _ = Describe("MySQLUser controller", func() {
 
 	When("Creating a MySQLUser", func() {
 		AfterEach(func() {
-			fmt.Println("AfterEach")
 			// Cleanup resources
 			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
 			Expect(err).NotTo(HaveOccurred())
