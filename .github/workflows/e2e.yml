@@ -3,9 +3,10 @@ on:
   pull_request:
     paths:
       - .github/workflows/e2e.yml
-      - containers/**
       - config/crd/**
       - tests/e2e/**
+      - '**.go'
+      - 'go.*'
       - kuttl-test.yaml
 
 jobs:
