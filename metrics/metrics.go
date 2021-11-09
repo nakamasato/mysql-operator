@@ -5,7 +5,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
-
 const MetricsNamespace = "mysqloperator"
 
 type MysqlUserTotalAdaptor struct {
@@ -16,13 +15,12 @@ func (m MysqlUserTotalAdaptor) Increment() {
 	m.metric.Inc()
 }
 
-
 var (
 	mysqlUserTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: MetricsNamespace,
-			Name: "mysql_user_total",
-			Help: "Number of mysqlUser processed",
+			Name:      "mysql_user_total",
+			Help:      "Number of mysqlUser processed",
 		},
 	)
 
