@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"math/rand"
 	"strings"
 
 	"github.com/redhat-cop/operator-utils/pkg/util"
@@ -37,6 +36,7 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	"github.com/nakamasato/mysql-operator/internal/metrics"
+	"github.com/nakamasato/mysql-operator/internal/utils"
 
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
@@ -151,7 +151,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	var password string
 	if err != nil {
 		if errors.IsNotFound(err) { // Secret doesn't exists -> generate password
-			password = generateRandomString(16)
+			password = utils.GenerateRandomString(16)
 		} else {
 			return r.ManageError(ctx, mysqlUser, err) // requeue
 		}
@@ -212,16 +212,6 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 
 	log.Info("Successfully finalized mysqlUser")
 	return nil
-}
-
-func generateRandomString(n int) string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-	s := make([]rune, n)
-	for i := range s {
-		s[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(s)
 }
 
 func getSecretName(mysqlName string, mysqlUserName string) string {
