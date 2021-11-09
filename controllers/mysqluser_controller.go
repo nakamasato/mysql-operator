@@ -36,7 +36,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
-	"github.com/nakamasato/mysql-operator/metrics"
+	"github.com/nakamasato/mysql-operator/internal/metrics"
 
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
