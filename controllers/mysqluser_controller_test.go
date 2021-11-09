@@ -11,11 +11,18 @@ import (
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
+)
+
+const (
+	MySQLName     = "test-mysql"
+	MySQLUserName = "test-mysql-user"
+	Namespace     = "default"
 )
 
 var _ = Describe("MySQLUser controller", func() {
@@ -57,24 +64,85 @@ var _ = Describe("MySQLUser controller", func() {
 		time.Sleep(100 * time.Millisecond)
 	})
 
-	const (
-		MySQLName     = "test-mysql"
-		MySQLUserName = "test-mysql-user"
-		Namespace     = "default"
+	var (
+		mysql     *mysqlv1alpha1.MySQL
+		mysqlUser *mysqlv1alpha1.MySQLUser
 	)
 
-	Context("In normal case", func() {
-		It("Should create Secret", func() {
-			By("By creating a new MySQL")
-			mysql := &mysqlv1alpha1.MySQL{
+	When("Creating a MySQLUser", func() {
+		AfterEach(func() {
+			// Expect(k8sClient.Get(ctx, client.ObjectKey{Name: MySQLUserName, Namespace: Namespace}, mysqlUser)).Should(Succeed())
+			// Delete MySQLUser
+			Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
+			// Remove finalizers from MySQLUser if exists
+			// if k8sClient.Get(ctx, client.ObjectKey{Name: MySQLUserName, Namespace: Namespace}, mysqlUser) == nil {
+			// 	mysqlUser.Finalizers = []string{}
+			// 	Eventually(k8sClient.Update(ctx, mysqlUser)).Should(Succeed())
+			// }
+			Eventually(func() error {
+				return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+			}).ShouldNot(Succeed())
+
+			// Delete MySQL
+			// Expect(k8sClient.Get(ctx, client.ObjectKey{Name: MySQLName, Namespace: Namespace}, mysql)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
+			// Remove finalizers from MySQL if exists
+			// if k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql) == nil {
+			// 	mysql.Finalizers = []string{}
+			// 	Eventually(k8sClient.Update(ctx, mysql)).Should(Succeed())
+			// }
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
+			}).ShouldNot(Succeed())
+		})
+		Context("With an available MySQL", func() {
+			It("Should create Secret", func() {
+				By("By creating a new MySQL")
+				mysql = &mysqlv1alpha1.MySQL{
+					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
+					ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
+					Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
+				}
+				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
+
+				By("By creating a new MySQLUser")
+				mysqlUser = &mysqlv1alpha1.MySQLUser{
+					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
+					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
+					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+					Status:     mysqlv1alpha1.MySQLUserStatus{},
+				}
+				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+				secret := &v1.Secret{}
+				Eventually(func() error {
+					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
+				}).Should(Succeed())
+			})
+		})
+	})
+
+	When("Deleting a MySQLUser", func() {
+		BeforeEach(func() {
+			// Clean up MySQLUser
+			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
+			// Clean up MySQL
+			err = k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
+			// Clean up Secret
+			err = k8sClient.DeleteAllOf(ctx, &v1.Secret{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
+
+			// Create resources
+			mysql = &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
 				Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 
-			By("By creating a new MySQLUser")
-			mysqlUser := &mysqlv1alpha1.MySQLUser{
+			mysqlUser = &mysqlv1alpha1.MySQLUser{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLUserName, Namespace: Namespace},
 				Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
@@ -82,10 +150,50 @@ var _ = Describe("MySQLUser controller", func() {
 			}
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
-			secret := &v1.Secret{}
+		})
+		AfterEach(func() {
+			// Delete MySQL
+			Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
+			// Remove finalizers from MySQL if exists
+			if k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql) == nil {
+				mysql.Finalizers = []string{}
+				Eventually(k8sClient.Update(ctx, mysql)).Should(Succeed())
+			}
 			Eventually(func() error {
-				return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: "mysql-test-mysql-" + MySQLUserName}, secret)
-			}).Should(Succeed())
+				return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
+			}).ShouldNot(Succeed())
+		})
+		Context("With an available MySQL", func() {
+			It("Should delete Secret", func() {
+
+				By("By deleting a MySQLUser")
+				mysqlUser = &mysqlv1alpha1.MySQLUser{
+					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
+					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
+					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+					Status:     mysqlv1alpha1.MySQLUserStatus{},
+				}
+				Expect(k8sClient.Delete(ctx, mysqlUser)).To(Succeed())
+
+				mysqlUser = &mysqlv1alpha1.MySQLUser{}
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					return errors.IsNotFound(err) // MySQLUser should not exist
+				}).Should(BeTrue())
+
+				secret := &v1.Secret{}
+				secretName := getSecretName(MySQLName, MySQLUserName)
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: secretName}, secret)
+					return errors.IsNotFound(err) // Secret should not exist
+				}).Should(BeTrue())
+
+				// MySQL should remain
+				mysql = &mysqlv1alpha1.MySQL{}
+				Consistently(func() error {
+					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
+				}).Should(Succeed())
+			})
 		})
 	})
 })
