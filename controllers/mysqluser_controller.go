@@ -36,6 +36,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	"github.com/nakamasato/mysql-operator/internal/metrics"
 
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
@@ -165,6 +166,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
+	metrics.MysqlUserCreatedTotal.Increment()
 
 	err = r.createSecret(ctx, log, password, secretName, mysqlUser.Namespace, mysqlUser)
 	// TODO: #35 add test if mysql user is successfully created but secret is failed to create
@@ -206,6 +208,7 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 		log.Error(err, "Failed to drop MySQL user.", "mysqlUser", mysqlUser.ObjectMeta.Name)
 		return err
 	}
+	metrics.MysqlUserDeletedTotal.Increment()
 
 	log.Info("Successfully finalized mysqlUser")
 	return nil
