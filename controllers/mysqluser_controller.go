@@ -36,9 +36,8 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	"github.com/nakamasato/mysql-operator/internal/metrics"
+	mysqlinternal "github.com/nakamasato/mysql-operator/internal/mysql"
 	"github.com/nakamasato/mysql-operator/internal/utils"
-
-	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
 
 const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
@@ -48,7 +47,7 @@ type MySQLUserReconciler struct {
 	util.ReconcilerBase
 	Log                logr.Logger
 	Scheme             *runtime.Scheme
-	MySQLClientFactory MySQLClientFactory
+	MySQLClientFactory mysqlinternal.MySQLClientFactory
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers,verbs=get;list;watch;create;update;patch;delete
@@ -95,7 +94,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("Fetched MySQL instance.")
 
 	// Connect to MySQL
-	cfg := MySQLConfig{
+	cfg := mysqlinternal.MySQLConfig{
 		AdminUser:     mysql.Spec.AdminUser,
 		AdminPassword: mysql.Spec.AdminPassword,
 		Host:          mysql.Spec.Host,
@@ -190,7 +189,7 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 	// 2. Connect to MySQL.
 	// 3. Delete the MySQL user.
 
-	cfg := MySQLConfig{
+	cfg := mysqlinternal.MySQLConfig{
 		AdminUser:     mysql.Spec.AdminUser,
 		AdminPassword: mysql.Spec.AdminPassword,
 		Host:          mysql.Spec.Host,
