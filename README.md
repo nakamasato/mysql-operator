@@ -38,6 +38,11 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
     ```
     make undeploy
     ```
+
+## Exposed Metrics
+
+- `mysql_user_created_total`
+- `mysql_user_deleted_total`
 ## Contributing
 
 [CONTRIBUTING](CONTRIBUTING.md)
