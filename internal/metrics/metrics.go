@@ -16,18 +16,30 @@ func (m MysqlUserTotalAdaptor) Increment() {
 }
 
 var (
-	mysqlUserTotal = prometheus.NewCounter(
+	mysqlUserCreatedTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: MetricsNamespace,
-			Name:      "mysql_user_total",
-			Help:      "Number of mysqlUser processed",
+			Name:      "mysql_user_created_total",
+			Help:      "Number of created MySQL User",
 		},
 	)
 
-	MysqlUserTotal *MysqlUserTotalAdaptor = &MysqlUserTotalAdaptor{metric: mysqlUserTotal}
+	mysqlUserDeletedTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: MetricsNamespace,
+			Name:      "mysql_user_deleted_total",
+			Help:      "Number of deleted MySQL User",
+		},
+	)
+
+	MysqlUserCreatedTotal *MysqlUserTotalAdaptor = &MysqlUserTotalAdaptor{metric: mysqlUserCreatedTotal}
+	MysqlUserDeletedTotal *MysqlUserTotalAdaptor = &MysqlUserTotalAdaptor{metric: mysqlUserDeletedTotal}
 )
 
 func init() {
 	// Register custom metrics with the global prometheus registry
-	metrics.Registry.MustRegister(mysqlUserTotal)
+	metrics.Registry.MustRegister(
+		mysqlUserCreatedTotal,
+		mysqlUserDeletedTotal,
+	)
 }
