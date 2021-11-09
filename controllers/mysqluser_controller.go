@@ -36,8 +36,8 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	"github.com/nakamasato/mysql-operator/internal/metrics"
-	"github.com/nakamasato/mysql-operator/internal/utils"
 	mysqlinternal "github.com/nakamasato/mysql-operator/internal/mysql"
+	"github.com/nakamasato/mysql-operator/internal/utils"
 )
 
 const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
