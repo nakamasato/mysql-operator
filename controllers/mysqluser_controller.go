@@ -36,6 +36,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	"github.com/nakamasato/mysql-operator/metrics"
 
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
@@ -67,6 +68,7 @@ type MySQLUserReconciler struct {
 func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	mysqlUserCounter.Inc()
 	// Fetch MySQLUser
 	mysqlUser := &mysqlv1alpha1.MySQLUser{}
 	err := r.GetClient().Get(ctx, req.NamespacedName, mysqlUser)
