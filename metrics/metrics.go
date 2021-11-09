@@ -8,25 +8,28 @@ import (
 
 const MetricsNamespace = "mysqloperator"
 
+type MysqlUserTotalAdaptor struct {
+	metric prometheus.Counter
+}
+
+func (m MysqlUserTotalAdaptor) Increment() {
+	m.metric.Inc()
+}
+
 
 var (
-	mysqlCounter = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Namespace: MetricsNamespace,
-			Name: "mysql_total",
-			Help: "Number of mysql proccessed",
-		},
-	)
-	mysqlUserCounter = prometheus.NewCounter(
+	mysqlUserTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: MetricsNamespace,
 			Name: "mysql_user_total",
 			Help: "Number of mysqlUser processed",
 		},
 	)
+
+	MysqlUserTotal *MysqlUserTotalAdaptor = &MysqlUserTotalAdaptor{metric: mysqlUserTotal}
 )
 
 func init() {
 	// Register custom metrics with the global prometheus registry
-	metrics.Registry.MustRegister(mysqlCounter, mysqlUserCounter)
+	metrics.Registry.MustRegister(mysqlUserTotal)
 }

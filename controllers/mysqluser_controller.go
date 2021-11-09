@@ -68,7 +68,7 @@ type MySQLUserReconciler struct {
 func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	mysqlUserCounter.Inc()
+	metrics.MysqlUserTotal.Increment()
 	// Fetch MySQLUser
 	mysqlUser := &mysqlv1alpha1.MySQLUser{}
 	err := r.GetClient().Get(ctx, req.NamespacedName, mysqlUser)
