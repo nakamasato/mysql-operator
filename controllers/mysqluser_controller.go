@@ -36,7 +36,7 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	"github.com/nakamasato/mysql-operator/internal/metrics"
-	mysqlinternal "github.com/nakamasato/mysql-operator/internal/mysql"
+  mysqlinternal "github.com/nakamasato/mysql-operator/internal/mysql"
 	"github.com/nakamasato/mysql-operator/internal/utils"
 )
 
