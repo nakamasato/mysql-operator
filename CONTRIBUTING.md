@@ -86,31 +86,23 @@ make uninstall
 
 ## Local kubernetes
 
-1. Build Docker image.
+1. Deploy controller with [skaffold](https://skaffold.dev/)
 
-    ```
-    docker build -t mysql-operator .
-    ```
-
-    If you're using `kind` for your local Kubernetes, you need to load your image to the cluster: `kind load docker-image mysql-operator`. If you're using Kubernetes in Docker Desktop, you can use your local image.
-
-1. Deploy the CRDs and operator.
-
-    ```
-    make deploy IMG=mysql-operator
+    ```bash
+    skaffold dev
     ```
 
     You can check the operator installed in `mysql-operator-system` namespace.
 
-    ```
+    ```bash
     kubectl get po -n mysql-operator-system
     NAME                                                 READY   STATUS    RESTARTS   AGE
     mysql-operator-controller-manager-5bc69f545b-fcxst   2/2     Running   0          51s
     ```
 
-1. Deploy test MySQL cluster and `MySQL` and `MySQLUser` resources.
+1. Create Custom Resources (`MySQL` and `MySQLUser` resources).
 
-    ```
+    ```bash
     kubectl apply -k config/samples-on-k8s
     ```
 
@@ -118,7 +110,7 @@ make uninstall
 
     Secret:
 
-    ```
+    ```bash
     kubectl get secret mysql-mysql-sample-nakamasato
     NAME                            TYPE     DATA   AGE
     mysql-mysql-sample-nakamasato   Opaque   1      109s
@@ -126,7 +118,7 @@ make uninstall
 
     MySQL user:
 
-    ```
+    ```bash
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'select User, Host from mysql.user where User = "nakamasato";'
     mysql: [Warning] Using a password on the command line interface can be insecure.
     +------------+------+
@@ -136,6 +128,12 @@ make uninstall
     +------------+------+
     ```
 
+1. Clean up the Custom Resources (`MySQL` and `MySQLUser` resources).
+
+    ```bash
+    kubectl delete -k config/samples-on-k8s
+    ```
+1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
 # Test
 ## Scorecard
 
