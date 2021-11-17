@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	kindName = "mysql-operator-e2e"
-	kubeconfigPath = ".kubeconfig"
-	mysqlOperatorNamespace = "mysql-operator-system"
+	kindName                    = "mysql-operator-e2e"
+	kubeconfigPath              = "kubeconfig"
+	mysqlOperatorNamespace      = "mysql-operator-system"
 	mysqlOperatorDeploymentName = "mysql-operator-controller-manager"
 )
 
@@ -24,8 +24,8 @@ var skaffold *Skaffold
 var kind *Kind
 
 func TestE2e(t *testing.T) {
-    RegisterFailHandler(Fail) // Use Gomega with Ginkgo
-    RunSpecs(t, "e2e suite") // tells Ginkgo to start the test suite.
+	RegisterFailHandler(Fail) // Use Gomega with Ginkgo
+	RunSpecs(t, "e2e suite")  // tells Ginkgo to start the test suite.
 }
 
 var _ = BeforeSuite(func() {
@@ -43,7 +43,12 @@ var _ = BeforeSuite(func() {
 	// kubernetesVersion := "v1.20.2"
 
 	ctx := context.Background()
-	kind = newKind(ctx, kindName, kubeconfigPath)
+	kind = newKind(
+		ctx,
+		kindName,
+		kubeconfigPath,
+		false,
+	)
 
 	// check kind version
 	err := kind.checkVersion()
@@ -69,12 +74,12 @@ var _ = BeforeSuite(func() {
 	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
 	skaffold.run()
 
-	// Wait until mysql operator is ready
+	// check mysql-operator is running
 	checkMySQLOperator()
 	fmt.Println("Setup completed")
 }, 60)
 
-var _ = AfterSuite(func()  {
+var _ = AfterSuite(func() {
 	fmt.Println("Clean up mysql-operator and kind cluster")
 	// 1. Remove the deployed resources
 	// 2. Stop kind cluster
@@ -87,7 +92,7 @@ var _ = AfterSuite(func()  {
 	fmt.Printf("kind deleted '%s'\n", kindName)
 })
 
-func checkMySQLOperator()  {
+func checkMySQLOperator() {
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		log.Fatal(err)
