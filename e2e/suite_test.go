@@ -44,26 +44,7 @@ var _ = BeforeSuite(func() {
 		true,
 	)
 
-	// check kind version
-	err := kind.checkVersion()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	isDeleted, err := kind.deleteCluster()
-	if err != nil {
-		log.Fatal(err)
-	} else if isDeleted {
-		fmt.Println("kind deleted cluster")
-	}
-
-	// create cluster
-	isCreated, err := kind.createCluster()
-	if err != nil {
-		log.Fatal(fmt.Printf("failed to create kind cluster. error: %s\n", err))
-	} else if isCreated {
-		fmt.Printf("kind created '%s'\n", kindName)
-	}
+	prepareKind(kind)
 
 	// scaffold
 	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
@@ -87,6 +68,29 @@ var _ = AfterSuite(func() {
 		fmt.Printf("kind deleted '%s'\n", kindName)
 	}
 })
+
+func prepareKind(kind *Kind) {
+	// check kind version
+	err := kind.checkVersion()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	isDeleted, err := kind.deleteCluster()
+	if err != nil {
+		log.Fatal(err)
+	} else if isDeleted {
+		fmt.Println("kind deleted cluster")
+	}
+
+	// create cluster
+	isCreated, err := kind.createCluster()
+	if err != nil {
+		log.Fatal(fmt.Printf("failed to create kind cluster. error: %s\n", err))
+	} else if isCreated {
+		fmt.Printf("kind created '%s'\n", kindName)
+	}
+}
 
 func checkMySQLOperator() {
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
