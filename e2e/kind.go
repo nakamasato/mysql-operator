@@ -16,11 +16,11 @@ type Kind struct {
 	LazyMode       bool
 }
 
-func (k *Kind) createCluster() error {
+func (k *Kind) createCluster() (bool, error) {
 	isRunning := k.checkCluster()
 	if k.LazyMode && isRunning {
 		fmt.Println("kind cluster is already running")
-		return nil
+		return false, nil
 	}
 	cmd := exec.CommandContext(
 		k.Ctx,
@@ -34,11 +34,10 @@ func (k *Kind) createCluster() error {
 		"--wait", // block until the control plane reaches a ready status
 		"30s",
 	)
-	// cmd.Path = "."
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	fmt.Println("start creating kind cluster")
-	return cmd.Run()
+	return true, cmd.Run()
 }
 
 func (k *Kind) checkCluster() bool {
@@ -65,10 +64,10 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
-func (k *Kind) deleteCluster() error {
+func (k *Kind) deleteCluster() (bool, error) {
 	if k.LazyMode {
 		fmt.Println("keep kind cluster running for next time.")
-		return nil
+		return false, nil
 	}
 	cmd := exec.CommandContext(
 		k.Ctx,
@@ -80,7 +79,7 @@ func (k *Kind) deleteCluster() error {
 	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return true, cmd.Run()
 }
 
 func (k *Kind) checkVersion() error {

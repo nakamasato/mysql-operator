@@ -30,24 +30,18 @@ func TestE2e(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	fmt.Println("Setup kind cluster and mysql-operator")
-	// 1. TODO: Check if docker is running
-	// 2. TODO: Check if kind is avaialble -> install kind if not available
-	// 3. Start up kind cluster
-	// 4. TODO: Check if kubeckl is available -> intall kubectl if not available
-	// 5. Configure kubectl
-	// 6. Deploy CRDs and controllers
-
-	// prepare kind configuration
-	// kindName := "mysql-operator-e2e"
-	// kubeConfigPath := "./.kubeconfig"
-	// kubernetesVersion := "v1.20.2"
+	// 1. TODO: Check if docker is running.
+	// 2. TODO: Check if kind is avaialble -> install kind if not available.
+	// 3. Start up kind cluster.
+	// 4. TODO: Check if skaffold is available -> intall skaffold if not available.
+	// 5. Deploy CRDs and controllers with skaffold.
 
 	ctx := context.Background()
 	kind = newKind(
 		ctx,
 		kindName,
 		kubeconfigPath,
-		false,
+		true,
 	)
 
 	// check kind version
@@ -56,19 +50,20 @@ var _ = BeforeSuite(func() {
 		log.Fatal(err)
 	}
 
-	// delete cluster: kind delete cluster --name mysql-operator-e2e
-	err = kind.deleteCluster()
+	isDeleted, err := kind.deleteCluster()
 	if err != nil {
 		log.Fatal(err)
+	} else if isDeleted {
+		fmt.Println("kind deleted cluster")
 	}
-	fmt.Println("kind deleted cluster")
 
-	// create cluster: kind create cluster --name mysql-operator-e2e --kubeconfig ./.kubeconfig --image kindest/node:v1.20.2
-	err = kind.createCluster()
+	// create cluster
+	isCreated, err := kind.createCluster()
 	if err != nil {
 		log.Fatal(fmt.Printf("failed to create kind cluster. error: %s\n", err))
+	} else if isCreated {
+		fmt.Printf("kind created '%s'\n", kindName)
 	}
-	fmt.Printf("kind created '%s'\n", kindName)
 
 	// scaffold
 	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
@@ -85,11 +80,12 @@ var _ = AfterSuite(func() {
 	// 2. Stop kind cluster
 	skaffold.delete()
 
-	err := kind.deleteCluster()
+	isDeleted, err := kind.deleteCluster()
 	if err != nil {
 		log.Fatal(err)
+	} else if isDeleted {
+		fmt.Printf("kind deleted '%s'\n", kindName)
 	}
-	fmt.Printf("kind deleted '%s'\n", kindName)
 })
 
 func checkMySQLOperator() {
