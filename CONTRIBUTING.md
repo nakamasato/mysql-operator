@@ -135,158 +135,43 @@ make uninstall
     ```
 1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
 # Test
-## Scorecard
 
-Statically validate your operator bundle.
+## Controller Test
 
 ```
-operator-sdk scorecard ./bundle --wait-time 60s
+make test
 ```
 
-Default tests:
-- basic-check-spec-test
-- olm-bundle-validation-test
-- olm-crds-have-validation-test
-- olm-crds-have-resources-test
-- olm-spec-descriptors-test
-- olm-status-descriptors-test
+(current `make test` includes the ***e2e (kind + skaffold + ginkgo + gomega)*** )
 
-More:
-- [custom test example](https://github.com/operator-framework/operator-sdk/blob/09c3aa14625965af9f22f513cd5c891471dbded2/images/custom-scorecard-tests/main.go)
-- [Writing Custom Scorecard Tests](https://sdk.operatorframework.io/docs/testing-operators/scorecard/custom-tests/)
+## e2e
 
-## kuttl (KUbernetes Test TooL)
-
-A declarative testing framework for Kubernetes Operators.
-
-https://kuttl.dev/docs/
+### e2e (kind + skaffold + ginkgo + gomega)
 
 Prerequisite:
-- Kubernetes Cluster
-- kubectl
+- [kind](https://kind.sigs.k8s.io/): local Kubernetes cluster
+- [Skaffold](https://skaffold.dev/): workflow for building, pushing and deploying your application
+- [ginkgo](https://onsi.github.io/ginkgo/)
+- [gomega](https://onsi.github.io/gomega/)
 
-Version:
-
-```
-kubectl-kuttl -v
-kubectl-kuttl version 0.11.1
-```
-
-```
-KUTTL Version: version.Info{GitVersion:"0.11.1", GitCommit:"25776a2", BuildDate:"2021-08-09T15:18:32Z", GoVersion:"go1.16.6", Compiler:"gc", Platform:"darwin/amd64"}
-```
-
-### Basics
-
-1. Install kuttl plugin
-
-    ```
-    kubectl krew install kuttl
-    ```
-
-1. Run kuttl test
-
-    Run tests against the Kubernetes cluster with default kubeconfig:
-
-    ```
-    kubectl kuttl test ./bundle/tests/scorecard/kuttl
-    ```
-    <details>
-
-    ```
-    kubectl kuttl test ./bundle/tests/scorecard/kuttl
-
-    2021/09/20 13:07:17 running without a 'kuttl-test.yaml' configuration
-    2021/09/20 13:07:17 kutt-test config testdirs is overridden with args: [ ./bundle/tests/scorecard/kuttl ]
-    === RUN   kuttl
-        harness.go:457: starting setup
-        harness.go:248: running tests using configured kubeconfig.
-        harness.go:285: Successful connection to cluster at: https://kubernetes.docker.internal:6443
-        harness.go:353: running tests
-        harness.go:74: going to run test suite with timeout of 30 seconds for each step
-        harness.go:365: testsuite: ./bundle/tests/scorecard/kuttl has 1 tests
-    === RUN   kuttl/harness
-    === RUN   kuttl/harness/with-valid-mysql
-    === PAUSE kuttl/harness/with-valid-mysql
-    === CONT  kuttl/harness/with-valid-mysql
-        logger.go:42: 13:07:19 | with-valid-mysql | Creating namespace: kuttl-test-becoming-liger
-        logger.go:42: 13:07:19 | with-valid-mysql/0-mysql-deployment | starting test step 0-mysql-deployment
-        logger.go:42: 13:07:20 | with-valid-mysql/0-mysql-deployment | Deployment:kuttl-test-becoming-liger/mysql created
-        logger.go:42: 13:07:20 | with-valid-mysql/0-mysql-deployment | Service:kuttl-test-becoming-liger/mysql created
-        logger.go:42: 13:07:22 | with-valid-mysql/0-mysql-deployment | test step completed 0-mysql-deployment
-        logger.go:42: 13:07:22 | with-valid-mysql | with-valid-mysql events from ns kuttl-test-becoming-liger:
-        logger.go:42: 13:07:22 | with-valid-mysql | 2021-09-20 13:07:20 +0900 JST   Normal  Pod mysql-5fd4b796b6-tr7wx      Binding      Scheduled       Successfully assigned kuttl-test-becoming-liger/mysql-5fd4b796b6-tr7wx to docker-desktop        default-scheduler
-        logger.go:42: 13:07:22 | with-valid-mysql | 2021-09-20 13:07:20 +0900 JST   Normal  ReplicaSet.apps mysql-5fd4b796b6    SuccessfulCreate Created pod: mysql-5fd4b796b6-tr7wx
-        logger.go:42: 13:07:22 | with-valid-mysql | 2021-09-20 13:07:20 +0900 JST   Normal  Deployment.apps mysql           ScalingReplicaSet    Scaled up replica set mysql-5fd4b796b6 to 1
-        logger.go:42: 13:07:22 | with-valid-mysql | 2021-09-20 13:07:21 +0900 JST   Normal  Pod mysql-5fd4b796b6-tr7wx.spec.containers{mysql}            Pulled  Container image "mysql:5.7" already present on machine
-        logger.go:42: 13:07:22 | with-valid-mysql | 2021-09-20 13:07:21 +0900 JST   Normal  Pod mysql-5fd4b796b6-tr7wx.spec.containers{mysql}            Created Created container mysql
-        logger.go:42: 13:07:22 | with-valid-mysql | 2021-09-20 13:07:21 +0900 JST   Normal  Pod mysql-5fd4b796b6-tr7wx.spec.containers{mysql}            Started Started container mysql
-        logger.go:42: 13:07:22 | with-valid-mysql | Deleting namespace: kuttl-test-becoming-liger
-    === CONT  kuttl
-        harness.go:399: run tests finished
-        harness.go:508: cleaning up
-        harness.go:563: removing temp folder: ""
-    --- PASS: kuttl (5.00s)
-        --- PASS: kuttl/harness (0.00s)
-            --- PASS: kuttl/harness/with-valid-mysql (2.85s)
-    PASS
-    ```
-
-    </details>
-
-    Run tests against `kind` cluster:
-
-    ```
-    kubectl kuttl test --start-kind=true ./bundle/tests/scorecard/kuttl
-    ```
-
-### kuttl in scorecard (WIP)
-
-Currently just create MySQL Deployment and Service.
-
-```
-operator-sdk scorecard ./bundle --selector=suite=kuttlsuite --wait-time 60s
-```
-
-Internally, it runs as follows:
-
-1. run kuttl in [entrypoint](https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test-kuttl/entrypoint)
-    ```shell
-    kubectl-kuttl test ${KUTTL_PATH} \
-        --config=${KUTTL_CONFIG} \
-        --namespace=${SCORECARD_NAMESPACE} \
-        --report=JSON --artifacts-dir=/tmp > /tmp/kuttl.stdout 2> /tmp/kuttl.stderr
-    ```
-1. [main.go](https://github.com/operator-framework/operator-sdk/blob/master/images/scorecard-test-kuttl/main.go) converts the kuttl result into scorecard result (`v1alpha3.TestStatus`)
-
-    ```shell
-    [21-09-20 23:52:01] [docker-desktop] masato-naka at mac in ~/repos/nakamasato/operator-sdk/images/scorecard-test-kuttl on update-writing-kuttl-scorecard-tests ✔
-    ± go run ./main.go
-    {
-        "results": [
-            {
-                "name": "with-valid-mysql",
-                "state": "pass"
-            }
-        ]
-    }
-    ```
-
-Reference:
-
-- [Writing Kuttl Scorecard Tests](https://sdk.operatorframework.io/docs/testing-operators/scorecard/kuttl-tests/)
-
-### kuttl for e2e
+### e2e with kuttl
 
 Prerequisite:
 
-- [kind](https://kind.sigs.k8s.io/)
-- [krew](https://krew.sigs.k8s.io/)
-- [kuttl](https://kuttl.dev/)
+- [kind](https://kind.sigs.k8s.io/): local Kubernetes cluster
+- [krew](https://krew.sigs.k8s.io/): kubectl plugin manager
+- [kuttl](https://kuttl.dev/): The KUbernetes Test TooL (kuttl)
 
-Tests:
+Test scenario:
 1. MySQL `Deployment` and `Service`. -> Assert MySQL replica is 1.
-1. Apply `config/samples-on-k8s` -> `Secret` `mysql-mysql-sample-nakamasato` exists.
+1. Apply `config/samples-on-k8s`. -> `Secret` `mysql-mysql-sample-nakamasato` exists.
+
+e2e steps:
+1. Build a docker image `mysql-operator` with the latest codes.
+1. Deploy controller (local image if you're running in local).
+1. Deploy mysql `Deployment` and `Service`.
+1. Create `MySQL` and `MySQLUser` by `kubectl apply -k ../../../config/samples-on-k8s`.
+1. Check `Secret` `mysql-mysql-sample-nakamasato`.
 
 Run:
 
@@ -407,13 +292,6 @@ PASS
 ```
 
 </details>
-
-What the e2e tests:
-1. Build a docker image `mysql-operator` with the latest codes.
-1. Deploy controller (local image if you're running in local).
-1. Deploy mysql `Deployment` and `Service`.
-1. Create `MySQL` and `MySQLUser` by `kubectl apply -k ../../../config/samples-on-k8s`.
-1. Check `Secret` `mysql-mysql-sample-nakamasato`.
 
 # OLM (ToDo)
 # Reference
