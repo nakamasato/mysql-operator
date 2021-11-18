@@ -13,21 +13,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("E2e", func() {
-	const (
+const (
 		mysqlName      = "mysql-sample"
+		mysqlUserName  = "john"
 		mysqlNamespace = "default"
-	)
+)
+
+var _ = Describe("E2e", func() {
+
 	ctx := context.Background()
 	BeforeEach(func() {
 		deleteMySQLDeploymentIfExist(ctx)
 		deleteMySQLServiceIfExist(ctx)
+		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
 	})
 
 	AfterEach(func() {
 		deleteMySQLDeploymentIfExist(ctx)
 		deleteMySQLServiceIfExist(ctx)
+		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
 	})
 
@@ -44,6 +49,8 @@ var _ = Describe("E2e", func() {
 				mysql := newMySQL(mysqlName, mysqlNamespace)
 				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 				// create mysqluser
+				mysqlUser := newMySQLUser(mysqlUserName, mysqlNamespace)
+				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 			})
 		})
 
@@ -70,7 +77,7 @@ var _ = Describe("E2e", func() {
 })
 
 func deleteMySQLServiceIfExist(ctx context.Context) {
-	object, err := getService("mysql", "default")
+	object, err := getService("mysql", mysqlNamespace)
 	if err != nil {
 		return
 	}
@@ -78,7 +85,7 @@ func deleteMySQLServiceIfExist(ctx context.Context) {
 }
 
 func deleteMySQLDeploymentIfExist(ctx context.Context) {
-	object, err := getDeployment("mysql", "default")
+	object, err := getDeployment("mysql", mysqlNamespace)
 	if err != nil {
 		return
 	}
@@ -86,12 +93,21 @@ func deleteMySQLDeploymentIfExist(ctx context.Context) {
 }
 
 func deleteMySQLIfExist(ctx context.Context) {
-	object, err := getMySQL("mysql", "default")
+	object, err := getMySQL("mysql", mysqlNamespace)
 	if err != nil {
 		return
 	}
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
+
+func deleteMySQLUserIfExist(ctx context.Context) {
+	object, err := getMySQLUser("mysql", mysqlNamespace)
+	if err != nil {
+		return
+	}
+	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
+}
+
 
 func getDeployment(name, namespace string) (*appsv1.Deployment, error) {
 	deploy := &appsv1.Deployment{}
@@ -120,11 +136,30 @@ func getMySQL(name, namespace string) (*mysqlv1alpha1.MySQL, error) {
 	return object, nil
 }
 
+func getMySQLUser(name, namespace string) (*mysqlv1alpha1.MySQLUser, error) {
+	object := &mysqlv1alpha1.MySQLUser{}
+	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, object)
+	if err != nil {
+		return nil, err
+	}
+	return object, nil
+}
+
 func newMySQL(name, namespace string) *mysqlv1alpha1.MySQL {
 	return &mysqlv1alpha1.MySQL{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 		Spec:       mysqlv1alpha1.MySQLSpec{Host: "mysql", AdminUser: "root", AdminPassword: "password"},
+	}
+}
+
+func newMySQLUser(name, namespace string) *mysqlv1alpha1.MySQLUser {
+	return &mysqlv1alpha1.MySQLUser{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+		Spec:       mysqlv1alpha1.MySQLUserSpec{
+			MysqlName: mysqlName,
+		},
 	}
 }
 
@@ -135,7 +170,7 @@ func newMySQLService() *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "mysql",
-			Namespace: "default",
+			Namespace: mysqlNamespace,
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
@@ -165,7 +200,7 @@ func newMySQLDeployment() *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "mysql",
-			Namespace: "default",
+			Namespace: mysqlNamespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
