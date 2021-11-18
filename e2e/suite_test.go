@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
+	appsv1 "k8s.io/api/apps/v1"
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 )
 
@@ -26,7 +27,6 @@ const (
 
 var skaffold *Skaffold
 var kind *Kind
-var kubectl *Kubectl
 var k8sClient client.Client
 
 func TestE2e(t *testing.T) {
@@ -49,23 +49,33 @@ var _ = BeforeSuite(func() {
 	// 3. Start up kind cluster.
 	prepareKind(kind)
 
-	// 4. Set up kubectl
-	kubectl = newKubectl(kubeconfigPath)
+	// 4. TODO: Check if skaffold is available -> intall skaffold if not available.
 
-	// 5. TODO: Check if skaffold is available -> intall skaffold if not available.
-
-	// 6. Set up skaffold
+	// 5. Set up skaffold
 	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
 
-	// 7. Deploy CRDs and controllers with skaffold.
+	// 6. Deploy CRDs and controllers with skaffold.
 	skaffold.run()
+
+	// 7. set k8sclient
+	setUpK8sClient()
 
 	// 8. Check if mysql-operator is running.
 	checkMySQLOperator() // check if mysql-operator is running
 
 	fmt.Println("Setup completed")
+}, 60)
 
-	// 9. set k8sclient
+var _ = AfterSuite(func() {
+	fmt.Println("Clean up mysql-operator and kind cluster")
+	// 1. Remove the deployed resources
+	skaffold.delete()
+
+	// 2. Stop kind cluster
+	cleanUpKind(kind)
+})
+
+func setUpK8sClient() {
 	mydir, err := os.Getwd()
 	if err != nil {
 		fmt.Println(err)
@@ -79,16 +89,7 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
-}, 60)
-
-var _ = AfterSuite(func() {
-	fmt.Println("Clean up mysql-operator and kind cluster")
-	// 1. Remove the deployed resources
-	skaffold.delete()
-
-	// 2. Stop kind cluster
-	cleanUpKind(kind)
-})
+}
 
 func prepareKind(kind *Kind) {
 	// check kind version
@@ -123,7 +124,8 @@ func cleanUpKind(kind *Kind) {
 }
 
 func checkMySQLOperator() {
-	deployment, err := kubectl.GetDeployment(mysqlOperatorNamespace, mysqlOperatorDeploymentName)
+	deployment := &appsv1.Deployment{}
+	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlOperatorNamespace, Name: mysqlOperatorDeploymentName}, deployment)
 	if err != nil {
 		log.Fatal(fmt.Printf("failed to get %s", mysqlOperatorDeploymentName))
 	}
