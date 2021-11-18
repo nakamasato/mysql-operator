@@ -46,23 +46,26 @@ var _ = BeforeSuite(func() {
 		kubeconfigPath,
 		true,
 	)
-	kubectl = newKubectl(kubeconfigPath)
-	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
-
 	// 3. Start up kind cluster.
 	prepareKind(kind)
 
-	// 4. TODO: Check if skaffold is available -> intall skaffold if not available.
+	// 4. Set up kubectl
+	kubectl = newKubectl(kubeconfigPath)
 
-	// 5. Deploy CRDs and controllers with skaffold.
+	// 5. TODO: Check if skaffold is available -> intall skaffold if not available.
+
+	// 6. Set up skaffold
+	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
+
+	// 7. Deploy CRDs and controllers with skaffold.
 	skaffold.run()
 
-	// 6. Check if mysql-operator is running.
+	// 8. Check if mysql-operator is running.
 	checkMySQLOperator() // check if mysql-operator is running
 
 	fmt.Println("Setup completed")
 
-	// set k8sclient
+	// 9. set k8sclient
 	mydir, err := os.Getwd()
 	if err != nil {
 		fmt.Println(err)
