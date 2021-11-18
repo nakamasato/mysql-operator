@@ -12,18 +12,13 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    env:
-      KIND_VERSION: v0.11.0
     steps:
-      - uses: actions/checkout@master
+      - name: set up
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
 
-      # https://kind.sigs.k8s.io/docs/user/quick-start/
-      - name: kind - install
-        run: |
-          wget -q -O ./kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
-          chmod +x ./kind
-          sudo mv ./kind /usr/local/bin/kind
-          kind version
+      - uses: actions/checkout@master
 
       # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
       - name: krew - install

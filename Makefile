@@ -205,6 +205,7 @@ catalog-push: ## Push a catalog image.
 kuttl:
 	kubectl kuttl test
 
+.PHONY: e2e
 e2e:
 	docker build -t mysql-operator .
 	kubectl kuttl test
