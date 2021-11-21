@@ -1,3 +1,4 @@
+namespace: default
 resources:
   - mysql-deployment.yaml
   - mysql-service.yaml

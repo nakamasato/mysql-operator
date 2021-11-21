@@ -24,5 +24,8 @@ spec:
         env:
           - name: MYSQL_ROOT_PASSWORD
             value: password
-        resources: {}
-status: {}
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 5
+          periodSeconds: 10

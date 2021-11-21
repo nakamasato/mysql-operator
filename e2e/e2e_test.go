@@ -2,10 +2,12 @@ package e2e
 
 import (
 	"context"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -17,6 +19,8 @@ const (
 		mysqlName      = "mysql-sample"
 		mysqlUserName  = "john"
 		mysqlNamespace = "default"
+		timeout = 30 * time.Second
+		interval = 250 * time.Millisecond
 )
 
 var _ = Describe("E2e", func() {
@@ -42,6 +46,13 @@ var _ = Describe("E2e", func() {
 				// create mysql deployment & service
 				deploy := newMySQLDeployment()
 				Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
+				Eventually(func() bool {
+					err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, deploy)
+					if err != nil {
+						return false
+					}
+					return deploy.Status.AvailableReplicas == *deploy.Spec.Replicas
+				}, timeout, interval).Should(BeTrue())
 				service := newMySQLService()
 				Expect(k8sClient.Create(ctx, service)).Should(Succeed())
 
@@ -51,6 +62,12 @@ var _ = Describe("E2e", func() {
 				// create mysqluser
 				mysqlUser := newMySQLUser(mysqlUserName, mysqlNamespace)
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+				// expect to have Secret
+				secret := &corev1.Secret{}
+				Eventually(func() error {
+					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+				}, timeout, interval).Should(Succeed())
 			})
 		})
 
@@ -97,6 +114,8 @@ func deleteMySQLIfExist(ctx context.Context) {
 	if err != nil {
 		return
 	}
+	controllerutil.RemoveFinalizer(object, "mysql.nakamasato.com/finalizer")
+	k8sClient.Update(ctx, object)
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
@@ -105,6 +124,8 @@ func deleteMySQLUserIfExist(ctx context.Context) {
 	if err != nil {
 		return
 	}
+	controllerutil.RemoveFinalizer(object, "mysqluser.nakamasato.com/finalizer")
+	k8sClient.Update(ctx, object)
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
@@ -149,7 +170,7 @@ func newMySQL(name, namespace string) *mysqlv1alpha1.MySQL {
 	return &mysqlv1alpha1.MySQL{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-		Spec:       mysqlv1alpha1.MySQLSpec{Host: "mysql", AdminUser: "root", AdminPassword: "password"},
+		Spec:       mysqlv1alpha1.MySQLSpec{Host: "mysql.default", AdminUser: "root", AdminPassword: "password"},
 	}
 }
 
