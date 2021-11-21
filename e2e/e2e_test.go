@@ -115,7 +115,7 @@ func deleteMySQLIfExist(ctx context.Context) {
 		return
 	}
 	controllerutil.RemoveFinalizer(object, "mysql.nakamasato.com/finalizer")
-	k8sClient.Update(ctx, object)
+	Expect(k8sClient.Update(ctx, object)).Should(Succeed())
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
@@ -125,7 +125,7 @@ func deleteMySQLUserIfExist(ctx context.Context) {
 		return
 	}
 	controllerutil.RemoveFinalizer(object, "mysqluser.nakamasato.com/finalizer")
-	k8sClient.Update(ctx, object)
+	Expect(k8sClient.Update(ctx, object)).Should(Succeed())
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
