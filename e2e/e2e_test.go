@@ -19,7 +19,7 @@ const (
 	mysqlName      = "mysql-sample"
 	mysqlUserName  = "john"
 	mysqlNamespace = "default"
-	timeout        = 30 * time.Second
+	timeout        = 60 * time.Second
 	interval       = 250 * time.Millisecond
 )
 
