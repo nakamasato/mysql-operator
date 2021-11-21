@@ -16,11 +16,11 @@ import (
 )
 
 const (
-		mysqlName      = "mysql-sample"
-		mysqlUserName  = "john"
-		mysqlNamespace = "default"
-		timeout = 30 * time.Second
-		interval = 250 * time.Millisecond
+	mysqlName      = "mysql-sample"
+	mysqlUserName  = "john"
+	mysqlNamespace = "default"
+	timeout        = 30 * time.Second
+	interval       = 250 * time.Millisecond
 )
 
 var _ = Describe("E2e", func() {
@@ -129,7 +129,6 @@ func deleteMySQLUserIfExist(ctx context.Context) {
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
-
 func getDeployment(name, namespace string) (*appsv1.Deployment, error) {
 	deploy := &appsv1.Deployment{}
 	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, deploy)
@@ -178,7 +177,7 @@ func newMySQLUser(name, namespace string) *mysqlv1alpha1.MySQLUser {
 	return &mysqlv1alpha1.MySQLUser{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-		Spec:       mysqlv1alpha1.MySQLUserSpec{
+		Spec: mysqlv1alpha1.MySQLUserSpec{
 			MysqlName: mysqlName,
 		},
 	}
