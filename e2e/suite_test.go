@@ -49,17 +49,17 @@ var _ = BeforeSuite(func() {
 	// 3. Start up kind cluster.
 	prepareKind(kind)
 
-	// 7. set k8sclient
+	// 4. set k8sclient
 	setUpK8sClient()
 	deleteMySQLUserIfExist(ctx)
 	deleteMySQLIfExist(ctx)
 
-	// 4. TODO: Check if skaffold is available -> intall skaffold if not available.
+	// 5. TODO: Check if skaffold is available -> intall skaffold if not available.
 
-	// 5. Set up skaffold
+	// 6. Set up skaffold
 	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
 
-	// 6. Deploy CRDs and controllers with skaffold.
+	// 7. Deploy CRDs and controllers with skaffold.
 	skaffold.run()
 
 	// 8. Check if mysql-operator is running.

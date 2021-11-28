@@ -154,6 +154,52 @@ Prerequisite:
 - [ginkgo](https://onsi.github.io/ginkgo/)
 - [gomega](https://onsi.github.io/gomega/)
 
+Test steps:
+1. BeforeSuite:
+    1. Prepare `kind` cluster.
+        1. Create `kind` cluster if not exist. Otherwise, recreate `kind` cluster if `lazymode` is false.
+    1. Set up `k8sClient`.
+    1. Delete `MySQLUser` and `MySQL` resources.
+    1. Execute `skaffold run`.
+        1. Deploy CRD and mysql-operator.
+        1. Deploy MySQL with `Deployment`.
+    1. Check `mysql-operator` is running.
+1. Run test cases.
+1. AfterSuite:
+    1. Execute `skaffold delete`.
+    1. Clean up `kind` cluster.
+
+<details><summary>If we want to debug with running each step with commands</summary>
+
+1. Create a `kind` cluster:
+    ```bash
+    kind create cluster --name mysql-operator-e2e --kubeconfig e2e/kubeconfig --config e2e/kind-config.yml --wait 30s
+    ```
+1. Delete `MySQLUser` resources if exists.
+    1. Delete the object:
+        ```bash
+        kubectl delete mysqluser john --kubeconfig e2e/kubeconfig
+        ```
+    1. Remove the finalizer if stuck:
+        ```bash
+        kubectl patch mysqluser john -p '{"metadata":{"finalizers": []}}' --type=merge --kubeconfig e2e/kubeconfig
+        ```
+1. Delete `MySQL` resources if exists.
+    1. Delete the object:
+        ```bash
+        kubectl delete mysql mysql-sample --kubeconfig e2e/kubeconfig
+        ```
+    1. Remove the finalizer if stuck:
+        ```
+        kubectl patch mysql mysql-sample -p '{"metadata":{"finalizers": []}}' --type=merge --kubeconfig e2e/kubeconfig
+        ```
+1. Deploy `CRD`, `mysql-operator`, and MySQL with `Deployment`:
+    ```
+    cd e2e && skaffold run
+    ```
+
+</details>
+
 ### e2e with kuttl
 
 Prerequisite:
