@@ -28,10 +28,6 @@ const (
 	interval       = 250 * time.Millisecond
 )
 
-type mysqlUserRecord struct {
-	User string
-}
-
 var _ = Describe("E2e", func() {
 
 	ctx := context.Background()
@@ -79,10 +75,10 @@ var _ = Describe("E2e", func() {
 				}, timeout, interval).Should(Succeed())
 
 				// expect to have mysql user in mysql
-				// Eventually(func () bool {
-				// 	res, _ := checkMySQLHasUser(mysqlUserName)
-				// 	return res
-				// }, timeout, interval).Should(BeTrue())
+				Eventually(func () bool {
+					res, _ := checkMySQLHasUser(mysqlUserName)
+					return res
+				}, timeout, interval).Should(BeTrue())
 			})
 		})
 
