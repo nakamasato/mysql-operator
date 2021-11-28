@@ -24,8 +24,8 @@ type mysqlClient struct {
 type fakeMysqlCLient struct {
 }
 
-func NewFakeMySQLClient(cfg MySQLConfig) MySQLClient {
-	return &fakeMysqlCLient{}
+func NewFakeMySQLClient(cfg MySQLConfig) (MySQLClient, error) {
+	return &fakeMysqlCLient{}, nil
 }
 
 func (mc fakeMysqlCLient) Exec(query string) error {
@@ -39,12 +39,12 @@ func (mc fakeMysqlCLient) Ping() error {
 func (mc fakeMysqlCLient) Close() {
 }
 
-type MySQLClientFactory func(cfg MySQLConfig) MySQLClient
+type MySQLClientFactory func(cfg MySQLConfig) (MySQLClient, error)
 
-func NewMySQLClient(config MySQLConfig) MySQLClient {
-	db, _ := sql.Open("mysql", config.AdminUser+":"+config.AdminPassword+"@tcp("+config.Host+":3306)/")
+func NewMySQLClient(config MySQLConfig) (MySQLClient, error) {
+	db, err := sql.Open("mysql", config.AdminUser+":"+config.AdminPassword+"@tcp("+config.Host+":3306)/")
 	// TODO error handling
-	return &mysqlClient{db: db}
+	return &mysqlClient{db: db}, err
 }
 
 func (mc mysqlClient) Exec(query string) error {
