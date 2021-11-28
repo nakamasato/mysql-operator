@@ -195,7 +195,7 @@ Test steps:
         ```
 1. Deploy `CRD`, `mysql-operator`, and MySQL with `Deployment`:
     ```
-    cd e2e && skaffold run
+    cd e2e && skaffold run --kubeconfig kubeconfig
     ```
 
 </details>
