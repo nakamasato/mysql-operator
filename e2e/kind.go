@@ -33,7 +33,7 @@ func (k *Kind) createCluster() (bool, error) {
 		k.KubeconfigPath,
 		"--config",
 		"kind-config.yml", // to expose node port
-		"--wait", // block until the control plane reaches a ready status
+		"--wait",          // block until the control plane reaches a ready status
 		"30s",
 	)
 	cmd.Stdout = os.Stdout

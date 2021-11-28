@@ -75,7 +75,7 @@ var _ = Describe("E2e", func() {
 				}, timeout, interval).Should(Succeed())
 
 				// expect to have mysql user in mysql
-				Eventually(func () bool {
+				Eventually(func() bool {
 					res, _ := checkMySQLHasUser(mysqlUserName)
 					return res
 				}, timeout, interval).Should(BeTrue())
@@ -113,11 +113,11 @@ func checkMySQLHasUser(mysqluser string) (bool, error) {
 	row := db.QueryRow("SELECT COUNT(*) FROM mysql.user where User = '" + mysqluser + "'")
 	var count int
 	if err := row.Scan(&count); err != nil {
-	    return false, err
+		return false, err
 	} else {
 		fmt.Printf("mysql.user count: %s, %d\n", mysqluser, count)
 		return count > 0, nil
-    }
+	}
 }
 
 func deleteMySQLServiceIfExist(ctx context.Context) {
