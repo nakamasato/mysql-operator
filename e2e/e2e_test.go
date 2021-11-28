@@ -2,7 +2,12 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -22,6 +27,10 @@ const (
 	timeout        = 60 * time.Second
 	interval       = 250 * time.Millisecond
 )
+
+type mysqlUserRecord struct {
+	User string
+}
 
 var _ = Describe("E2e", func() {
 
@@ -68,6 +77,12 @@ var _ = Describe("E2e", func() {
 				Eventually(func() error {
 					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
 				}, timeout, interval).Should(Succeed())
+
+				// expect to have mysql user in mysql
+				// Eventually(func () bool {
+				// 	res, _ := checkMySQLHasUser(mysqlUserName)
+				// 	return res
+				// }, timeout, interval).Should(BeTrue())
 			})
 		})
 
@@ -93,6 +108,22 @@ var _ = Describe("E2e", func() {
 	})
 })
 
+func checkMySQLHasUser(mysqluser string) (bool, error) {
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:30306)/") // TODO: Make MySQL root user credentials configurable
+	if err != nil {
+		return false, err
+	}
+	defer db.Close()
+	row := db.QueryRow("SELECT COUNT(*) FROM mysql.user where User = '" + mysqluser + "'")
+	var count int
+	if err := row.Scan(&count); err != nil {
+	    return false, err
+	} else {
+		fmt.Printf("mysql.user count: %s, %d\n", mysqluser, count)
+		return count > 0, nil
+    }
+}
+
 func deleteMySQLServiceIfExist(ctx context.Context) {
 	object, err := getService("mysql", mysqlNamespace)
 	if err != nil {
@@ -110,22 +141,30 @@ func deleteMySQLDeploymentIfExist(ctx context.Context) {
 }
 
 func deleteMySQLIfExist(ctx context.Context) {
-	object, err := getMySQL("mysql", mysqlNamespace)
+	object, err := getMySQL(mysqlName, mysqlNamespace) // TODO: enable to pass mysqlName and mysqlNamespace
 	if err != nil {
 		return
 	}
 	controllerutil.RemoveFinalizer(object, "mysql.nakamasato.com/finalizer")
 	Expect(k8sClient.Update(ctx, object)).Should(Succeed())
+	object, err = getMySQL(mysqlName, mysqlNamespace) // TODO: enable to pass mysqlName and mysqlNamespace
+	if err != nil {
+		return
+	}
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
 func deleteMySQLUserIfExist(ctx context.Context) {
-	object, err := getMySQLUser("mysql", mysqlNamespace)
+	object, err := getMySQLUser(mysqlUserName, mysqlNamespace) // TODO: enable to pass mysqlUserName and mysqlNamespace
 	if err != nil {
 		return
 	}
 	controllerutil.RemoveFinalizer(object, "mysqluser.nakamasato.com/finalizer")
 	Expect(k8sClient.Update(ctx, object)).Should(Succeed())
+	object, err = getMySQLUser(mysqlUserName, mysqlNamespace) // TODO: enable to pass mysqlUserName and mysqlNamespace
+	if err != nil {
+		return
+	}
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 

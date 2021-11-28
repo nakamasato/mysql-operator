@@ -1,4 +1,5 @@
-namespace: default
+namespace: default # this is necessary for skaffold's healthcheck
 resources:
   - mysql-deployment.yaml
   - mysql-service.yaml
+  - mysql-service-nodeport.yaml
