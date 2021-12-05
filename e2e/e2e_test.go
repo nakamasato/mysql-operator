@@ -12,12 +12,12 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -34,15 +34,15 @@ var _ = Describe("E2e", func() {
 	BeforeEach(func() {
 		// deleteMySQLDeploymentIfExist(ctx)
 		// deleteMySQLServiceIfExist(ctx)
-		deleteMySQLUserIfExist(ctx)
-		deleteMySQLIfExist(ctx)
+		// deleteMySQLUserIfExist(ctx)
+		// deleteMySQLIfExist(ctx)
 	})
 
 	AfterEach(func() {
 		deleteMySQLDeploymentIfExist(ctx)
 		deleteMySQLServiceIfExist(ctx)
-		deleteMySQLUserIfExist(ctx)
-		deleteMySQLIfExist(ctx)
+		// deleteMySQLUserIfExist(ctx)
+		// deleteMySQLIfExist(ctx)
 	})
 
 	Describe("Creating MySQL object", func() {
@@ -137,13 +137,22 @@ func deleteMySQLDeploymentIfExist(ctx context.Context) {
 }
 
 func deleteMySQLIfExist(ctx context.Context) {
-	object, err := getMySQL(mysqlName, mysqlNamespace) // TODO: enable to pass mysqlName and mysqlNamespace
+	_, err := getMySQL(mysqlName, mysqlNamespace) // TODO: enable to pass mysqlName and mysqlNamespace
 	if err != nil {
 		return
 	}
-	controllerutil.RemoveFinalizer(object, "mysql.nakamasato.com/finalizer")
-	Expect(k8sClient.Update(ctx, object)).Should(Succeed())
-	object, err = getMySQL(mysqlName, mysqlNamespace) // TODO: enable to pass mysqlName and mysqlNamespace
+	// remove finalizers
+	patch := []byte(`{"metadata":{"finalizers": []}}`)
+	err = k8sClient.Patch(ctx, &mysqlv1alpha1.MySQL{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: mysqlNamespace,
+			Name:      mysqlName,
+		},
+	}, client.RawPatch(types.StrategicMergePatchType, patch))
+	Expect(err).Should(Succeed())
+
+	// delete object if exist
+	object, err := getMySQL(mysqlName, mysqlNamespace) // TODO: enable to pass mysqlName and mysqlNamespace
 	if err != nil {
 		return
 	}
@@ -155,8 +164,12 @@ func deleteMySQLUserIfExist(ctx context.Context) {
 	if err != nil {
 		return
 	}
-	controllerutil.RemoveFinalizer(object, "mysqluser.nakamasato.com/finalizer")
-	Expect(k8sClient.Update(ctx, object)).Should(Succeed())
+	// remove finalizers
+	patch := []byte(`{"metadata":{"finalizers": []}}`)
+	err = k8sClient.Patch(ctx, object, client.RawPatch(types.StrategicMergePatchType, patch))
+	Expect(err).Should(Succeed())
+
+	// delete object if exist
 	object, err = getMySQLUser(mysqlUserName, mysqlNamespace) // TODO: enable to pass mysqlUserName and mysqlNamespace
 	if err != nil {
 		return

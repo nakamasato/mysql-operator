@@ -44,7 +44,7 @@ var _ = BeforeSuite(func() {
 		ctx,
 		kindName,
 		kubeconfigPath,
-		true,
+		false,
 	)
 	// 3. Start up kind cluster.
 	prepareKind(kind)
