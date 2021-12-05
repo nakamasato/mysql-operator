@@ -1,5 +1,7 @@
 # MySQL Operator
 
+[![codecov](https://codecov.io/gh/nakamasato/mysql-operator/branch/master/graph/badge.svg?token=AWM1SBTI19)](https://codecov.io/gh/nakamasato/mysql-operator)
+
 This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.operatorframework.io/docs/building-operators/golang/), which manages MySQL databases, schema, users, permissions for existing MySQL clusters. This operator DOES NOT manage MySQL cluster like other MySQL operator.
 
 ## Versions
