@@ -99,7 +99,11 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		AdminPassword: mysql.Spec.AdminPassword,
 		Host:          mysql.Spec.Host,
 	}
-	mysqlClient := r.MySQLClientFactory(cfg)
+	mysqlClient, err := r.MySQLClientFactory(cfg)
+	if err != nil {
+		log.Error(err, "Failed to create mysqlClient")
+		return r.ManageError(ctx, mysqlUser, err) // requeue
+	}
 	err = mysqlClient.Ping()
 	if err != nil { // TODO: #23 add error info to status
 		log.Error(err, "Failed to connect to MySQL.", "mysqlName", mysqlName)
@@ -194,8 +198,11 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(log logr.Logger, mysqlUser *mysq
 		AdminPassword: mysql.Spec.AdminPassword,
 		Host:          mysql.Spec.Host,
 	}
-	mysqlClient := r.MySQLClientFactory(cfg)
-	err := mysqlClient.Ping()
+	mysqlClient, err := r.MySQLClientFactory(cfg)
+	if err != nil {
+		return err
+	}
+	err = mysqlClient.Ping()
 	if err != nil {
 		return err
 	}

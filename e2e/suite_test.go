@@ -14,8 +14,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	appsv1 "k8s.io/api/apps/v1"
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 )
 
 const (
@@ -44,21 +44,23 @@ var _ = BeforeSuite(func() {
 		ctx,
 		kindName,
 		kubeconfigPath,
-		true,
+		false,
 	)
 	// 3. Start up kind cluster.
 	prepareKind(kind)
 
-	// 4. TODO: Check if skaffold is available -> intall skaffold if not available.
+	// 4. set k8sclient
+	setUpK8sClient()
+	deleteMySQLUserIfExist(ctx)
+	deleteMySQLIfExist(ctx)
 
-	// 5. Set up skaffold
+	// 5. TODO: Check if skaffold is available -> intall skaffold if not available.
+
+	// 6. Set up skaffold
 	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
 
-	// 6. Deploy CRDs and controllers with skaffold.
+	// 7. Deploy CRDs and controllers with skaffold.
 	skaffold.run()
-
-	// 7. set k8sclient
-	setUpK8sClient()
 
 	// 8. Check if mysql-operator is running.
 	checkMySQLOperator() // check if mysql-operator is running

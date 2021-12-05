@@ -1,0 +1,9 @@
+apiVersion: kind.x-k8s.io/v1alpha4
+kind: Cluster
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 30306
+    hostPort: 30306 # enable to access to mysql container from outside the cluster
+    listenAddress: "0.0.0.0"
+    protocol: tcp
