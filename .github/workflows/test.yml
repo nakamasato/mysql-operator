@@ -23,8 +23,9 @@ jobs:
           curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
           sudo install skaffold /usr/local/bin/
       - uses: actions/checkout@v2
-      - run: make test
-      - run: go test -coverprofile="coverage.txt" -covermode=atomic ./...
+      - run: |
+          make test
+          cat cover.out >> coverage.txt
       - name: codecov
         uses: codecov/codecov-action@v1
         with:
