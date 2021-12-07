@@ -21,22 +21,22 @@ type mysqlClient struct {
 	db *sql.DB
 }
 
-type fakeMysqlCLient struct {
+type fakeMysqlClient struct {
 }
 
 func NewFakeMySQLClient(cfg MySQLConfig) (MySQLClient, error) {
-	return &fakeMysqlCLient{}, nil
+	return &fakeMysqlClient{}, nil
 }
 
-func (mc fakeMysqlCLient) Exec(query string) error {
+func (mc fakeMysqlClient) Exec(query string) error {
 	return nil
 }
 
-func (mc fakeMysqlCLient) Ping() error {
+func (mc fakeMysqlClient) Ping() error {
 	return nil
 }
 
-func (mc fakeMysqlCLient) Close() {
+func (mc fakeMysqlClient) Close() {
 }
 
 type MySQLClientFactory func(cfg MySQLConfig) (MySQLClient, error)
