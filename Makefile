@@ -88,7 +88,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out -covermode=atomic
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" ginkgo -cover -coverprofile cover.out -covermode=atomic -skipPackage=e2e ./...
 
 ##@ Build
 
@@ -205,7 +205,11 @@ catalog-push: ## Push a catalog image.
 kuttl:
 	kubectl kuttl test
 
-.PHONY: e2e
-e2e:
+.PHONY: e2e-with-kuttl
+e2e-with-kuttl:
 	docker build -t mysql-operator .
 	kubectl kuttl test
+
+.PHONY: e2e-with-ginkgo
+e2e-with-ginkgo:
+	ginkgo e2e

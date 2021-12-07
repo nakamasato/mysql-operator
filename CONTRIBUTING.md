@@ -136,13 +136,16 @@ make uninstall
 1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
 # Test
 
+## Versions
+
+- Ginkgo: v1.16.4
+- Gomega: v1.13.0
+
 ## Controller Test
 
 ```
 make test
 ```
-
-(current `make test` includes the ***e2e (kind + skaffold + ginkgo + gomega)*** )
 
 ## e2e
 
@@ -168,6 +171,12 @@ Test steps:
 1. AfterSuite:
     1. Execute `skaffold delete`.
     1. Clean up `kind` cluster.
+
+Run:
+
+```
+make e2e-with-ginkgo
+```
 
 <details><summary>If we want to debug with running each step with commands</summary>
 
@@ -222,7 +231,7 @@ e2e steps:
 Run:
 
 ```
-make e2e
+make e2e-with-kuttl
 ```
 
 <details>
