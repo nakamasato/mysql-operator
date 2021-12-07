@@ -104,13 +104,14 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "Failed to create mysqlClient")
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
+	log.Info("started mysqlClient.Ping()")
 	err = mysqlClient.Ping()
 	if err != nil { // TODO: #23 add error info to status
 		log.Error(err, "Failed to connect to MySQL.", "mysqlName", mysqlName)
 		// return ctrl.Result{}, err //requeue
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
-
+	log.Info("Successfully created mysqlClient")
 	defer mysqlClient.Close()
 
 	// Finalize if DeletionTimestamp exists
@@ -154,8 +155,10 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	var password string
 	if err != nil {
 		if errors.IsNotFound(err) { // Secret doesn't exists -> generate password
+			log.Info("Generate new password for Secret", "secretName", secretName)
 			password = utils.GenerateRandomString(16)
 		} else {
+			log.Error(err, "Failed to get Secret", "secretName", secretName)
 			return r.ManageError(ctx, mysqlUser, err) // requeue
 		}
 	} else { // exists -> get password from Secret

@@ -18,6 +18,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -34,8 +35,8 @@ var _ = Describe("E2e", func() {
 
 	ctx := context.Background()
 	BeforeEach(func() {
-		// deleteMySQLDeploymentIfExist(ctx)
-		// deleteMySQLServiceIfExist(ctx)
+		deleteMySQLDeploymentIfExist(ctx)
+		deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
 	})
@@ -49,26 +50,46 @@ var _ = Describe("E2e", func() {
 
 	Describe("Creating MySQL object", func() {
 		Context("With the MySQL cluster", func() {
-			It("successfully create MySQL object", func() {
+			BeforeEach(func ()  {
 				// create mysql deployment & service
-				// deploy := newMySQLDeployment()
-				// Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
-				// Eventually(func() bool {
-				// 	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, deploy)
-				// 	if err != nil {
-				// 		return false
-				// 	}
-				// 	return deploy.Status.AvailableReplicas == *deploy.Spec.Replicas
-				// }, timeout, interval).Should(BeTrue())
-				// service := newMySQLService()
-				// Expect(k8sClient.Create(ctx, service)).Should(Succeed())
+				deploy := newMySQLDeployment()
+				Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
+				Eventually(func() bool {
+					err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, deploy)
+					if err != nil {
+						return false
+					}
+					return deploy.Status.ReadyReplicas == *deploy.Spec.Replicas
+				}, timeout, interval).Should(BeTrue())
+				service := newMySQLService()
+				Expect(k8sClient.Create(ctx, service)).Should(Succeed())
+
+				svcNodePort := newMySQLServiceNodePort()
+				Expect(k8sClient.Create(ctx, svcNodePort)).Should(Succeed())
+
+				ep := &corev1.Endpoints{}
+				Eventually(func() bool {
+					k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, ep)
+					for _, subset := range ep.Subsets {
+						for _, port := range subset.Ports {
+							if port.Port == 3306 {
+								return len(subset.Addresses) > 0
+							}
+						}
+					}
+					return false
+				}, timeout, interval).Should(BeTrue())
+
+				time.Sleep(2 * time.Second)
 
 				// create mysql
 				mysql := newMySQL(mysqlName, mysqlNamespace)
 				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 				// create mysqluser
-				mysqlUser := newMySQLUser(mysqlUserName, mysqlNamespace)
+				mysqlUser := newMySQLUser(mysqlUserName, mysqlName, mysqlNamespace)
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+			})
+			It("successfully create MySQL object", func() {
 
 				// expect to have Secret
 				secret := &corev1.Secret{}
@@ -123,11 +144,14 @@ func checkMySQLHasUser(mysqluser string) (bool, error) {
 }
 
 func deleteMySQLServiceIfExist(ctx context.Context) {
-	object, err := getService("mysql", mysqlNamespace)
-	if err != nil {
-		return
+	svcNames := []string{"mysql", "mysql-nodeport"}
+	for _, svcName := range svcNames {
+		object, err := getService(svcName, mysqlNamespace)
+		if err != nil {
+			return
+		}
+		Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 	}
-	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
 func deleteMySQLDeploymentIfExist(ctx context.Context) {
@@ -228,7 +252,7 @@ func newMySQL(name, namespace string) *mysqlv1alpha1.MySQL {
 	}
 }
 
-func newMySQLUser(name, namespace string) *mysqlv1alpha1.MySQLUser {
+func newMySQLUser(name, mysqlName, namespace string) *mysqlv1alpha1.MySQLUser {
 	return &mysqlv1alpha1.MySQLUser{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
@@ -238,67 +262,96 @@ func newMySQLUser(name, namespace string) *mysqlv1alpha1.MySQLUser {
 	}
 }
 
-// func newMySQLService() *corev1.Service {
-// 	labels := map[string]string{
-// 		"app": "mysql",
-// 	}
-// 	return &corev1.Service{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name:      "mysql",
-// 			Namespace: mysqlNamespace,
-// 			Labels:    labels,
-// 		},
-// 		Spec: corev1.ServiceSpec{
-// 			Ports: []corev1.ServicePort{
-// 				{
-// 					Name:     "tcp",
-// 					Protocol: "TCP",
-// 					Port:     3306,
-// 				},
-// 			},
-// 			Selector:                      labels,
-// 			Type:                          "ClusterIP",
-// 			HealthCheckNodePort:           0,
-// 			PublishNotReadyAddresses:      false,
-// 			SessionAffinityConfig:         &corev1.SessionAffinityConfig{},
-// 			AllocateLoadBalancerNodePorts: new(bool),
-// 			LoadBalancerClass:             new(string),
-// 		},
-// 	}
-// }
+func newMySQLService() *corev1.Service {
+	labels := map[string]string{
+		"app": "mysql",
+	}
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mysql",
+			Namespace: mysqlNamespace,
+			Labels:    labels,
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{
+					Name:     "tcp",
+					Protocol: "TCP",
+					Port:     3306,
+				},
+			},
+			Selector:                      labels,
+			Type:                          "ClusterIP",
+		},
+	}
+}
 
-// func newMySQLDeployment() *appsv1.Deployment {
-// 	labels := map[string]string{
-// 		"app": "mysql",
-// 	}
-// 	replicas := int32(1)
-// 	return &appsv1.Deployment{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name:      "mysql",
-// 			Namespace: mysqlNamespace,
-// 		},
-// 		Spec: appsv1.DeploymentSpec{
-// 			Replicas: &replicas,
-// 			Selector: &metav1.LabelSelector{
-// 				MatchLabels: labels,
-// 			},
-// 			Template: corev1.PodTemplateSpec{
-// 				ObjectMeta: metav1.ObjectMeta{
-// 					Labels: labels,
-// 				},
-// 				Spec: corev1.PodSpec{
-// 					Containers: []corev1.Container{{
-// 						Image: "mysql:5.7",
-// 						Name:  "mysql",
-// 						Env: []corev1.EnvVar{
-// 							{
-// 								Name:  "MYSQL_ROOT_PASSWORD",
-// 								Value: "password",
-// 							},
-// 						},
-// 					}},
-// 				},
-// 			},
-// 		},
-// 	}
-// }
+func newMySQLServiceNodePort() *corev1.Service {
+	labels := map[string]string{
+		"app": "mysql",
+	}
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mysql-nodeport",
+			Namespace: mysqlNamespace,
+			Labels:    labels,
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{
+					Name:     "tcp",
+					Protocol: "TCP",
+					Port:     3306,
+					NodePort: 30306,
+				},
+			},
+			Selector:                      labels,
+			Type:                          "NodePort",
+		},
+	}
+}
+
+func newMySQLDeployment() *appsv1.Deployment {
+	labels := map[string]string{
+		"app": "mysql",
+	}
+	replicas := int32(1)
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mysql",
+			Namespace: mysqlNamespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Image: "mysql:5.7",
+						Name:  "mysql",
+						Env: []corev1.EnvVar{
+							{
+								Name:  "MYSQL_ROOT_PASSWORD",
+								Value: "password",
+							},
+						},
+						ReadinessProbe: &corev1.Probe{
+							Handler:                       corev1.Handler{
+								TCPSocket: &corev1.TCPSocketAction{
+									Port: intstr.FromInt(3306),
+								},
+							},
+							InitialDelaySeconds:           5,
+							PeriodSeconds:                 10,
+						},
+					}},
+				},
+			},
+		},
+	}
+}
