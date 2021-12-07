@@ -30,7 +30,7 @@ jobs:
 
       - run: |
           make test
-          cat cover.out >> coverage.txt
+          cat **/cover.out >> coverage.txt
 
       - name: codecov
         uses: codecov/codecov-action@v1
