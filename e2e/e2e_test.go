@@ -11,6 +11,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -48,7 +49,7 @@ var _ = Describe("E2e", func() {
 		deleteMySQLIfExist(ctx)
 	})
 
-	Describe("Creating MySQL object", func() {
+	Describe("Creating and deleting MySQL/MySQLUser object", func() {
 		Context("With the MySQL cluster", func() {
 			BeforeEach(func ()  {
 				// create mysql deployment & service
@@ -76,7 +77,7 @@ var _ = Describe("E2e", func() {
 				mysqlUser := newMySQLUser(mysqlUserName, mysqlName, mysqlNamespace)
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 			})
-			It("successfully create MySQL object", func() {
+			It("successfully create MySQL user and Secret", func() {
 
 				// expect to have Secret
 				secret := &corev1.Secret{}
@@ -89,6 +90,28 @@ var _ = Describe("E2e", func() {
 					res, _ := checkMySQLHasUser(mysqlUserName)
 					return res
 				}, timeout, interval).Should(BeTrue())
+			})
+
+			It("successfully delete MySQL user and Secret", func() {
+				By("delete MySQLUser")
+				mysqlUser, err := getMySQLUser(mysqlUserName, mysqlNamespace)
+				if err != nil {
+					return
+				}
+				Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
+
+				// expect to delete Secret
+				secret := &corev1.Secret{}
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+					return errors.IsNotFound(err)
+				}, timeout, interval).Should(BeTrue())
+
+				// expect to delete mysql user in mysql
+				Eventually(func() bool {
+					res, _ := checkMySQLHasUser(mysqlUserName)
+					return res
+				}, timeout, interval).Should(BeFalse())
 			})
 		})
 
