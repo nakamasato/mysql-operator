@@ -67,20 +67,7 @@ var _ = Describe("E2e", func() {
 				svcNodePort := newMySQLServiceNodePort()
 				Expect(k8sClient.Create(ctx, svcNodePort)).Should(Succeed())
 
-				ep := &corev1.Endpoints{}
-				Eventually(func() bool {
-					k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, ep)
-					for _, subset := range ep.Subsets {
-						for _, port := range subset.Ports {
-							if port.Port == 3306 {
-								return len(subset.Addresses) > 0
-							}
-						}
-					}
-					return false
-				}, timeout, interval).Should(BeTrue())
-
-				time.Sleep(2 * time.Second)
+				time.Sleep(1 * time.Second) // TODO: #78 [e2e] Check why Ping() doesn't return without Sleep
 
 				// create mysql
 				mysql := newMySQL(mysqlName, mysqlNamespace)
