@@ -254,6 +254,12 @@ var _ = Describe("MySQLUser controller", func() {
 				// Clean up Secret
 				err = k8sClient.DeleteAllOf(ctx, &v1.Secret{}, client.InNamespace(Namespace))
 				Expect(err).NotTo(HaveOccurred())
+
+				// Delete MySQLUser
+				Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
+				Eventually(func() error {
+					return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+				}).ShouldNot(Succeed())
 			})
 
 			It("Should not create Secret", func() {
