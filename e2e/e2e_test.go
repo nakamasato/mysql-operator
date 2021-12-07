@@ -51,7 +51,7 @@ var _ = Describe("E2e", func() {
 
 	Describe("Creating and deleting MySQL/MySQLUser object", func() {
 		Context("With the MySQL cluster", func() {
-			BeforeEach(func ()  {
+			BeforeEach(func() {
 				// create mysql deployment & service
 				deploy := newMySQLDeployment()
 				Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
@@ -290,8 +290,8 @@ func newMySQLService() *corev1.Service {
 					Port:     3306,
 				},
 			},
-			Selector:                      labels,
-			Type:                          "ClusterIP",
+			Selector: labels,
+			Type:     "ClusterIP",
 		},
 	}
 }
@@ -315,8 +315,8 @@ func newMySQLServiceNodePort() *corev1.Service {
 					NodePort: 30306,
 				},
 			},
-			Selector:                      labels,
-			Type:                          "NodePort",
+			Selector: labels,
+			Type:     "NodePort",
 		},
 	}
 }
@@ -351,13 +351,13 @@ func newMySQLDeployment() *appsv1.Deployment {
 							},
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler:                       corev1.Handler{
+							Handler: corev1.Handler{
 								TCPSocket: &corev1.TCPSocketAction{
 									Port: intstr.FromInt(3306),
 								},
 							},
-							InitialDelaySeconds:           5,
-							PeriodSeconds:                 10,
+							InitialDelaySeconds: 5,
+							PeriodSeconds:       10,
 						},
 					}},
 				},

@@ -10,7 +10,7 @@ on:
       - kuttl-test.yaml
 
 jobs:
-  e2e:
+  e2e-with-kuttl:
     runs-on: ubuntu-latest
     steps:
       - name: set up
@@ -43,5 +43,18 @@ jobs:
           kubectl krew install kuttl
           kubectl kuttl -v
 
-      - name: e2e
-        run: make e2e
+      - name: e2e-with-kuttl
+        run: make e2e-with-kuttl
+
+  e2e-with-ginkgo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: set up
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+
+      - uses: actions/checkout@master
+
+      - name: e2e-with-ginkgo
+        run: make e2e-with-ginkgo

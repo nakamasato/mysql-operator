@@ -32,7 +32,7 @@ var _ = Describe("MySQLUser controller", func() {
 		mysqlUser *mysqlv1alpha1.MySQLUser
 	)
 
-	Context("With available MySQL", func ()  {
+	Context("With available MySQL", func() {
 
 		ctx := context.Background()
 		var stopFunc func()
@@ -183,7 +183,7 @@ var _ = Describe("MySQLUser controller", func() {
 		})
 	})
 
-	Context("With unavailable MySQL", func ()  {
+	Context("With unavailable MySQL", func() {
 		ctx := context.Background()
 		var stopFunc func()
 		BeforeEach(func() {
@@ -234,7 +234,7 @@ var _ = Describe("MySQLUser controller", func() {
 			time.Sleep(100 * time.Millisecond)
 		})
 
-		When("Creating MySQLUser", func ()  {
+		When("Creating MySQLUser", func() {
 
 			BeforeEach(func() {
 				// Clean up MySQLUser
@@ -274,7 +274,7 @@ var _ = Describe("MySQLUser controller", func() {
 			})
 		})
 
-		When("Creating and deleting MySQLUser", func ()  {
+		When("Creating and deleting MySQLUser", func() {
 
 			BeforeEach(func() {
 				// Clean up MySQLUser
