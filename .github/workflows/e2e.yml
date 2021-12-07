@@ -57,6 +57,11 @@ jobs:
       - name: install ginkgo
         run: go get -u github.com/onsi/ginkgo/ginkgo
 
+      - name: install skaffold # TODO: #69 Enable to install skaffold in e2e
+        run: |
+          curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+          sudo install skaffold /usr/local/bin/
+
       - uses: actions/checkout@master
 
       - name: e2e-with-ginkgo
