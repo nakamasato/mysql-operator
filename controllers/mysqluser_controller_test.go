@@ -72,26 +72,14 @@ var _ = Describe("MySQLUser controller", func() {
 
 		When("Creating a MySQLUser", func() {
 			AfterEach(func() {
-				// Expect(k8sClient.Get(ctx, client.ObjectKey{Name: MySQLUserName, Namespace: Namespace}, mysqlUser)).Should(Succeed())
 				// Delete MySQLUser
 				Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
-				// Remove finalizers from MySQLUser if exists
-				// if k8sClient.Get(ctx, client.ObjectKey{Name: MySQLUserName, Namespace: Namespace}, mysqlUser) == nil {
-				// 	mysqlUser.Finalizers = []string{}
-				// 	Eventually(k8sClient.Update(ctx, mysqlUser)).Should(Succeed())
-				// }
 				Eventually(func() error {
 					return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
 				}).ShouldNot(Succeed())
 
 				// Delete MySQL
-				// Expect(k8sClient.Get(ctx, client.ObjectKey{Name: MySQLName, Namespace: Namespace}, mysql)).Should(Succeed())
 				Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
-				// Remove finalizers from MySQL if exists
-				// if k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql) == nil {
-				// 	mysql.Finalizers = []string{}
-				// 	Eventually(k8sClient.Update(ctx, mysql)).Should(Succeed())
-				// }
 				Eventually(func() error {
 					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
 				}).ShouldNot(Succeed())
@@ -266,12 +254,6 @@ var _ = Describe("MySQLUser controller", func() {
 				// Clean up Secret
 				err = k8sClient.DeleteAllOf(ctx, &v1.Secret{}, client.InNamespace(Namespace))
 				Expect(err).NotTo(HaveOccurred())
-
-				// Delete MySQLUser
-				Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
-				Eventually(func() error {
-					return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
-				}).ShouldNot(Succeed())
 			})
 
 			It("Should not create Secret", func() {
