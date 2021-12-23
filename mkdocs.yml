@@ -1,3 +1,5 @@
 site_name: MySQL Controller
 theme:
   name: material
+  palette:
+    primary: cyan
