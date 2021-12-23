@@ -51,7 +51,7 @@ var _ = Describe("E2e", func() {
 
 	Describe("Creating and deleting MySQL/MySQLUser object", func() {
 		Context("With the MySQL cluster", func() {
-			BeforeEach(func() {
+			BeforeEach(func ()  {
 				// create mysql deployment & service
 				deploy := newMySQLDeployment()
 				Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
@@ -118,6 +118,25 @@ var _ = Describe("E2e", func() {
 		Context("Without the MySQL cluster", func() {
 			It("should fail", func() {
 				Expect("test").To(Equal("test"))
+			})
+			It("Create MySQL and MySQLUser", func() {
+				// create mysql
+				mysql := newMySQL(mysqlName, mysqlNamespace)
+				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
+				// create mysqluser
+				mysqlUser := newMySQLUser(mysqlUserName, mysqlName, mysqlNamespace)
+				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+				// // expect to have Secret
+				// secret := &corev1.Secret{}
+				// Eventually(func() error {
+				// 	return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+				// }, timeout, interval).Should(Succeed())
+
+				// // expect to have mysql user in mysql
+				// Eventually(func() bool {
+				// 	res, _ := checkMySQLHasUser(mysqlUserName)
+				// 	return res
+				// }, timeout, interval).Should(BeTrue())
 			})
 		})
 	})
@@ -290,8 +309,8 @@ func newMySQLService() *corev1.Service {
 					Port:     3306,
 				},
 			},
-			Selector: labels,
-			Type:     "ClusterIP",
+			Selector:                      labels,
+			Type:                          "ClusterIP",
 		},
 	}
 }
@@ -315,8 +334,8 @@ func newMySQLServiceNodePort() *corev1.Service {
 					NodePort: 30306,
 				},
 			},
-			Selector: labels,
-			Type:     "NodePort",
+			Selector:                      labels,
+			Type:                          "NodePort",
 		},
 	}
 }
@@ -351,13 +370,13 @@ func newMySQLDeployment() *appsv1.Deployment {
 							},
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							Handler:                       corev1.Handler{
 								TCPSocket: &corev1.TCPSocketAction{
 									Port: intstr.FromInt(3306),
 								},
 							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       10,
+							InitialDelaySeconds:           5,
+							PeriodSeconds:                 10,
 						},
 					}},
 				},
