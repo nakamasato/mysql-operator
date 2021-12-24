@@ -5,6 +5,8 @@
 * `MySQL` - MySQL cluster or server.
 * `MySQLUser` - MySQL user.
 
-## Reconciliation loop
+## Contents
 
-![](reconciliation.drawio.svg)
+
+- [Reconciliation](reconciliation.md)
+- [Debug](debug.md)
