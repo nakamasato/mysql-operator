@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"strings"
-	"time"
 
 	"github.com/redhat-cop/operator-utils/pkg/util"
 	v1 "k8s.io/api/core/v1"
@@ -111,7 +110,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil { // TODO: #23 add error info to status
 		log.Error(err, "Failed to connect to MySQL.", "mysqlName", mysqlName)
 		// return ctrl.Result{}, err //requeue
-		return r.ManageErrorWithRequeue(ctx, mysqlUser, err, 3*time.Second) // recheck mysql connectivity every three seconds
+		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
 	log.Info("Successfully created mysqlClient")
 	defer mysqlClient.Close()
