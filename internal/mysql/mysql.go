@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
