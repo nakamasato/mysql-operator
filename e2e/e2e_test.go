@@ -53,22 +53,7 @@ var _ = Describe("E2e", func() {
 		Context("With the MySQL cluster", func() {
 			BeforeEach(func() {
 				// create mysql deployment & service
-				deploy := newMySQLDeployment()
-				Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
-				Eventually(func() bool {
-					err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, deploy)
-					if err != nil {
-						return false
-					}
-					return deploy.Status.ReadyReplicas == *deploy.Spec.Replicas
-				}, timeout, interval).Should(BeTrue())
-				service := newMySQLService()
-				Expect(k8sClient.Create(ctx, service)).Should(Succeed())
-
-				svcNodePort := newMySQLServiceNodePort()
-				Expect(k8sClient.Create(ctx, svcNodePort)).Should(Succeed())
-
-				time.Sleep(1 * time.Second) // TODO: #78 [e2e] Check why Ping() doesn't return without Sleep
+				createMySQLDeploymentAndService(ctx)
 
 				// create mysql
 				mysql := newMySQL(mysqlName, mysqlNamespace)
@@ -77,7 +62,7 @@ var _ = Describe("E2e", func() {
 				mysqlUser := newMySQLUser(mysqlUserName, mysqlName, mysqlNamespace)
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 			})
-			It("successfully create MySQL user and Secret", func() {
+			It("Successfully create MySQL user and Secret", func() {
 
 				// expect to have Secret
 				secret := &corev1.Secret{}
@@ -92,8 +77,8 @@ var _ = Describe("E2e", func() {
 				}, timeout, interval).Should(BeTrue())
 			})
 
-			It("successfully delete MySQL user and Secret", func() {
-				By("delete MySQLUser")
+			It("Successfully delete MySQL user and Secret", func() {
+				By("Delete MySQLUser")
 				mysqlUser, err := getMySQLUser(mysqlUserName, mysqlNamespace)
 				if err != nil {
 					return
@@ -116,22 +101,39 @@ var _ = Describe("E2e", func() {
 		})
 
 		Context("Without the MySQL cluster", func() {
-			It("should fail", func() {
-				Expect("test").To(Equal("test"))
+			It("Fail to create MySQL", func() {
+				// create mysql
+				// mysql := newMySQL(mysqlName, mysqlNamespace)
+				// Expect(k8sClient.Create(ctx, mysql)).Should(Fail())
 			})
-		})
-	})
+			It("Create MySQL and MySQLUser after MySQL cluster gets available", func() {
+				// create mysql
+				mysql := newMySQL(mysqlName, mysqlNamespace)
+				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
+				// create mysqluser
+				mysqlUser := newMySQLUser(mysqlUserName, mysqlName, mysqlNamespace)
+				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+				// expect not to have Secret
+				secret := &corev1.Secret{}
+				Consistently(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+					return errors.IsNotFound(err)
+				}, timeout, interval).Should(BeTrue())
 
-	Describe("Creating MySQLUser", func() {
-		Context("With the MySQL object", func() {
-			It("should pass", func() {
-				Expect("test").To(Equal("test"))
-			})
-		})
+				By("Create MySQL Deployment and Service")
+				// create mysql deployment & service
+				createMySQLDeploymentAndService(ctx)
 
-		Context("Without the MySQL object", func() {
-			It("should fail", func() {
-				Expect("test").To(Equal("test"))
+				// expect to have Secret
+				Eventually(func() error {
+					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+				}, timeout, interval).Should(Succeed())
+
+				// expect to have mysql user in mysql
+				Eventually(func() bool {
+					res, _ := checkMySQLHasUser(mysqlUserName)
+					return res
+				}, timeout, interval).Should(BeTrue())
 			})
 		})
 	})
@@ -364,4 +366,22 @@ func newMySQLDeployment() *appsv1.Deployment {
 			},
 		},
 	}
+}
+
+func createMySQLDeploymentAndService(ctx context.Context) {
+	deploy := newMySQLDeployment()
+	Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
+	Eventually(func() bool {
+		err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, deploy)
+		if err != nil {
+			return false
+		}
+		return deploy.Status.ReadyReplicas == *deploy.Spec.Replicas
+	}, timeout, interval).Should(BeTrue())
+	service := newMySQLService()
+	Expect(k8sClient.Create(ctx, service)).Should(Succeed())
+
+	svcNodePort := newMySQLServiceNodePort()
+	Expect(k8sClient.Create(ctx, svcNodePort)).Should(Succeed())
+	time.Sleep(1 * time.Second) // TODO: #78 [e2e] Check why Ping() doesn't return without Sleep
 }
