@@ -1,9 +1,7 @@
 package mysql
 
 import (
-	"context"
 	"database/sql"
-	"time"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -61,20 +59,7 @@ func (mc mysqlClient) Exec(query string) error {
 }
 
 func (mc mysqlClient) Ping() error {
-	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	done := make(chan error, 1)
-	go func() {
-		err := mc.db.Ping()
-		done <- err
-	}()
-	select {
-	case e := <-done:
-		return e
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	return mc.db.Ping()
 }
 
 func (mc mysqlClient) Close() {
