@@ -50,6 +50,7 @@ var _ = Describe("MySQLUser controller", func() {
 					k8sManager.GetEventRecorderFor("mysqluser_controller"),
 					k8sManager.GetAPIReader(),
 				),
+				Log:                nil,
 				Scheme:             k8sManager.GetScheme(),
 				MySQLClientFactory: NewFakeMySQLClient,
 			}).SetupWithManager(k8sManager)
@@ -199,6 +200,7 @@ var _ = Describe("MySQLUser controller", func() {
 					k8sManager.GetEventRecorderFor("mysqluser_controller"),
 					k8sManager.GetAPIReader(),
 				),
+				Log:                nil,
 				Scheme:             k8sManager.GetScheme(),
 				MySQLClientFactory: NewMySQLClient, // real mysql client
 			}).SetupWithManager(k8sManager)
