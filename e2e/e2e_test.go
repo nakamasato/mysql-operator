@@ -353,7 +353,7 @@ func newMySQLDeployment() *appsv1.Deployment {
 							},
 						},
 						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
+							ProbeHandler: corev1.ProbeHandler{
 								TCPSocket: &corev1.TCPSocketAction{
 									Port: intstr.FromInt(3306),
 								},
