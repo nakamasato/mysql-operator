@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -60,26 +61,41 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	err := r.Get(ctx, req.NamespacedName, mysql)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Fetch MySQL instance. MySQL not found.", "mysql.Name", mysql.Name, "mysql.Namespace", mysql.Namespace)
+			log.Info("[FetchMySQL] Not found", "mysql.Name", mysql.Name, "mysql.Namespace", mysql.Namespace)
 			return ctrl.Result{}, nil
 		}
 
-		log.Error(err, "Fetch MySQL instance. Failed to get MySQL.")
+		log.Error(err, "[FetchMySQL] Failed to get MySQL")
 		return ctrl.Result{}, err
+	}
+
+	// Get referenced number
+	referencedNum, err := r.countReferencesByMySQLUser(ctx, log, mysql)
+	if err != nil {
+		log.Error(err, "[countReferences] Failed get referencedNum")
+		return ctrl.Result{}, err
+	}
+	log.Info(fmt.Sprintf("[countReferences] Successfully got %d\n", referencedNum))
+
+	// Update Status
+	if mysql.Status.UserCount != int32(referencedNum) {
+		mysql.Status.UserCount = int32(referencedNum)
+		err = r.Status().Update(ctx, mysql)
+		if err != nil {
+			log.Error(err, "[Status] Failed to update")
+			return ctrl.Result{}, err
+		}
+		log.Info(fmt.Sprintf("[Status] updated with userCount=%d\n", referencedNum))
 	}
 
 	// Finalize if DeletionTimestamp exists
 	isMysqlUserMarkedToBeDeleted := mysql.GetDeletionTimestamp() != nil
 	if isMysqlUserMarkedToBeDeleted {
-		log.Info("MySQL instance is marked to be deleted.")
+		log.Info("[MySQL] Marked to be deleted")
 		if controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
 			// Run finalization logic for mysqlFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			referencedNum, err := r.countReferencesByMySQLUser(ctx, log, mysql)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
 
 			// if referencedNum is greater than zero, requeue it.
 			if referencedNum > 0 {
@@ -115,6 +131,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlv1alpha1.MySQL{}).
+		Owns(&mysqlv1alpha1.MySQLUser{}).
 		Complete(r)
 }
 
@@ -133,10 +150,5 @@ func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, log lo
 			mysqlUserCount++
 		}
 	}
-	if mysqlUserCount == 0 {
-		return mysqlUserCount, nil
-	} else {
-		log.Info("Cannot remove mysql '%s' finalizer as is referenced by %d mysqlUsers", mysql.Name, mysqlUserCount)
-		return mysqlUserCount, nil
-	}
+	return mysqlUserCount, nil
 }

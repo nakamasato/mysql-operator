@@ -128,9 +128,9 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
-              status.phase:
+              phase:
                 type: string
-              status.reason:
+              reason:
                 type: string
             type: object
         type: object

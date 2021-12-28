@@ -40,7 +40,12 @@ import (
 	"github.com/nakamasato/mysql-operator/internal/utils"
 )
 
-const mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
+const (
+	mysqlUserFinalizer       = "mysqluser.nakamasato.com/finalizer"
+	mysqlUserReasonCompleted = "Both secret and mysql user are successfully created."
+	mysqlUserPhaseReady      = "Ready"
+	mysqlUserPhaseNotReady   = "NotReady"
+)
 
 // MySQLUserReconciler reconciles a MySQLUser object
 type MySQLUserReconciler struct {
@@ -73,14 +78,14 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err := r.GetClient().Get(ctx, req.NamespacedName, mysqlUser)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Fetch MySQLUser instance. MySQLUser not found.", "req.NamespacedName", req.NamespacedName)
+			log.Info("[FetchMySQLUser] Not found", "req.NamespacedName", req.NamespacedName)
 			return ctrl.Result{}, nil
 		}
 
-		log.Error(err, "Fetch MySQLUser instance. Failed to get MySQLUser.")
+		log.Error(err, "[FetchMySQLUser] Failed")
 		return ctrl.Result{}, err
 	}
-	log.Info("Fetch MySQLUser instance. MySQLUser resource found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+	log.Info("[FetchMySQLUser] Found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
 	mysqlUserName := mysqlUser.ObjectMeta.Name
 	mysqlName := mysqlUser.Spec.MysqlName
 
@@ -88,14 +93,23 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	mysql := &mysqlv1alpha1.MySQL{}
 	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlUser.Spec.MysqlName}
 	if err := r.GetClient().Get(ctx, mysqlNamespacedName, mysql); err != nil {
-		msg := "unable to fetch MySQL"
+		msg := "[FetchMySQL] Failed"
 		log.Error(err, msg)
 		mysqlUser.Status.Phase = "NotReady"
 		mysqlUser.Status.Reason = msg
 		// return ctrl.Result{}, client.IgnoreNotFound(err)
 		return r.ManageError(ctx, mysqlUser, err)
 	}
-	log.Info("Fetched MySQL instance.")
+	log.Info("[FetchMySQL] Found")
+
+	// SetOwnerReference if not exists
+	if !r.ifOwnerReferencesContains(mysqlUser.ObjectMeta.OwnerReferences, mysql) {
+		controllerutil.SetControllerReference(mysql, mysqlUser, r.Scheme)
+		err := r.GetClient().Update(ctx, mysqlUser)
+		if err != nil {
+			return r.ManageError(ctx, mysqlUser, err) // requeue
+		}
+	}
 
 	// Connect to MySQL
 	cfg := mysqlinternal.MySQLConfig{
@@ -105,17 +119,19 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	mysqlClient, err := r.MySQLClientFactory(cfg)
 	if err != nil {
-		log.Error(err, "Failed to create mysqlClient")
+		log.Error(err, "[MySQLClient] Failed to create")
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
-	log.Info("started mysqlClient.Ping()")
+	log.Info("[MySQLClient] Ping")
 	err = mysqlClient.Ping()
-	if err != nil { // TODO: #23 add error info to status
-		log.Error(err, "Failed to connect to MySQL.", "mysqlName", mysqlName)
+	if err != nil {
+		mysqlUser.Status.Phase = "NotRead"
+		mysqlUser.Status.Reason = "Failed to connect to mysql."
+		log.Error(err, "[MySQLClient] Failed to connect to MySQL", "mysqlName", mysqlName)
 		// return ctrl.Result{}, err //requeue
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
-	log.Info("Successfully created mysqlClient")
+	log.Info("[MySQLClient] Successfully connected")
 	defer mysqlClient.Close()
 
 	// Finalize if DeletionTimestamp exists
@@ -159,10 +175,10 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	var password string
 	if err != nil {
 		if errors.IsNotFound(err) { // Secret doesn't exists -> generate password
-			log.Info("Generate new password for Secret", "secretName", secretName)
+			log.Info("[password] Generate new password for Secret", "secretName", secretName)
 			password = utils.GenerateRandomString(16)
 		} else {
-			log.Error(err, "Failed to get Secret", "secretName", secretName)
+			log.Error(err, "[password] Failed to get Secret", "secretName", secretName)
 			return r.ManageError(ctx, mysqlUser, err) // requeue
 		}
 	} else { // exists -> get password from Secret
@@ -170,13 +186,15 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// Create MySQL user if not exists with the password set above.
-	log.Info("Create MySQL user if not.", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
 	err = mysqlClient.Exec("CREATE USER IF NOT EXISTS '" + mysqlUserName + "'@'" + mysqlUser.Spec.Host + "' IDENTIFIED BY '" + password + "';")
 	if err != nil {
-		log.Error(err, "Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
+		log.Error(err, "[MySQL] Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
+	log.Info("[MySQL] Created or updated", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
 	metrics.MysqlUserCreatedTotal.Increment()
+	mysqlUser.Status.Phase = "Ready"
+	mysqlUser.Status.Reason = "mysql user are successfully created. Secret is being created."
 
 	err = r.createSecret(ctx, log, password, secretName, mysqlUser.Namespace, mysqlUser)
 	// TODO: #35 add test if mysql user is successfully created but secret is failed to create
@@ -184,9 +202,8 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return r.ManageError(ctx, mysqlUser, err)
 	}
 	mysqlUser.Status.Phase = "Ready"
-	mysqlUser.Status.Reason = "Both secret and mysql user are successfully created."
+	mysqlUser.Status.Reason = mysqlUserReasonCompleted
 
-	// return ctrl.Result{}, nil
 	return r.ManageSuccess(ctx, mysqlUser)
 }
 
@@ -257,4 +274,13 @@ func (r *MySQLUserReconciler) createSecret(ctx context.Context, log logr.Logger,
 		return err
 	}
 	return nil
+}
+
+func (r *MySQLUserReconciler) ifOwnerReferencesContains(ownerReferences []metav1.OwnerReference, mysql *mysqlv1alpha1.MySQL) bool {
+	for _, ref := range ownerReferences {
+		if ref.APIVersion == "mysql.nakamasato.com/v1alpha1" && ref.Kind == "MySQL" && ref.UID == mysql.UID {
+			return true
+		}
+	}
+	return false
 }

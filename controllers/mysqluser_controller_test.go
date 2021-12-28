@@ -84,7 +84,7 @@ var _ = Describe("MySQLUser controller", func() {
 					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
 				}).ShouldNot(Succeed())
 			})
-			It("Should create Secret", func() {
+			It("Should create Secret and update mysqluser's status", func() {
 				By("By creating a new MySQL")
 				mysql = &mysqlv1alpha1.MySQL{
 					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
@@ -106,6 +106,24 @@ var _ = Describe("MySQLUser controller", func() {
 				Eventually(func() error {
 					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
 				}).Should(Succeed())
+
+				// status.phase should be ready
+				Eventually(func() string {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					if err != nil {
+						return ""
+					}
+					return mysqlUser.Status.Phase
+				}).Should(Equal(mysqlUserPhaseReady))
+
+				// status.reason should be 'both secret and mysql user are successfully created.'
+				Eventually(func() string {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					if err != nil {
+						return ""
+					}
+					return mysqlUser.Status.Reason
+				}).Should(Equal(mysqlUserReasonCompleted))
 			})
 		})
 
@@ -272,6 +290,24 @@ var _ = Describe("MySQLUser controller", func() {
 					return errors.IsNotFound(err)
 				}).Should(BeTrue())
 			})
+
+			// It("Should have NotReady status", func() {
+			// 	By("By creating a new MySQLUser")
+			// 	mysqlUser = &mysqlv1alpha1.MySQLUser{
+			// 		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
+			// 		ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
+			// 		Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+			// 	}
+			// 	Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+			// 	Eventually(func() string {
+			// 		err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+			// 		if err != nil {
+			// 			return ""
+			// 		}
+			// 		return mysqlUser.Status.Phase
+			// 	}).Should(Equal("NotReady"))
+			// })
 		})
 
 		When("Creating and deleting MySQLUser", func() {

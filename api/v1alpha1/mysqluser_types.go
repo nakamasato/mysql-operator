@@ -45,8 +45,8 @@ type MySQLUserStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-	Phase      string             `json:"status.phase,omitempty"`
-	Reason     string             `json:"status.reason,omitempty"`
+	Phase      string             `json:"phase,omitempty"`
+	Reason     string             `json:"reason,omitempty"`
 }
 
 func (m *MySQLUser) GetConditions() []metav1.Condition {
