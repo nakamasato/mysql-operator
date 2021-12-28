@@ -88,7 +88,10 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	mysql := &mysqlv1alpha1.MySQL{}
 	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlUser.Spec.MysqlName}
 	if err := r.GetClient().Get(ctx, mysqlNamespacedName, mysql); err != nil {
-		log.Error(err, "unable to fetch MySQL")
+		msg := "unable to fetch MySQL"
+		log.Error(err, msg)
+		mysqlUser.Status.Phase = "NotReady"
+		mysqlUser.Status.Reason = msg
 		// return ctrl.Result{}, client.IgnoreNotFound(err)
 		return r.ManageError(ctx, mysqlUser, err)
 	}
@@ -180,6 +183,8 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		return r.ManageError(ctx, mysqlUser, err)
 	}
+	mysqlUser.Status.Phase = "Ready"
+	mysqlUser.Status.Reason = "Both secret and mysql user are successfully created."
 
 	// return ctrl.Result{}, nil
 	return r.ManageSuccess(ctx, mysqlUser)

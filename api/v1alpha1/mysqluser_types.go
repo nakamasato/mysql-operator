@@ -45,6 +45,8 @@ type MySQLUserStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Phase      string             `json:"status.phase,omitempty"`
+	Reason     string             `json:"status.reason,omitempty"`
 }
 
 func (m *MySQLUser) GetConditions() []metav1.Condition {
@@ -57,6 +59,8 @@ func (m *MySQLUser) SetConditions(conditions []metav1.Condition) {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="The phase of this MySQLUser"
+//+kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.reason",description="The reason for the current phase of this MySQLUser"
 
 // MySQLUser is the Schema for the mysqlusers API
 type MySQLUser struct {
