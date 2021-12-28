@@ -164,4 +164,3 @@ if err != nil {
     ```
 - [SetOwnerReference](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller/controllerutil#SetOwnerReference): Use this when you just want garbage collection.
     > SetOwnerReference is a helper method to make sure the given object contains an object reference to the object provided. This allows you to declare that owner has a dependency on the object without specifying it as a controller.
-
