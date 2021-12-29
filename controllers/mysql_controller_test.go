@@ -49,20 +49,27 @@ var _ = Describe("MySQL controller", func() {
 
 	Context("With available MySQL", func() {
 		BeforeEach(func() {
-			// Create MySQL
-			mysql := &mysqlv1alpha1.MySQL{
-				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
-				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-				Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
-			}
-			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
-
 			// Delete MySQLUser
 			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() error {
 				return k8sClient.Get(ctx, types.NamespacedName{Name: MySQLUserName, Namespace: Namespace}, mysqlUser)
 			}).ShouldNot(Succeed())
+
+			// Delete MySQL
+			err = k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: MySQLName, Namespace: Namespace}, mysql)
+			}).ShouldNot(Succeed())
+
+			// Create MySQL
+			mysql = &mysqlv1alpha1.MySQL{
+				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
+				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
+				Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
+			}
+			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 		})
 		AfterEach(func() {
 			// Delete MySQLUser
@@ -90,16 +97,16 @@ var _ = Describe("MySQL controller", func() {
 			}, timeout, interval).Should(Equal(int32(0)))
 		})
 
-		It("Should have status.UserCount=1", func() {
+		It("Should increase status.UserCount by one", func() {
 			By("By creating a new MySQLUser")
 			mysqlUser = &mysqlv1alpha1.MySQLUser{
-				TypeMeta: metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
+				TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLUser"},
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: Namespace,
 					Name:      MySQLUserName,
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							APIVersion:         "mysql.nakamasato.com/v1alpha1",
+							APIVersion:         APIVersion,
 							Kind:               "MySQL",
 							Name:               mysql.Name,
 							UID:                mysql.UID,
@@ -121,5 +128,41 @@ var _ = Describe("MySQL controller", func() {
 				return mysql.Status.UserCount
 			}, timeout, interval).Should(Equal(int32(1)))
 		})
+
+		// It("Should decrease status.UserCount to zero", func() {
+		// 	By("By creating a new MySQLUser")
+		// 	mysqlUser = &mysqlv1alpha1.MySQLUser{
+		// 		TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLUser"},
+		// 		ObjectMeta: metav1.ObjectMeta{
+		// 			Namespace: Namespace,
+		// 			Name:      MySQLUserName,
+		// 			OwnerReferences: []metav1.OwnerReference{
+		// 				{
+		// 					APIVersion:         APIVersion,
+		// 					Kind:               "MySQL",
+		// 					Name:               mysql.Name,
+		// 					UID:                mysql.UID,
+		// 					BlockOwnerDeletion: pointer.BoolPtr(true),
+		// 					Controller:         pointer.BoolPtr(true),
+		// 				},
+		// 			},
+		// 		},
+		// 		Spec:   mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+		// 		Status: mysqlv1alpha1.MySQLUserStatus{},
+		// 	}
+		// 	Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+		// 	By("By deleting the MySQLUser")
+		// 	err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+		// 	Expect(err).NotTo(HaveOccurred())
+
+		// 	Eventually(func() int32 {
+		// 		err := k8sClient.Get(ctx, types.NamespacedName{Name: MySQLName, Namespace: Namespace}, mysql)
+		// 		if err != nil {
+		// 			return -1
+		// 		}
+		// 		return mysql.Status.UserCount
+		// 	}, timeout, interval).Should(Equal(int32(0)))
+		// })
 	})
 })

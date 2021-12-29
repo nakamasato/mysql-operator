@@ -47,6 +47,7 @@ var mysql *mysqlv1alpha1.MySQL
 var mysqlUser *mysqlv1alpha1.MySQLUser
 
 const (
+	APIVersion    = "mysql.nakamasato.com/v1alpha1"
 	MySQLName     = "test-mysql"
 	MySQLUserName = "test-mysql-user"
 	Namespace     = "default"
