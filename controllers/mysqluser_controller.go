@@ -123,6 +123,8 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	mysqlClient, err := r.MySQLClientFactory(cfg)
 	if err != nil {
+		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
+		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
 		log.Error(err, "[MySQLClient] Failed to create")
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
