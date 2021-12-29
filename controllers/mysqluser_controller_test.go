@@ -285,6 +285,7 @@ var _ = Describe("MySQLUser controller", func() {
 				}
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
+				// Secret should not be created
 				secret := &v1.Secret{}
 				Consistently(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
@@ -292,13 +293,22 @@ var _ = Describe("MySQLUser controller", func() {
 				}).Should(BeTrue())
 
 				// Status.Phase should be NotReady
-				// Eventually(func() string {
-				// 	err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
-				// 	if err != nil {
-				// 		return ""
-				// 	}
-				// 	return mysqlUser.Status.Phase
-				// }).Should(Equal("NotReady"))
+				Eventually(func() string {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					if err != nil {
+						return ""
+					}
+					return mysqlUser.Status.Phase
+				}).Should(Equal(mysqlUserPhaseNotReady))
+
+				// Status.Reason should be 'failed to connect to mysql'
+				Eventually(func() string {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					if err != nil {
+						return ""
+					}
+					return mysqlUser.Status.Reason
+				}).Should(Equal(mysqlUserReasonMySQLConnectionFailed))
 
 			})
 
@@ -360,14 +370,16 @@ var _ = Describe("MySQLUser controller", func() {
 					return errors.IsNotFound(err)
 				}).Should(BeTrue())
 
+				// Status.Phase should be NotReady
 				Eventually(func() string {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
 					if err != nil {
 						return ""
 					}
 					return mysqlUser.Status.Phase
-				}).Should(Equal("NotReady"))
+				}).Should(Equal(mysqlUserPhaseNotReady))
 
+				// Status.Reason should be 'failed to connect to mysql'
 				Eventually(func() string {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
 					if err != nil {
