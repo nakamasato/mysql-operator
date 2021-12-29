@@ -202,7 +202,7 @@ var _ = Describe("MySQLUser controller", func() {
 		})
 	})
 
-	Context("With unavailable MySQL", func() {
+	Context("With MySQL with unnconnectable configuration", func() {
 		ctx := context.Background()
 		var stopFunc func()
 		BeforeEach(func() {
@@ -243,8 +243,9 @@ var _ = Describe("MySQLUser controller", func() {
 		})
 
 		AfterEach(func() {
-			// Delete MySQL
-			Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
+			// Clean up MySQL
+			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
 			}).ShouldNot(Succeed())
@@ -291,6 +292,24 @@ var _ = Describe("MySQLUser controller", func() {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
 					return errors.IsNotFound(err)
 				}).Should(BeTrue())
+			})
+
+			It("Should have NotReady status with reason 'failed to connect to mysql'", func() {
+				By("By creating a new MySQLUser")
+				mysqlUser = &mysqlv1alpha1.MySQLUser{
+					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
+					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
+					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+					Status:     mysqlv1alpha1.MySQLUserStatus{},
+				}
+				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+				// Secret should not be created
+				secret := &v1.Secret{}
+				Consistently(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
+					return errors.IsNotFound(err)
+				}).Should(BeTrue())
 
 				// Status.Phase should be NotReady
 				Eventually(func() string {
@@ -309,26 +328,7 @@ var _ = Describe("MySQLUser controller", func() {
 					}
 					return mysqlUser.Status.Reason
 				}).Should(Equal(mysqlUserReasonMySQLConnectionFailed))
-
 			})
-
-			// It("Should have NotReady status", func() {
-			// 	By("By creating a new MySQLUser")
-			// 	mysqlUser = &mysqlv1alpha1.MySQLUser{
-			// 		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
-			// 		ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
-			// 		Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
-			// 	}
-			// 	Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
-
-			// 	Eventually(func() string {
-			// 		err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
-			// 		if err != nil {
-			// 			return ""
-			// 		}
-			// 		return mysqlUser.Status.Phase
-			// 	}).Should(Equal("NotReady"))
-			// })
 		})
 
 		When("Creating and deleting MySQLUser", func() {
@@ -353,13 +353,47 @@ var _ = Describe("MySQLUser controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			It("Should be able to delete MySQLUser", func() {
+			It("Should delete MySQLUser", func() {
 				By("By creating a new MySQLUser")
 				mysqlUser = &mysqlv1alpha1.MySQLUser{
 					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
 					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
 					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
 					Status:     mysqlv1alpha1.MySQLUserStatus{},
+				}
+				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+				// Secret will not be created
+				secret := &v1.Secret{}
+				Consistently(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
+					return errors.IsNotFound(err)
+				}).Should(BeTrue())
+
+				// Delete MySQLUser
+				Expect(k8sClient.Delete(ctx, mysqlUser)).To(Succeed())
+				Eventually(func() error {
+					return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+				}).Should(HaveOccurred())
+			})
+		})
+
+		Context("With no MySQL found", func() {
+			BeforeEach(func ()  {
+				// Clean up MySQLUser
+				err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
+				Expect(err).NotTo(HaveOccurred())
+
+				// Clean up MySQL
+				err = k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("Should have NotReady status with reason 'failed to fetch MySQL'", func() {
+				By("By creating a new MySQLUser")
+				mysqlUser = &mysqlv1alpha1.MySQLUser{
+					TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQLUser"},
+					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
+					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
 				}
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
@@ -379,20 +413,14 @@ var _ = Describe("MySQLUser controller", func() {
 					return mysqlUser.Status.Phase
 				}).Should(Equal(mysqlUserPhaseNotReady))
 
-				// Status.Reason should be 'failed to connect to mysql'
+				// Status.Reason should be 'failed to fetch MySQL'
 				Eventually(func() string {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
 					if err != nil {
 						return ""
 					}
 					return mysqlUser.Status.Reason
-				}).Should(Equal(mysqlUserReasonMySQLConnectionFailed))
-
-				// Delete MySQLUser
-				Expect(k8sClient.Delete(ctx, mysqlUser)).To(Succeed())
-				Eventually(func() error {
-					return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
-				}).Should(HaveOccurred())
+				}).Should(Equal(mysqlUserReasonMySQLFetchFailed))
 			})
 		})
 	})

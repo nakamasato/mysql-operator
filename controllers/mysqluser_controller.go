@@ -44,6 +44,7 @@ const (
 	mysqlUserFinalizer       = "mysqluser.nakamasato.com/finalizer"
 	mysqlUserReasonCompleted = "Both secret and mysql user are successfully created."
 	mysqlUserReasonMySQLConnectionFailed = "Failed to connect to mysql"
+	mysqlUserReasonMySQLFetchFailed = "Failed to fetch MySQL"
 	mysqlUserPhaseReady      = "Ready"
 	mysqlUserPhaseNotReady   = "NotReady"
 )
@@ -94,10 +95,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	mysql := &mysqlv1alpha1.MySQL{}
 	var mysqlNamespacedName = client.ObjectKey{Namespace: req.Namespace, Name: mysqlUser.Spec.MysqlName}
 	if err := r.GetClient().Get(ctx, mysqlNamespacedName, mysql); err != nil {
-		msg := "[FetchMySQL] Failed"
-		log.Error(err, msg)
-		mysqlUser.Status.Phase = "NotReady"
-		mysqlUser.Status.Reason = msg
+		log.Error(err, "[FetchMySQL] Failed")
+		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
+		mysqlUser.Status.Reason = mysqlUserReasonMySQLFetchFailed
 		// return ctrl.Result{}, client.IgnoreNotFound(err)
 		return r.ManageError(ctx, mysqlUser, err)
 	}
@@ -105,8 +105,11 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// SetOwnerReference if not exists
 	if !r.ifOwnerReferencesContains(mysqlUser.ObjectMeta.OwnerReferences, mysql) {
-		controllerutil.SetControllerReference(mysql, mysqlUser, r.Scheme)
-		err := r.GetClient().Update(ctx, mysqlUser)
+		err := controllerutil.SetControllerReference(mysql, mysqlUser, r.Scheme)
+		if err != nil {
+			return r.ManageError(ctx, mysqlUser, err) // requeue
+		}
+		err = r.GetClient().Update(ctx, mysqlUser)
 		if err != nil {
 			return r.ManageError(ctx, mysqlUser, err) // requeue
 		}
