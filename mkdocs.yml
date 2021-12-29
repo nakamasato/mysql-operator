@@ -15,3 +15,5 @@ extra:
   analytics:
     provider: google
     property: G-9NTB93RVPJ
+markdown_extensions:
+  - pymdownx.superfences
