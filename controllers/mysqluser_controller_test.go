@@ -19,18 +19,7 @@ import (
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
 )
 
-const (
-	MySQLName     = "test-mysql"
-	MySQLUserName = "test-mysql-user"
-	Namespace     = "default"
-)
-
 var _ = Describe("MySQLUser controller", func() {
-
-	var (
-		mysql     *mysqlv1alpha1.MySQL
-		mysqlUser *mysqlv1alpha1.MySQLUser
-	)
 
 	Context("With available MySQL", func() {
 
@@ -379,7 +368,7 @@ var _ = Describe("MySQLUser controller", func() {
 		})
 
 		Context("With no MySQL found", func() {
-			BeforeEach(func ()  {
+			BeforeEach(func() {
 				// Clean up MySQLUser
 				err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
 				Expect(err).NotTo(HaveOccurred())

@@ -19,6 +19,7 @@ package controllers
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -42,6 +43,16 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var mysql *mysqlv1alpha1.MySQL
+var mysqlUser *mysqlv1alpha1.MySQLUser
+
+const (
+	MySQLName     = "test-mysql"
+	MySQLUserName = "test-mysql-user"
+	Namespace     = "default"
+	timeout       = time.Second * 10
+	interval      = time.Millisecond * 250
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)

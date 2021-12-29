@@ -41,12 +41,12 @@ import (
 )
 
 const (
-	mysqlUserFinalizer       = "mysqluser.nakamasato.com/finalizer"
-	mysqlUserReasonCompleted = "Both secret and mysql user are successfully created."
+	mysqlUserFinalizer                   = "mysqluser.nakamasato.com/finalizer"
+	mysqlUserReasonCompleted             = "Both secret and mysql user are successfully created."
 	mysqlUserReasonMySQLConnectionFailed = "Failed to connect to mysql"
-	mysqlUserReasonMySQLFetchFailed = "Failed to fetch MySQL"
-	mysqlUserPhaseReady      = "Ready"
-	mysqlUserPhaseNotReady   = "NotReady"
+	mysqlUserReasonMySQLFetchFailed      = "Failed to fetch MySQL"
+	mysqlUserPhaseReady                  = "Ready"
+	mysqlUserPhaseNotReady               = "NotReady"
 )
 
 // MySQLUserReconciler reconciles a MySQLUser object
