@@ -43,6 +43,7 @@ import (
 const (
 	mysqlUserFinalizer       = "mysqluser.nakamasato.com/finalizer"
 	mysqlUserReasonCompleted = "Both secret and mysql user are successfully created."
+	mysqlUserReasonMySQLConnectionFailed = "Failed to connect to mysql"
 	mysqlUserPhaseReady      = "Ready"
 	mysqlUserPhaseNotReady   = "NotReady"
 )
@@ -125,10 +126,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("[MySQLClient] Ping")
 	err = mysqlClient.Ping()
 	if err != nil {
-		mysqlUser.Status.Phase = "NotRead"
-		mysqlUser.Status.Reason = "Failed to connect to mysql."
+		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
+		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
 		log.Error(err, "[MySQLClient] Failed to connect to MySQL", "mysqlName", mysqlName)
-		// return ctrl.Result{}, err //requeue
 		return r.ManageError(ctx, mysqlUser, err) // requeue
 	}
 	log.Info("[MySQLClient] Successfully connected")
@@ -193,7 +193,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	log.Info("[MySQL] Created or updated", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
 	metrics.MysqlUserCreatedTotal.Increment()
-	mysqlUser.Status.Phase = "Ready"
+	mysqlUser.Status.Phase = mysqlUserPhaseReady
 	mysqlUser.Status.Reason = "mysql user are successfully created. Secret is being created."
 
 	err = r.createSecret(ctx, log, password, secretName, mysqlUser.Namespace, mysqlUser)
@@ -201,7 +201,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		return r.ManageError(ctx, mysqlUser, err)
 	}
-	mysqlUser.Status.Phase = "Ready"
+	mysqlUser.Status.Phase = mysqlUserPhaseReady
 	mysqlUser.Status.Reason = mysqlUserReasonCompleted
 
 	return r.ManageSuccess(ctx, mysqlUser)

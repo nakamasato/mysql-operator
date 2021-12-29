@@ -102,6 +102,7 @@ var _ = Describe("MySQLUser controller", func() {
 				}
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
+				// secret should be created
 				secret := &v1.Secret{}
 				Eventually(func() error {
 					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
@@ -289,6 +290,16 @@ var _ = Describe("MySQLUser controller", func() {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
 					return errors.IsNotFound(err)
 				}).Should(BeTrue())
+
+				// Status.Phase should be NotReady
+				// Eventually(func() string {
+				// 	err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+				// 	if err != nil {
+				// 		return ""
+				// 	}
+				// 	return mysqlUser.Status.Phase
+				// }).Should(Equal("NotReady"))
+
 			})
 
 			// It("Should have NotReady status", func() {
@@ -342,17 +353,34 @@ var _ = Describe("MySQLUser controller", func() {
 				}
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
+				// Secret will not be created
 				secret := &v1.Secret{}
 				Consistently(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: getSecretName(MySQLName, MySQLUserName)}, secret)
 					return errors.IsNotFound(err)
 				}).Should(BeTrue())
 
+				Eventually(func() string {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					if err != nil {
+						return ""
+					}
+					return mysqlUser.Status.Phase
+				}).Should(Equal("NotReady"))
+
+				Eventually(func() string {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					if err != nil {
+						return ""
+					}
+					return mysqlUser.Status.Reason
+				}).Should(Equal(mysqlUserReasonMySQLConnectionFailed))
+
 				// Delete MySQLUser
-				Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
+				Expect(k8sClient.Delete(ctx, mysqlUser)).To(Succeed())
 				Eventually(func() error {
 					return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
-				}).ShouldNot(Succeed())
+				}).Should(HaveOccurred())
 			})
 		})
 	})
