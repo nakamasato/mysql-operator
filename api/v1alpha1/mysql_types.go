@@ -40,10 +40,16 @@ type MySQLSpec struct {
 type MySQLStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	//+kubebuilder:default=0
+	UserCount int32 `json:"userCount"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Host",type=string,JSONPath=`.spec.host`
+//+kubebuilder:printcolumn:name="AdminUser",type=string,JSONPath=`.spec.admin_user`
+//+kubebuilder:printcolumn:name="UserCount",type="integer",JSONPath=".status.userCount",description="The number of MySQLUsers that belongs to the MySQL"
 
 // MySQL is the Schema for the mysqls API
 type MySQL struct {

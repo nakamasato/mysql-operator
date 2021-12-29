@@ -16,7 +16,18 @@ spec:
     singular: mysql
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.host
+      name: Host
+      type: string
+    - jsonPath: .spec.admin_user
+      name: AdminUser
+      type: string
+    - description: The number of MySQLUsers that belongs to the MySQL
+      jsonPath: .status.userCount
+      name: UserCount
+      type: integer
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: MySQL is the Schema for the mysqls API
@@ -52,6 +63,13 @@ spec:
             type: object
           status:
             description: MySQLStatus defines the observed state of MySQL
+            properties:
+              userCount:
+                default: 0
+                format: int32
+                type: integer
+            required:
+            - userCount
             type: object
         type: object
     served: true
