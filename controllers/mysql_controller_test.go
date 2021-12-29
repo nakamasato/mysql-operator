@@ -129,40 +129,40 @@ var _ = Describe("MySQL controller", func() {
 			}, timeout, interval).Should(Equal(int32(1)))
 		})
 
-		// It("Should decrease status.UserCount to zero", func() {
-		// 	By("By creating a new MySQLUser")
-		// 	mysqlUser = &mysqlv1alpha1.MySQLUser{
-		// 		TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLUser"},
-		// 		ObjectMeta: metav1.ObjectMeta{
-		// 			Namespace: Namespace,
-		// 			Name:      MySQLUserName,
-		// 			OwnerReferences: []metav1.OwnerReference{
-		// 				{
-		// 					APIVersion:         APIVersion,
-		// 					Kind:               "MySQL",
-		// 					Name:               mysql.Name,
-		// 					UID:                mysql.UID,
-		// 					BlockOwnerDeletion: pointer.BoolPtr(true),
-		// 					Controller:         pointer.BoolPtr(true),
-		// 				},
-		// 			},
-		// 		},
-		// 		Spec:   mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
-		// 		Status: mysqlv1alpha1.MySQLUserStatus{},
-		// 	}
-		// 	Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+		It("Should decrease status.UserCount to zero", func() {
+			By("By creating a new MySQLUser")
+			mysqlUser = &mysqlv1alpha1.MySQLUser{
+				TypeMeta: metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLUser"},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: Namespace,
+					Name:      MySQLUserName,
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion:         APIVersion,
+							Kind:               "MySQL",
+							Name:               mysql.Name,
+							UID:                mysql.UID,
+							BlockOwnerDeletion: pointer.BoolPtr(true),
+							Controller:         pointer.BoolPtr(true),
+						},
+					},
+				},
+				Spec:   mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+				Status: mysqlv1alpha1.MySQLUserStatus{},
+			}
+			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
-		// 	By("By deleting the MySQLUser")
-		// 	err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
-		// 	Expect(err).NotTo(HaveOccurred())
+			By("By deleting the MySQLUser")
+			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+			Expect(err).NotTo(HaveOccurred())
 
-		// 	Eventually(func() int32 {
-		// 		err := k8sClient.Get(ctx, types.NamespacedName{Name: MySQLName, Namespace: Namespace}, mysql)
-		// 		if err != nil {
-		// 			return -1
-		// 		}
-		// 		return mysql.Status.UserCount
-		// 	}, timeout, interval).Should(Equal(int32(0)))
-		// })
+			Eventually(func() int32 {
+				err := k8sClient.Get(ctx, types.NamespacedName{Name: MySQLName, Namespace: Namespace}, mysql)
+				if err != nil {
+					return -1
+				}
+				return mysql.Status.UserCount
+			}, timeout, interval).Should(Equal(int32(0)))
+		})
 	})
 })
