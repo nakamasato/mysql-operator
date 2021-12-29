@@ -7,6 +7,7 @@
 
 - Developer Guide
     - [Reconciliation](developer-guide/reconciliation.md)
+    - [API Resource](developer-guide/api-resources.md)
     - [Debug](developer-guide/debug.md)
 
 ## Getting Started
