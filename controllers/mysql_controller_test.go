@@ -153,7 +153,7 @@ var _ = Describe("MySQL controller", func() {
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
 			By("By deleting the MySQLUser")
-			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
+			err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func() int32 {
