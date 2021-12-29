@@ -15,7 +15,10 @@ MySQL represents a MySQL cluster with root acess.
     - UserCount
 
 TODO:
+
 1. Credential management.
+1. Change to `ClusterResource` so `MySQLUser` in any namespace can reference it. (No need of changing `OwnerReference`)
+    > Namespaced dependents can specify cluster-scoped or namespaced owners.
 
 ## `MySQLUser`
 
