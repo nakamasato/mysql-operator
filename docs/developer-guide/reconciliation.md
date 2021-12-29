@@ -195,7 +195,6 @@ https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resou
 1. Remove the finalizer.
 > Once the list of finalizers is empty, meaning all finalizers have been executed, the resource is deleted by Kubernetes.
 
-
 - https://kubernetes.io/blog/2021/05/14/using-finalizers-to-control-deletion/
 - https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#advanced-topics
 - https://book.kubebuilder.io/reference/using-finalizers.html
