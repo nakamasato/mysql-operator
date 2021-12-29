@@ -62,16 +62,9 @@ var _ = Describe("MySQLUser controller", func() {
 		When("Creating a MySQLUser", func() {
 			AfterEach(func() {
 				// Delete MySQLUser
-				Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
-				Eventually(func() error {
-					return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
-				}).ShouldNot(Succeed())
-
+				cleanUpMySQLUser(ctx, k8sClient, Namespace)
 				// Delete MySQL
-				Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
-				Eventually(func() error {
-					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
-				}).ShouldNot(Succeed())
+				cleanUpMySQL(ctx, k8sClient, Namespace)
 			})
 			It("Should create Secret and update mysqluser's status", func() {
 				By("By creating a new MySQL")
@@ -120,20 +113,11 @@ var _ = Describe("MySQLUser controller", func() {
 		When("Deleting a MySQLUser", func() {
 			BeforeEach(func() {
 				// Clean up MySQLUser
-				err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
-				Eventually(func() error {
-					return k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
-				}).ShouldNot(Succeed())
+				cleanUpMySQLUser(ctx, k8sClient, Namespace)
 				// Clean up MySQL
-				err = k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
-				Eventually(func() error {
-					return k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
-				}).ShouldNot(Succeed())
+				cleanUpMySQL(ctx, k8sClient, Namespace)
 				// Clean up Secret
-				err = k8sClient.DeleteAllOf(ctx, &v1.Secret{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
+				cleanUpSecret(ctx, k8sClient, Namespace)
 
 				// Create resources
 				mysql = &mysqlv1alpha1.MySQL{
@@ -273,12 +257,7 @@ var _ = Describe("MySQLUser controller", func() {
 
 			It("Should not create Secret", func() {
 				By("By creating a new MySQLUser")
-				mysqlUser = &mysqlv1alpha1.MySQLUser{
-					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLUser"},
-					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
-					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
-					Status:     mysqlv1alpha1.MySQLUserStatus{},
-				}
+				mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
 				// Secret should not be created
@@ -291,12 +270,7 @@ var _ = Describe("MySQLUser controller", func() {
 
 			It("Should have NotReady status with reason 'failed to connect to mysql'", func() {
 				By("By creating a new MySQLUser")
-				mysqlUser = &mysqlv1alpha1.MySQLUser{
-					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLUser"},
-					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
-					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
-					Status:     mysqlv1alpha1.MySQLUserStatus{},
-				}
+				mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
 				// Secret should not be created
@@ -329,33 +303,18 @@ var _ = Describe("MySQLUser controller", func() {
 		When("Creating and deleting MySQLUser", func() {
 
 			BeforeEach(func() {
-				// Clean up MySQLUser
-				err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
-
-				// Clean up Secret
-				err = k8sClient.DeleteAllOf(ctx, &v1.Secret{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
+				cleanUpMySQLUser(ctx, k8sClient, Namespace)
+				cleanUpSecret(ctx, k8sClient, Namespace)
 			})
 
 			AfterEach(func() {
-				// Clean up MySQLUser
-				err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
-
-				// Clean up Secret
-				err = k8sClient.DeleteAllOf(ctx, &v1.Secret{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
+				cleanUpMySQLUser(ctx, k8sClient, Namespace)
+				cleanUpSecret(ctx, k8sClient, Namespace)
 			})
 
 			It("Should delete MySQLUser", func() {
 				By("By creating a new MySQLUser")
-				mysqlUser = &mysqlv1alpha1.MySQLUser{
-					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLUser"},
-					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
-					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
-					Status:     mysqlv1alpha1.MySQLUserStatus{},
-				}
+				mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
 				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
 				// Secret will not be created
@@ -376,12 +335,9 @@ var _ = Describe("MySQLUser controller", func() {
 		Context("With no MySQL found", func() {
 			BeforeEach(func() {
 				// Clean up MySQLUser
-				err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQLUser{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
-
+				cleanUpMySQLUser(ctx, k8sClient, Namespace)
 				// Clean up MySQL
-				err = k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(Namespace))
-				Expect(err).NotTo(HaveOccurred())
+				cleanUpMySQL(ctx, k8sClient, Namespace)
 			})
 			It("Should have NotReady status with reason 'failed to fetch MySQL'", func() {
 				By("By creating a new MySQLUser")
