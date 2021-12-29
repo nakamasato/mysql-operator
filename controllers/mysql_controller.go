@@ -24,14 +24,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 )
-
-const mysqlFinalizer = "mysql.nakamasato.com/finalizer"
 
 // MySQLReconciler reconciles a MySQL object
 type MySQLReconciler struct {
@@ -86,42 +83,6 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			return ctrl.Result{}, err
 		}
 		log.Info(fmt.Sprintf("[Status] updated with userCount=%d\n", referencedNum))
-	}
-
-	// Finalize if DeletionTimestamp exists
-	isMysqlUserMarkedToBeDeleted := mysql.GetDeletionTimestamp() != nil
-	if isMysqlUserMarkedToBeDeleted {
-		log.Info("[MySQL] Marked to be deleted")
-		if controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
-			// Run finalization logic for mysqlFinalizer. If the
-			// finalization logic fails, don't remove the finalizer so
-			// that we can retry during the next reconciliation.
-
-			// if referencedNum is greater than zero, requeue it.
-			if referencedNum > 0 {
-				return ctrl.Result{
-					Requeue:      true,
-					RequeueAfter: 0,
-				}, nil // https://github.com/operator-framework/operator-sdk/issues/4209#issuecomment-729916367
-			}
-			// Remove mysqlFinalizer. Once all finalizers have been
-			// removed, the object will be deleted.
-			controllerutil.RemoveFinalizer(mysql, mysqlFinalizer)
-			err = r.Update(ctx, mysql)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-		return ctrl.Result{}, err
-	}
-
-	// Add finalizer for this CR
-	if !controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
-		controllerutil.AddFinalizer(mysql, mysqlFinalizer)
-		err = r.Update(ctx, mysql)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
 	}
 
 	return ctrl.Result{}, nil
