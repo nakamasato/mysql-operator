@@ -52,8 +52,8 @@ var _ = Describe("MySQL controller", func() {
 		interval       = time.Millisecond * 250
 	)
 
-	Context("When updating MySQL Status", func() {
-		It("Should increase MySQL", func() {
+	Context("With available MySQL", func() {
+		It("Should have status.UserCount=0", func() {
 			By("By creating a new MySQL")
 			mysql := &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
@@ -63,12 +63,15 @@ var _ = Describe("MySQL controller", func() {
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 
 			lookUpKey := types.NamespacedName{Name: MySQLName, Namespace: MySQLNamespace}
-			createdMySQL := &mysqlv1alpha1.MySQL{}
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, lookUpKey, createdMySQL)
-				return err == nil
-			}, timeout, interval).Should(BeTrue())
-			Expect(createdMySQL.Spec.Host).Should(Equal("localhost"))
+			mySQL := &mysqlv1alpha1.MySQL{}
+			Eventually(func() int32 {
+				err := k8sClient.Get(ctx, lookUpKey, mySQL)
+				if err != nil {
+					return -1
+				}
+				return mySQL.Status.UserCount
+			}, timeout, interval).Should(Equal(int32(0)))
+
 		})
 	})
 })
