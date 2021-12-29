@@ -147,13 +147,33 @@ If you don't want to `kubebuilder` marker, you can write CRD by yourself.
 https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#additional-printer-columns
 ## 4. Add `OwnerReference` or `SetControllerReference` between CustomResources
 
-```go
-controllerutil.SetControllerReference(mysql, mysqlUser, r.Scheme)
-err := r.GetClient().Update(ctx, mysqlUser)
-if err != nil {
-    return r.ManageError(ctx, mysqlUser, err) // requeue
-}
-```
+1. Add `SetControllerReference` for MySQL
+    ```go
+    controllerutil.SetControllerReference(mysql, mysqlUser, r.Scheme)
+    err := r.GetClient().Update(ctx, mysqlUser)
+    if err != nil {
+        return r.ManageError(ctx, mysqlUser, err) // requeue
+    }
+    ```
+
+1. Get in yaml format.
+
+    ```yaml
+    kubectl get mysqluser nakamasato -o yaml
+    ...
+    metadata:
+      ...
+      ownerReferences:
+      - apiVersion: mysql.nakamasato.com/v1alpha1
+        blockOwnerDeletion: true
+        controller: true
+        kind: MySQL
+        name: mysql-sample
+        uid: 0689bf66-86a3-40a5-8e50-5e91533a8dc8
+      resourceVersion: "928"
+      uid: 09c69b78-79c5-4af8-9f84-7eb5dba52371
+    ...
+    ```
 
 - [SetControllerReference](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller/controllerutil#SetControllerReference): Use this when you want to reconcile the owner object on changes to controlled one.
     > SetControllerReference sets owner as a Controller OwnerReference on controlled. This is used for garbage collection of the controlled object and for reconciling the owner object on changes to controlled (with a Watch + EnqueueRequestForOwner).
@@ -164,3 +184,19 @@ if err != nil {
     ```
 - [SetOwnerReference](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/controller/controllerutil#SetOwnerReference): Use this when you just want garbage collection.
     > SetOwnerReference is a helper method to make sure the given object contains an object reference to the object provided. This allows you to declare that owner has a dependency on the object without specifying it as a controller.
+
+## 5. Finalizer (Handle Cleanup on Deletion of external resource)
+
+**Finalizer** is set to wait until dependents are deleted before deleting the object.
+
+1. When a new object is created, add the finalizer.
+1. When an object is deleted, `DeletionTimestamp` will be set.
+1. Execute the finalizer logic if the finalizer exists.
+1. Remove the finalizer.
+> Once the list of finalizers is empty, meaning all finalizers have been executed, the resource is deleted by Kubernetes.
+
+
+- https://kubernetes.io/blog/2021/05/14/using-finalizers-to-control-deletion/
+- https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#advanced-topics
+- https://book.kubebuilder.io/reference/using-finalizers.html
+- https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/#handle-cleanup-on-deletion
