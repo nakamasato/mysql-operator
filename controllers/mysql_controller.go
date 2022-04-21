@@ -105,11 +105,5 @@ func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, log lo
 	if err != nil {
 		return 0, err
 	}
-	mysqlUserCount := 0
-	for _, mysqlUser := range mysqlUserList.Items {
-		if mysqlUser.Spec.MysqlName == mysql.Name {
-			mysqlUserCount++
-		}
-	}
-	return mysqlUserCount, nil
+	return len(mysqlUserList.Items), nil
 }
