@@ -100,13 +100,16 @@ func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, log lo
 	// 1. Get the referenced MySQLUser instances.
 	// 2. Return the number of referencing MySQLUser.
 	mysqlUserList := &mysqlv1alpha1.MySQLUserList{}
-	opts := []client.ListOption{
-		client.MatchingFields{"spec.mysqlName": mysql.Name},
-	}
-	err := r.List(ctx, mysqlUserList, opts...)
+	err := r.List(ctx, mysqlUserList, client.MatchingFields{"spec.mysqlName": mysql.Name})
 
 	if err != nil {
 		return 0, err
 	}
-	return len(mysqlUserList.Items), nil
+	mysqlUserCount := 0
+	for _, mysqlUser := range mysqlUserList.Items {
+		if mysqlUser.Spec.MysqlName == mysql.Name {
+			mysqlUserCount++
+		}
+	}
+	return mysqlUserCount, nil
 }

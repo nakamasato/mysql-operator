@@ -215,5 +215,5 @@ e2e-with-kuttl:
 	kubectl kuttl test
 
 .PHONY: e2e-with-ginkgo
-e2e-with-ginkgo:
+e2e-with-ginkgo: ginkgo
 	$(GINKGO) e2e

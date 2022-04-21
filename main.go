@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -28,6 +29,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -97,6 +99,16 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQL")
 		os.Exit(1)
 	}
+
+	// set index for mysqluser with spec.mysqlName
+	cache := mgr.GetCache()
+	indexFunc := func(obj client.Object) []string {
+		return []string{obj.(*mysqlv1alpha1.MySQLUser).Spec.MysqlName}
+	}
+	if err := cache.IndexField(context.TODO(), &mysqlv1alpha1.MySQLUser{}, "spec.mysqlName", indexFunc); err != nil {
+		panic(err)
+	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
