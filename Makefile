@@ -216,4 +216,4 @@ e2e-with-kuttl:
 
 .PHONY: e2e-with-ginkgo
 e2e-with-ginkgo:
-	ginkgo e2e
+	$(GINKGO) e2e
