@@ -87,8 +87,8 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" ginkgo -cover -coverprofile cover.out -covermode=atomic -skipPackage=e2e ./...
+test: ginkgo manifests generate fmt vet envtest ## Run tests.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GINKGO) -cover -coverprofile cover.out -covermode=atomic -skipPackage=e2e ./...
 
 ##@ Build
 
@@ -126,13 +126,17 @@ controller-gen: ## Download controller-gen locally if necessary.
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.2)
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 envtest: ## Download envtest-setup locally if necessary.
 	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
 
-# go-get-tool will 'go get' any package $2 and install it to $1.
+GINKGO = $(shell pwd)/bin/ginkgo
+ginkgo:
+	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/ginkgo@latest)
+
+# go-get-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
 @[ -f $(1) ] || { \
@@ -141,7 +145,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
@@ -211,5 +215,5 @@ e2e-with-kuttl:
 	kubectl kuttl test
 
 .PHONY: e2e-with-ginkgo
-e2e-with-ginkgo:
-	ginkgo e2e
+e2e-with-ginkgo: ginkgo
+	$(GINKGO) e2e

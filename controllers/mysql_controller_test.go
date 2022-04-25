@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 )
@@ -24,6 +25,15 @@ var _ = Describe("MySQL controller", func() {
 			Scheme: scheme.Scheme,
 		})
 		Expect(err).ToNot(HaveOccurred())
+
+		// set index for mysqluser with spec.mysqlName
+		cache := k8sManager.GetCache()
+		indexFunc := func(obj client.Object) []string {
+			return []string{obj.(*mysqlv1alpha1.MySQLUser).Spec.MysqlName}
+		}
+		if err := cache.IndexField(ctx, &mysqlv1alpha1.MySQLUser{}, "spec.mysqlName", indexFunc); err != nil {
+			panic(err)
+		}
 
 		err = (&MySQLReconciler{
 			Client: k8sManager.GetClient(),
