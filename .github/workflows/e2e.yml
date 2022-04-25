@@ -16,7 +16,7 @@ jobs:
       - name: set up
         uses: actions/setup-go@v3
         with:
-          go-version: 1.16
+          go-version: 1.17
 
       - uses: actions/checkout@master
 
@@ -52,7 +52,7 @@ jobs:
       - name: set up
         uses: actions/setup-go@v3
         with:
-          go-version: 1.16
+          go-version: 1.17
 
       - name: install skaffold # TODO: #69 Enable to install skaffold in e2e
         run: |
