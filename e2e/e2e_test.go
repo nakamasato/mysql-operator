@@ -19,7 +19,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -351,15 +350,6 @@ func newMySQLDeployment() *appsv1.Deployment {
 								Name:  "MYSQL_ROOT_PASSWORD",
 								Value: "password",
 							},
-						},
-						ReadinessProbe: &corev1.Probe{
-							Handler: corev1.Handler{
-								TCPSocket: &corev1.TCPSocketAction{
-									Port: intstr.FromInt(3306),
-								},
-							},
-							InitialDelaySeconds: 5,
-							PeriodSeconds:       10,
 						},
 					}},
 				},
