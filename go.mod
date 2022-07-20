@@ -11,7 +11,7 @@ require (
 	github.com/redhat-cop/operator-utils v1.3.2
 	k8s.io/api v0.22.3
 	k8s.io/apimachinery v0.22.3
-	k8s.io/client-go v0.22.3
+	k8s.io/client-go v1.5.2
 	k8s.io/utils v0.0.0-20220713171938-56c0de1e6f5e
 	sigs.k8s.io/controller-runtime v0.10.0
 )
