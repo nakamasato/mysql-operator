@@ -95,6 +95,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "[FetchMySQL] Failed")
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLFetchFailed
+		if err = r.Status().Update(ctx, mysqlUser); err != nil {
+			log.Error(err, "[MySQLClient] Failed to update status")
+		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log.Info("[FetchMySQL] Found")
@@ -121,8 +124,10 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
-		r.Status().Update(ctx, mysqlUser)
 		log.Error(err, "[MySQLClient] Failed to create")
+		if err = r.Status().Update(ctx, mysqlUser); err != nil {
+			log.Error(err, "[MySQLClient] Failed to update status")
+		}
 		return ctrl.Result{}, err // requeue
 	}
 	log.Info("[MySQLClient] Ping")
@@ -131,7 +136,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
 		log.Error(err, "[MySQLClient] Failed to connect to MySQL", "mysqlName", mysqlName)
-		r.Status().Update(ctx, mysqlUser)
+		if err = r.Status().Update(ctx, mysqlUser); err != nil {
+			log.Error(err, "[MySQLClient] Failed to update status")
+		}
 		return ctrl.Result{}, err // requeue
 	}
 	log.Info("[MySQLClient] Successfully connected")
@@ -205,8 +212,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	mysqlUser.Status.Phase = mysqlUserPhaseReady
 	mysqlUser.Status.Reason = mysqlUserReasonCompleted
-	r.Status().Update(ctx, mysqlUser)
-
+	if err = r.Status().Update(ctx, mysqlUser); err != nil {
+		log.Error(err, "[MySQL] Failed to update status")
+	}
 	return ctrl.Result{}, nil
 }
 

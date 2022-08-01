@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -344,7 +345,7 @@ var _ = Describe("MySQLUser controller", func() {
 				Eventually(func() string {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
 					if err != nil {
-						return ""
+						return fmt.Sprintf("%v", err)
 					}
 					return mysqlUser.Status.Phase
 				}).Should(Equal(mysqlUserPhaseNotReady))
