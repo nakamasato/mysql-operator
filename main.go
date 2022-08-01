@@ -36,7 +36,6 @@ import (
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	"github.com/nakamasato/mysql-operator/controllers"
 	"github.com/nakamasato/mysql-operator/internal/mysql"
-	"github.com/redhat-cop/operator-utils/pkg/util"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -84,8 +83,7 @@ func main() {
 	}
 
 	if err = (&controllers.MySQLUserReconciler{
-		ReconcilerBase:     util.NewReconcilerBase(mgr.GetClient(), mgr.GetScheme(), mgr.GetConfig(), mgr.GetEventRecorderFor("mysqluser_controller"), mgr.GetAPIReader()),
-		Log:                ctrl.Log.WithName("controllers").WithName("MySQLUser"),
+		Client:             mgr.GetClient(),
 		Scheme:             mgr.GetScheme(),
 		MySQLClientFactory: mysql.NewMySQLClient,
 	}).SetupWithManager(mgr); err != nil {
