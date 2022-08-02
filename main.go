@@ -75,7 +75,7 @@ func main() {
 		HealthProbeBindAddress:     probeAddr,
 		LeaderElection:             enableLeaderElection,
 		LeaderElectionID:           "dfc6d3c2.nakamasato.com",
-		LeaderElectionResourceLock: "configmaps",
+		LeaderElectionResourceLock: "configmapsleases",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
