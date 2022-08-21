@@ -95,7 +95,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "[FetchMySQL] Failed")
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLFetchFailed
-		r.Status().Update(ctx, mysqlUser)
+		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
+			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
+		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log.Info("[FetchMySQL] Found")
@@ -122,7 +124,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
-		r.Status().Update(ctx, mysqlUser)
+		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
+			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
+		}
 		log.Error(err, "[MySQLClient] Failed to create")
 		return ctrl.Result{}, err // requeue
 	}
@@ -132,7 +136,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
 		log.Error(err, "[MySQLClient] Failed to connect to MySQL", "mysqlName", mysqlName)
-		r.Status().Update(ctx, mysqlUser)
+		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
+			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
+		}
 		return ctrl.Result{}, err // requeue
 	}
 	log.Info("[MySQLClient] Successfully connected")
@@ -206,7 +212,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	mysqlUser.Status.Phase = mysqlUserPhaseReady
 	mysqlUser.Status.Reason = mysqlUserReasonCompleted
-	r.Status().Update(ctx, mysqlUser)
+	if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
+		log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
+	}
 
 	return ctrl.Result{}, nil
 }
