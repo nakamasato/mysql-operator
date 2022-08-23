@@ -43,6 +43,14 @@ jobs:
           kubectl krew install kuttl
           kubectl kuttl -v
 
+      - uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: e2e-with-kuttl
         run: make e2e-with-kuttl
 
@@ -60,6 +68,14 @@ jobs:
           sudo install skaffold /usr/local/bin/
 
       - uses: actions/checkout@master
+
+      - uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: e2e-with-ginkgo
         run: make e2e-with-ginkgo
