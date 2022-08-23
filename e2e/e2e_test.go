@@ -27,25 +27,28 @@ const (
 	mysqlNamespace     = "default"
 	mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
 	mysqlFinalizer     = "mysql.nakamasato.com/finalizer"
-	timeout            = 60 * time.Second
-	interval           = 250 * time.Millisecond
+	timeout            = 20 * time.Second
+	interval           = 1 * time.Second
+	secretName         = "mysql-" + mysqlName + "-" + mysqlUserName
 )
 
 var _ = Describe("E2e", func() {
 
 	ctx := context.Background()
 	BeforeEach(func() {
-		deleteMySQLDeploymentIfExist(ctx)
-		deleteMySQLServiceIfExist(ctx)
+		// deleteMySQLDeploymentIfExist(ctx)
+		// deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
+		deleteUserInMysql(mysqlUserName)
 	})
 
 	AfterEach(func() {
-		deleteMySQLDeploymentIfExist(ctx)
-		deleteMySQLServiceIfExist(ctx)
+		// deleteMySQLDeploymentIfExist(ctx)
+		// deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
+		deleteUserInMysql(mysqlUserName)
 	})
 
 	Describe("Creating and deleting MySQL/MySQLUser object", func() {
@@ -66,7 +69,7 @@ var _ = Describe("E2e", func() {
 				// expect to have Secret
 				secret := &corev1.Secret{}
 				Eventually(func() error {
-					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
 				}, timeout, interval).Should(Succeed())
 
 				// expect to have mysql user in mysql
@@ -87,7 +90,7 @@ var _ = Describe("E2e", func() {
 				// expect to delete Secret
 				secret := &corev1.Secret{}
 				Eventually(func() bool {
-					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
 					return errors.IsNotFound(err)
 				}, timeout, interval).Should(BeTrue())
 
@@ -106,6 +109,9 @@ var _ = Describe("E2e", func() {
 				// Expect(k8sClient.Create(ctx, mysql)).Should(Fail())
 			})
 			It("Create MySQL and MySQLUser after MySQL cluster gets available", func() {
+				// delete mysql
+				deleteMySQLDeploymentIfExist(ctx)
+				deleteMySQLServiceIfExist(ctx)
 				// create mysql
 				mysql := newMySQL(mysqlName, mysqlNamespace)
 				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
@@ -115,7 +121,7 @@ var _ = Describe("E2e", func() {
 				// expect not to have Secret
 				secret := &corev1.Secret{}
 				Consistently(func() bool {
-					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
 					return errors.IsNotFound(err)
 				}, timeout, interval).Should(BeTrue())
 
@@ -125,7 +131,7 @@ var _ = Describe("E2e", func() {
 
 				// expect to have Secret
 				Eventually(func() error {
-					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql-" + mysqlName + "-" + mysqlUserName}, secret)
+					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
 				}, timeout, interval).Should(Succeed())
 
 				// expect to have mysql user in mysql
@@ -151,6 +157,21 @@ func checkMySQLHasUser(mysqluser string) (bool, error) {
 	} else {
 		fmt.Printf("mysql.user count: %s, %d\n", mysqluser, count)
 		return count > 0, nil
+	}
+}
+
+func deleteUserInMysql(mysqluser string) {
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:30306)/") // TODO: Make MySQL root user credentials configurable
+	if err != nil {
+		return
+	}
+	defer db.Close()
+	_, err = db.Exec("DELETE FROM mysql.user where User = '" + mysqluser + "'")
+
+	if err != nil {
+		fmt.Printf("failed delete mysql.user %v\n", err)
+	} else {
+		fmt.Printf("successfully deleted mysql.user: %s\n", mysqluser)
 	}
 }
 
@@ -359,19 +380,32 @@ func newMySQLDeployment() *appsv1.Deployment {
 }
 
 func createMySQLDeploymentAndService(ctx context.Context) {
-	deploy := newMySQLDeployment()
-	Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
-	Eventually(func() bool {
-		err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, deploy)
-		if err != nil {
-			return false
-		}
-		return deploy.Status.ReadyReplicas == *deploy.Spec.Replicas
-	}, timeout, interval).Should(BeTrue())
-	service := newMySQLService()
-	Expect(k8sClient.Create(ctx, service)).Should(Succeed())
+	_, err := getDeployment("mysql", mysqlNamespace)
+	if err != nil { // try to create for any error
+		deploy := newMySQLDeployment()
+		Expect(k8sClient.Create(ctx, deploy)).Should(Succeed())
+		Eventually(func() bool {
+			err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlNamespace, Name: "mysql"}, deploy)
+			if err != nil {
+				return false
+			}
+			return deploy.Status.ReadyReplicas == *deploy.Spec.Replicas
+		}, timeout, interval).Should(BeTrue())
+	}
 
-	svcNodePort := newMySQLServiceNodePort()
-	Expect(k8sClient.Create(ctx, svcNodePort)).Should(Succeed())
-	time.Sleep(1 * time.Second) // TODO: #78 [e2e] Check why Ping() doesn't return without Sleep
+	_, err = getService("mysql", mysqlNamespace)
+	if err != nil {
+		service := newMySQLService()
+		Expect(k8sClient.Create(ctx, service)).Should(Succeed())
+
+		svcNodePort := newMySQLServiceNodePort()
+		Expect(k8sClient.Create(ctx, svcNodePort)).Should(Succeed())
+	}
+
+	// wait until deployment is ready
+	deployment := &appsv1.Deployment{}
+	Eventually(func() bool {
+		err = k8sClient.Get(context.TODO(), client.ObjectKey{Name: "mysql", Namespace: mysqlNamespace}, deployment)
+		return deployment.Status.AvailableReplicas == *deployment.Spec.Replicas
+	}, timeout, interval).Should(BeTrue())
 }
