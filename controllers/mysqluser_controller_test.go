@@ -12,7 +12,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
@@ -26,7 +25,7 @@ var _ = Describe("MySQLUser controller", func() {
 		var stopFunc func()
 		BeforeEach(func() {
 			k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-				Scheme: scheme.Scheme,
+				Scheme: scheme,
 			})
 			Expect(err).ToNot(HaveOccurred())
 
@@ -178,7 +177,7 @@ var _ = Describe("MySQLUser controller", func() {
 		var stopFunc func()
 		BeforeEach(func() {
 			k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-				Scheme: scheme.Scheme,
+				Scheme: scheme,
 			})
 			Expect(err).ToNot(HaveOccurred())
 

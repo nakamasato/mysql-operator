@@ -140,7 +140,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
 			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
 		}
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, err // requeue after 5 second
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil // requeue after 5 second
 	}
 	log.Info("[MySQLClient] Successfully connected")
 	defer mysqlClient.Close()
@@ -161,7 +161,6 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			controllerutil.RemoveFinalizer(mysqlUser, mysqlUserFinalizer)
 			err := r.Update(ctx, mysqlUser)
 			if err != nil {
-				// return ctrl.Result{}, err
 				return ctrl.Result{}, err // requeue
 			}
 			return ctrl.Result{}, nil
@@ -204,7 +203,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("[MySQL] Created or updated", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
 	metrics.MysqlUserCreatedTotal.Increment()
 	mysqlUser.Status.Phase = mysqlUserPhaseReady
-	mysqlUser.Status.Reason = "mysql user are successfully created. Secret is being created."
+	mysqlUser.Status.Reason = "mysql user is successfully created. Secret is being created."
 
 	err = r.createSecret(ctx, password, secretName, mysqlUser.Namespace, mysqlUser)
 	// TODO: #35 add test if mysql user is successfully created but secret is failed to create

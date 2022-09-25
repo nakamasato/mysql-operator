@@ -88,7 +88,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 test: ginkgo manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GINKGO) -cover -coverprofile cover.out -covermode=atomic -skipPackage=e2e ./...
+	ACK_GINKGO_DEPRECATIONS=1.16.5 KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GINKGO) -cover -coverprofile cover.out -covermode=atomic -skipPackage=e2e ./...
 
 ##@ Build
 
@@ -216,4 +216,4 @@ e2e-with-kuttl:
 
 .PHONY: e2e-with-ginkgo
 e2e-with-ginkgo: ginkgo
-	$(GINKGO) e2e
+	ACK_GINKGO_RC=true $(GINKGO) e2e
