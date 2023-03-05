@@ -40,7 +40,7 @@ var _ = Describe("E2e", func() {
 		// deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
-		deleteUserInMysql(mysqlUserName)
+		// deleteUserInMysql(mysqlUserName)
 	})
 
 	AfterEach(func() {
@@ -48,7 +48,7 @@ var _ = Describe("E2e", func() {
 		// deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
-		deleteUserInMysql(mysqlUserName)
+		// deleteUserInMysql(mysqlUserName)
 	})
 
 	Describe("Creating and deleting MySQL/MySQLUser object", func() {
@@ -73,10 +73,10 @@ var _ = Describe("E2e", func() {
 				}, timeout, interval).Should(Succeed())
 
 				// expect to have mysql user in mysql
-				Eventually(func() bool {
+				Eventually(func() int {
 					res, _ := checkMySQLHasUser(mysqlUserName)
 					return res
-				}, timeout, interval).Should(BeTrue())
+				}, timeout, interval).Should(Equal(1))
 			})
 
 			It("Successfully delete MySQL user and Secret", func() {
@@ -95,10 +95,10 @@ var _ = Describe("E2e", func() {
 				}, timeout, interval).Should(BeTrue())
 
 				// expect to delete mysql user in mysql
-				Eventually(func() bool {
+				Eventually(func() int {
 					res, _ := checkMySQLHasUser(mysqlUserName)
 					return res
-				}, timeout, interval).Should(BeFalse())
+				}, timeout, interval).Should(Equal(0))
 			})
 		})
 
@@ -131,47 +131,77 @@ var _ = Describe("E2e", func() {
 
 				// expect to have Secret
 				Eventually(func() error {
+					mysqlUser, err := getMySQLUser(mysqlUserName, mysqlNamespace)
+					if err != nil {
+						fmt.Println("failed to get mysqluer")
+						return err
+					}
+					fmt.Printf("mysqluser: %v, %s\n", mysqlUser.Status, mysqlUser.ObjectMeta.ResourceVersion)
 					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
 				}, timeout, interval).Should(Succeed())
 
 				// expect to have mysql user in mysql
-				Eventually(func() bool {
+				Eventually(func() int {
 					res, _ := checkMySQLHasUser(mysqlUserName)
 					return res
-				}, timeout, interval).Should(BeTrue())
+				}, timeout, interval).Should(Equal(1))
 			})
 		})
 	})
 })
 
-func checkMySQLHasUser(mysqluser string) (bool, error) {
+func checkMySQLHasUser(mysqluser string) (int, error) {
 	db, err := sql.Open("mysql", "root:password@tcp(localhost:30306)/") // TODO: Make MySQL root user credentials configurable
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 	defer db.Close()
 	row := db.QueryRow("SELECT COUNT(*) FROM mysql.user where User = '" + mysqluser + "'")
 	var count int
 	if err := row.Scan(&count); err != nil {
-		return false, err
+		return 0, err
 	} else {
 		fmt.Printf("mysql.user count: %s, %d\n", mysqluser, count)
-		return count > 0, nil
+		return count, nil
 	}
 }
 
 func deleteUserInMysql(mysqluser string) {
+	_, err := getDeployment("mysql", mysqlNamespace)
+	if err != nil {
+		return
+	}
 	db, err := sql.Open("mysql", "root:password@tcp(localhost:30306)/") // TODO: Make MySQL root user credentials configurable
 	if err != nil {
 		return
 	}
 	defer db.Close()
-	_, err = db.Exec("DELETE FROM mysql.user where User = '" + mysqluser + "'")
+	// _, err = db.Exec("DELETE FROM mysql.user where User = '" + mysqluser + "'")
 
+	// if err != nil {
+	// 	fmt.Printf("failed delete mysql.user %v\n", err)
+	// } else {
+	// 	fmt.Printf("successfully deleted mysql.user: %s\n", mysqluser)
+	// }
+	stmtDelete, err := db.Prepare("DELETE FROM mysql.user where User =?")
 	if err != nil {
-		fmt.Printf("failed delete mysql.user %v\n", err)
+		panic(err.Error())
+	}
+	defer stmtDelete.Close()
+
+	result, err := stmtDelete.Exec(mysqluser)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	rowsAffect, err := result.RowsAffected()
+	if err != nil {
+		panic(err.Error())
+	}
+	if rowsAffect == 0 {
+		fmt.Printf("[deleteUserInMysql] deleted mysql.user '%s'\n", mysqluser)
 	} else {
-		fmt.Printf("successfully deleted mysql.user: %s\n", mysqluser)
+		fmt.Printf("[deleteUserInMysql] mysql.user '%s' doesn't exist\n", mysqluser)
 	}
 }
 
