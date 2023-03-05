@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1alpha1 contains API Schema definitions for the mysql v1alpha1 API group
-//+kubebuilder:object:generate=true
-//+groupName=mysql.nakamasato.com
+// +kubebuilder:object:generate=true
+// +groupName=mysql.nakamasato.com
 package v1alpha1
 
 import (
