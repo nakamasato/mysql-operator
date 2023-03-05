@@ -8,7 +8,7 @@
 
 1. Run MySQL with Docker.
     ```
-    docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:5.7
+    docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:8
     ```
 1. `kubectl` is configured to a Kubernetes cluster.
 1. Install CRD and run the operator locally.
@@ -50,7 +50,8 @@
 
 1. Delete `MySQLUser`
     ```
-    kubectl delete -k config/samples
+    kubectl delete -f config/samples/mysql_v1alpha1_mysqluser.yaml
+    kubectl delete -f config/samples/mysql_v1alpha1_mysql.yaml
     ```
     1. Secret is deleted.
         ```
@@ -131,7 +132,8 @@ make uninstall
 1. Clean up the Custom Resources (`MySQL` and `MySQLUser` resources).
 
     ```bash
-    kubectl delete -k config/samples-on-k8s
+    kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysqluser.yaml
+    kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysql.yaml
     ```
 1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
 # Test

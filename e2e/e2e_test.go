@@ -344,7 +344,7 @@ func newMySQLDeployment() *appsv1.Deployment {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: "mysql:5.7",
+						Image: "mysql:8",
 						Name:  "mysql",
 						Env: []corev1.EnvVar{
 							{
