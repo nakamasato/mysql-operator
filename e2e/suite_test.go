@@ -2,24 +2,29 @@ package e2e
 
 import (
 	"context"
+	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/workqueue"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
@@ -38,13 +43,30 @@ var kind *Kind
 var k8sClient client.Client
 var cancel context.CancelFunc
 
+var (
+	log    = logf.Log.WithName("mysql-operator")
+	scheme = runtime.NewScheme()
+)
+
+func init() {
+	utilruntime.Must(mysqlv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+}
+
 func TestE2e(t *testing.T) {
+	opts := zap.Options{
+		Development: true,
+		TimeEncoder: zapcore.ISO8601TimeEncoder,
+	}
+	opts.BindFlags(flag.CommandLine)
+	flag.Parse()
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	RegisterFailHandler(Fail) // Use Gomega with Ginkgo
 	RunSpecs(t, "e2e suite")  // tells Ginkgo to start the test suite.
 }
 
 var _ = BeforeSuite(func() {
-	fmt.Println("Setup kind cluster and mysql-operator")
+	log.Info("Setup kind cluster and mysql-operator")
 	// 1. TODO: Check if docker is running.
 	// 2. TODO: Check if kind is avaialble -> install kind if not available.
 
@@ -68,9 +90,9 @@ var _ = BeforeSuite(func() {
 	cfg, err := config.GetConfigWithContext("kind-" + kindName)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
-	err = mysqlv1alpha1.AddToScheme(scheme.Scheme)
+	err = mysqlv1alpha1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 	deleteMySQLUserIfExist(ctx)
@@ -88,7 +110,7 @@ var _ = BeforeSuite(func() {
 	checkMySQLOperator() // check if mysql-operator is running
 
 	// 9. Start debug tool
-	// startDebugTool(ctx, cfg, scheme.Scheme)
+	startDebugTool(ctx, cfg, scheme)
 	fmt.Println("Setup completed")
 }, 60)
 
@@ -111,9 +133,9 @@ func setUpK8sClient() {
 	cfg, err := config.GetConfigWithContext("kind-" + kindName)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
-	err = mysqlv1alpha1.AddToScheme(scheme.Scheme)
+	err = mysqlv1alpha1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 }
@@ -122,12 +144,12 @@ func prepareKind(kind *Kind) {
 	// check kind version
 	err := kind.checkVersion()
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "failed to check version")
 	}
 
 	isDeleted, err := kind.deleteCluster()
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "failed to delete cluster")
 	} else if isDeleted {
 		fmt.Println("kind deleted cluster")
 	}
@@ -135,7 +157,7 @@ func prepareKind(kind *Kind) {
 	// create cluster
 	isCreated, err := kind.createCluster()
 	if err != nil {
-		log.Fatal(fmt.Printf("failed to create kind cluster. error: %s\n", err))
+		log.Error(err, "failed to create kind cluster.")
 	} else if isCreated {
 		fmt.Printf("kind created '%s'\n", kindName)
 	}
@@ -144,7 +166,7 @@ func prepareKind(kind *Kind) {
 func cleanUpKind(kind *Kind) {
 	isDeleted, err := kind.deleteCluster()
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "failed to clean up cluster")
 	} else if isDeleted {
 		fmt.Printf("kind deleted '%s'\n", kindName)
 	}
@@ -154,10 +176,10 @@ func checkMySQLOperator() {
 	deployment := &appsv1.Deployment{}
 	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlOperatorNamespace, Name: mysqlOperatorDeploymentName}, deployment)
 	if err != nil {
-		log.Fatal(fmt.Printf("failed to get %s", mysqlOperatorDeploymentName))
+		log.Error(err, "failed to get", "mysqlOperatorDeploymentName", mysqlOperatorDeploymentName)
 	}
 	if deployment.Status.AvailableReplicas != *deployment.Spec.Replicas {
-		log.Fatal(fmt.Printf("%s doesn't have the required replicss", mysqlOperatorDeploymentName))
+		log.Error(err, "doesn't have the required replicas", "mysqlOperatorDeploymentName", mysqlOperatorDeploymentName)
 	}
 }
 
@@ -165,38 +187,47 @@ func startDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 	fmt.Println("startDebugTool")
 	mapper, err := apiutil.NewDynamicRESTMapper(cfg)
 	if err != nil {
-		log.Fatal("failed to create mapper")
+		log.Error(err, "failed to create mapper")
 	}
 
 	cache, err := cache.New(cfg, cache.Options{Scheme: scheme, Mapper: mapper})
 	if err != nil {
-		log.Fatal("failed to create cache")
+		log.Error(err, "failed to create cache")
 	}
 	mysqluser := &mysqlv1alpha1.MySQLUser{}
 	cache.Get(ctx, client.ObjectKeyFromObject(mysqluser), mysqluser)
+	// Start Cache
+	go func() {
+		if err := cache.Start(ctx); err != nil { // func (m *InformersMap) Start(ctx context.Context) error {
+			log.Error(err, "failed to start cache")
+		}
+	}()
+	log.Info("cache is started")
+
 	kindWithCacheMysqlUser := source.NewKindWithCache(mysqluser, cache)
 	queue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "test")
 	eventHandler := handler.Funcs{
 		CreateFunc: func(e event.CreateEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("CreateFunc is called %s", e.Object.GetName())
+			log.Info("CreateFunc is called", "Name", e.Object.GetName(), "finalizers", e.Object.GetFinalizers())
 		},
 		UpdateFunc: func(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("UpdateFunc is called %s", e.ObjectNew.GetName())
+			log.Info("UpdateFunc is called", "Name", e.ObjectNew.GetName(), "finalizers", e.ObjectNew.GetFinalizers())
 		},
 		DeleteFunc: func(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("DeleteFunc is called %s", e.Object.GetName())
+			log.Info("DeleteFunc is called", "Name", e.Object.GetName(), "finalizers", e.Object.GetFinalizers())
 		},
 	}
-	fmt.Println("cache starting")
+	log.Info("kindWithCacheMysqlUser starting")
 	if err := kindWithCacheMysqlUser.Start(ctx, eventHandler, queue); err != nil {
-		log.Fatal("failed to start kind")
+		log.Error(err, "failed to start kind")
 	}
-	fmt.Println("waiting for cache to be synced")
+	log.Info("waiting for kindWithCacheMysqlUser to be synced")
 	if err := kindWithCacheMysqlUser.WaitForSync(ctx); err != nil {
-		log.Fatal("failed to wait cache")
+		log.Error(err, "failed to wait cache")
 	}
-	fmt.Println("cache is synced")
+	log.Info("kindWithCacheMysqlUser is synced")
 	go func() {
+		// run until ctx is done.
 		<-ctx.Done()
 	}()
 }

@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 )
@@ -37,7 +36,7 @@ func (s *Skaffold) execute(args ...string) {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal("failed to run skaffold command.", err)
+		fmt.Errorf("failed to run skaffold command. %v", err)
 	}
 	fmt.Println("skaffold completed")
 }
