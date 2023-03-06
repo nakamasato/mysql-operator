@@ -88,7 +88,7 @@ var _ = BeforeSuite(func() {
 	checkMySQLOperator() // check if mysql-operator is running
 
 	// 9. Start debug tool
-	startDebugTool(ctx, cfg, scheme.Scheme)
+	// startDebugTool(ctx, cfg, scheme.Scheme)
 	fmt.Println("Setup completed")
 }, 60)
 
