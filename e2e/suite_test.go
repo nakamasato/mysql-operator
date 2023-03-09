@@ -44,7 +44,7 @@ var k8sClient client.Client
 var cancel context.CancelFunc
 
 var (
-	log    = logf.Log.WithName("mysql-operator")
+	log    = logf.Log.WithName("mysql-operator-e2e")
 	scheme = runtime.NewScheme()
 )
 
@@ -104,7 +104,11 @@ var _ = BeforeSuite(func() {
 	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
 
 	// 7. Deploy CRDs and controllers with skaffold.
-	skaffold.run()
+	go func(ctx context.Context) {
+		err := skaffold.run(true) // To check log during running tests
+		Expect(err).To(BeNil())
+		<-ctx.Done()
+	}(ctx)
 
 	// 8. Check if mysql-operator is running.
 	checkMySQLOperator() // check if mysql-operator is running
@@ -174,13 +178,17 @@ func cleanUpKind(kind *Kind) {
 
 func checkMySQLOperator() {
 	deployment := &appsv1.Deployment{}
-	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlOperatorNamespace, Name: mysqlOperatorDeploymentName}, deployment)
-	if err != nil {
-		log.Error(err, "failed to get", "mysqlOperatorDeploymentName", mysqlOperatorDeploymentName)
-	}
-	if deployment.Status.AvailableReplicas != *deployment.Spec.Replicas {
-		log.Error(err, "doesn't have the required replicas", "mysqlOperatorDeploymentName", mysqlOperatorDeploymentName)
-	}
+	Eventually(func() error {
+		err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlOperatorNamespace, Name: mysqlOperatorDeploymentName}, deployment)
+		log.Info("waiting until mysqlOperator Deployment is deployed")
+		return err
+	}, timeout, interval).Should(BeNil())
+
+	Eventually(func() bool {
+		k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlOperatorNamespace, Name: mysqlOperatorDeploymentName}, deployment)
+		log.Info("waiting until mysqlOperator Pods get ready", "Replicas", *deployment.Spec.Replicas, "AvailableReplicas", deployment.Status.AvailableReplicas)
+		return deployment.Status.AvailableReplicas == *deployment.Spec.Replicas
+	}, timeout, interval).Should(BeTrue())
 }
 
 func startDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Scheme) {

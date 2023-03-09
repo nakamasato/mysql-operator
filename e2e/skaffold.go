@@ -10,23 +10,23 @@ type Skaffold struct {
 	KubeconfigPath string
 }
 
-func (s *Skaffold) run() {
-	s.execute(
-		"run",
-		"--kubeconfig",
-		s.KubeconfigPath,
-	)
+func (s *Skaffold) run(tail bool) error {
+	args := []string{"run", "--kubeconfig", s.KubeconfigPath}
+	if tail {
+		args = append(args, "--tail")
+	}
+	return s.execute(args...)
 }
 
-func (s *Skaffold) delete() {
-	s.execute(
+func (s *Skaffold) delete() error {
+	return s.execute(
 		"delete",
 		"--kubeconfig",
 		s.KubeconfigPath,
 	)
 }
 
-func (s *Skaffold) execute(args ...string) {
+func (s *Skaffold) execute(args ...string) error {
 	cmd := exec.Command(
 		"skaffold",
 		args...,
@@ -36,7 +36,8 @@ func (s *Skaffold) execute(args ...string) {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Errorf("failed to run skaffold command. %v", err)
+		return fmt.Errorf("failed to run skaffold command. %v", err)
 	}
 	fmt.Println("skaffold completed")
+	return nil
 }

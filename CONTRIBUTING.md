@@ -242,7 +242,7 @@ make e2e-with-ginkgo
         ```
 1. Deploy `CRD`, `mysql-operator`, and MySQL with `Deployment`:
     ```
-    cd e2e && skaffold run --kubeconfig kubeconfig
+    cd e2e && skaffold run --kubeconfig kubeconfig --tail
     ```
 
 </details>
@@ -417,6 +417,16 @@ PASS
 https://cloud.redhat.com/blog/kubernetes-operators-best-practices
 1. Return the error in the status of the object. https://pkg.go.dev/github.com/shivanshs9/operator-utils@v1.0.1#section-readme
 1. Generate an event describing the error.
+
+### Error1: `Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \"john\": StorageError: invalid object, Code: 4, Key: /registry/mysql.nakamasato.com/mysqlusers/default/john, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: cd9c94d1-992a-457d-8fab-489b21ed02e9, UID in object meta:`
+
+```
+[manager] 1.6781410047933352e+09        ERROR   Reconciler error        {"controller": "mysqluser", "controllerGroup": "mysql.nakamasato.com", "controllerKind": "MySQLUser", "mySQLUser": {"name":"john","namespace":"default"}, "namespace": "default", "name": "john", "reconcileID": "85fc0e64-f2b9-413f-af44-46ff1daad7f7", "error": "Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \"john\": StorageError: invalid object, Code: 4, Key: /registry/mysql.nakamasato.com/mysqlusers/default/john, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: cd9c94d1-992a-457d-8fab-489b21ed02e9, UID in object meta: "}
+```
+
+UID in precondition and UID in object meta are different?
+
+https://github.com/kubernetes-sigs/controller-runtime/issues/2209
 
 ## MySQL
 - http://go-database-sql.org/index.html

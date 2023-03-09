@@ -77,14 +77,24 @@ var _ = Describe("E2e", func() {
 					res, _ := checkMySQLHasUser(mysqlUserName)
 					return res
 				}, timeout, interval).Should(Equal(1))
+
+				Eventually(func() bool {
+					mysqlUser, _ := getMySQLUser(mysqlUserName, mysqlNamespace)
+					return controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer)
+				}, timeout, interval).Should(BeTrue())
 			})
 
 			It("Successfully delete MySQL user and Secret", func() {
 				By("Delete MySQLUser")
+				Eventually(func() bool {
+					mysqlUser, _ := getMySQLUser(mysqlUserName, mysqlNamespace)
+					return controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer)
+				}, timeout, interval).Should(BeTrue())
 				mysqlUser, err := getMySQLUser(mysqlUserName, mysqlNamespace)
 				if err != nil {
 					return
 				}
+				log.Info("mysqlUser before deletion", "finalizers", mysqlUser.Finalizers)
 				Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
 
 				// expect to delete Secret
