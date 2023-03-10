@@ -14,3 +14,8 @@ deploy:
       - config/crd
       - config/default
       - config/mysql # mysql cluster for testing. todo: will be moved to e2e.
+# https://skaffold.dev/docs/testers/custom/ <- no doc about image
+# test:
+#   - image: gcr.io/k8s-skaffold/skaffold-example
+#     custom:
+#       - command: echo Hello world!!

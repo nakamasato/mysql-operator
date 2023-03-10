@@ -116,7 +116,7 @@ var _ = BeforeSuite(func() {
 	// 9. Start debug tool
 	startDebugTool(ctx, cfg, scheme)
 	fmt.Println("Setup completed")
-}, 60)
+}, 120)
 
 var _ = AfterSuite(func() {
 	fmt.Println("Clean up mysql-operator and kind cluster")

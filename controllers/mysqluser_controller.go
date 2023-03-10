@@ -71,7 +71,7 @@ type MySQLUserReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	log := log.FromContext(ctx).WithName("MySQLUserReconciler")
 
 	// Fetch MySQLUser
 	mysqlUser := &mysqlv1alpha1.MySQLUser{}
@@ -139,42 +139,62 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "[MySQLClient] Failed to connect to MySQL", "mysqlName", mysqlName)
 		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
 			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil // requeue after 5 second
+		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 5 second
 	}
 	log.Info("[MySQLClient] Successfully connected")
 	defer mysqlClient.Close()
 
 	// Finalize if DeletionTimestamp exists
 	isMysqlUserMarkedToBeDeleted := mysqlUser.GetDeletionTimestamp() != nil
+	log.Info("isMysqlUserMarkedToBeDeleted", "isMysqlUserMarkedToBeDeleted", isMysqlUserMarkedToBeDeleted)
 	if isMysqlUserMarkedToBeDeleted {
+		log.Info("isMysqlUserMarkedToBeDeleted is true")
 		if controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
+			log.Info("ContainsFinalizer is true")
 			// Run finalization logic for mysqlUserFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
 			if err := r.finalizeMySQLUser(ctx, mysqlUser, mysql); err != nil {
+				log.Info("finalizeMySQLUser err")
 				// return ctrl.Result{}, err
 				return ctrl.Result{}, err // requeue
 			}
+			log.Info("finalizeMySQLUser completed")
 			// Remove mysqlUserFinalizer. Once all finalizers have been
 			// removed, the object will be deleted.
-			controllerutil.RemoveFinalizer(mysqlUser, mysqlUserFinalizer)
-			err := r.Update(ctx, mysqlUser)
-			if err != nil {
-				return ctrl.Result{}, err // requeue
+			log.Info("removing finalizer")
+			if controllerutil.RemoveFinalizer(mysqlUser, mysqlUserFinalizer) {
+				log.Info("RemoveFinalizer completed")
+				err := r.Update(ctx, mysqlUser)
+				log.Info("Update")
+				if err != nil {
+					log.Info("Update err")
+					return ctrl.Result{}, err // requeue
+				}
+				log.Info("Update completed")
 			}
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, nil // should return success when not having the finalizer
 	}
 
+	log.Info("Add Finalizer for this CR")
 	// Add finalizer for this CR
 	if !controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
-		controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer)
-		err = r.Update(ctx, mysqlUser)
-		if err != nil {
-			return ctrl.Result{}, err // requeue
+		log.Info("not have finalizer")
+		if controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer) {
+			log.Info("Added Finalizer")
+			err = r.Update(ctx, mysqlUser)
+			if err != nil {
+				log.Info("Failed to update after adding finalizer")
+				return ctrl.Result{}, err // requeue
+			}
+			log.Info("Updated successfully after adding finalizer")
 		}
+	} else {
+		log.Info("already has finalizer")
 	}
 
 	// Get password from Secret if exists. Otherwise, generate new one.
@@ -208,6 +228,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err = r.createSecret(ctx, password, secretName, mysqlUser.Namespace, mysqlUser)
 	// TODO: #35 add test if mysql user is successfully created but secret is failed to create
 	if err != nil {
+		log.Error(err, "Failed to create secret", "secretName", secretName, "namespace", mysqlUser.Namespace, "mysqlUser", mysqlUser.Name)
 		return ctrl.Result{}, err
 	}
 	mysqlUser.Status.Phase = mysqlUserPhaseReady
@@ -248,7 +269,7 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(ctx context.Context, mysqlUser *
 
 	defer mysqlClient.Close()
 
-	err = mysqlClient.Exec("DROP USER IF EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'%';")
+	err = mysqlClient.Exec("DROP USER IF EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'" + mysqlUser.Spec.Host + "';")
 	if err != nil {
 		log.Error(err, "Failed to drop MySQL user.", "mysqlUser", mysqlUser.ObjectMeta.Name)
 		return err
