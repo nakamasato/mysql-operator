@@ -36,19 +36,13 @@ var _ = Describe("E2e", func() {
 
 	ctx := context.Background()
 	BeforeEach(func() {
-		// deleteMySQLDeploymentIfExist(ctx)
-		// deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
-		deleteUserInMysql(mysqlUserName)
 	})
 
 	AfterEach(func() {
-		// deleteMySQLDeploymentIfExist(ctx)
-		// deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
-		deleteUserInMysql(mysqlUserName)
 	})
 
 	Describe("Creating and deleting MySQL/MySQLUser object", func() {
@@ -187,45 +181,6 @@ func checkMySQLHasUser(mysqluser string) (int, error) {
 	} else {
 		fmt.Printf("mysql.user count: %s, %d\n", mysqluser, count)
 		return count, nil
-	}
-}
-
-func deleteUserInMysql(mysqluser string) {
-	_, err := getDeployment("mysql", mysqlNamespace)
-	if err != nil {
-		return
-	}
-	db, err := sql.Open("mysql", "root:password@tcp(localhost:30306)/") // TODO: Make MySQL root user credentials configurable
-	if err != nil {
-		return
-	}
-	defer db.Close()
-	// _, err = db.Exec("DELETE FROM mysql.user where User = '" + mysqluser + "'")
-
-	// if err != nil {
-	// 	fmt.Printf("failed delete mysql.user %v\n", err)
-	// } else {
-	// 	fmt.Printf("successfully deleted mysql.user: %s\n", mysqluser)
-	// }
-	stmtDelete, err := db.Prepare("DELETE FROM mysql.user where User =?")
-	if err != nil {
-		panic(err.Error())
-	}
-	defer stmtDelete.Close()
-
-	result, err := stmtDelete.Exec(mysqluser)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	rowsAffect, err := result.RowsAffected()
-	if err != nil {
-		panic(err.Error())
-	}
-	if rowsAffect == 0 {
-		fmt.Printf("[deleteUserInMysql] deleted mysql.user '%s'\n", mysqluser)
-	} else {
-		fmt.Printf("[deleteUserInMysql] mysql.user '%s' doesn't exist\n", mysqluser)
 	}
 }
 
