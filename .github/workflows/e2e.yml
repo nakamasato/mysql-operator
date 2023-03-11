@@ -5,6 +5,7 @@ on:
       - .github/workflows/e2e.yml
       - config/crd/**
       - tests/e2e/**
+      - internal/**
       - '**.go'
       - 'go.*'
       - kuttl-test.yaml
