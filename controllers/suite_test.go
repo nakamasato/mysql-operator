@@ -98,7 +98,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	startDebugTool(ctx, cfg, scheme)
+	StartDebugTool(ctx, cfg, scheme)
 }, 60)
 
 var _ = AfterSuite(func() {

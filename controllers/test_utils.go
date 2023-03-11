@@ -79,7 +79,7 @@ func addOwnerReferenceToMySQL(mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1
 	return mysqlUser
 }
 
-func startDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Scheme) {
+func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Scheme) {
 	fmt.Println("startDebugTool")
 	// Set a mapper
 	mapper, err := func(c *rest.Config) (meta.RESTMapper, error) {
@@ -96,9 +96,7 @@ func startDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 	}
 
 	secret := &v1.Secret{}
-	cache.Get(ctx, client.ObjectKeyFromObject(secret), secret)
 	mysqluser := &mysqlv1alpha1.MySQLUser{}
-	cache.Get(ctx, client.ObjectKeyFromObject(mysqluser), mysqluser)
 
 	// Start Cache
 	go func() {

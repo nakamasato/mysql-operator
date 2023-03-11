@@ -14,20 +14,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	"github.com/nakamasato/mysql-operator/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -111,7 +105,7 @@ var _ = BeforeSuite(func() {
 	checkMySQLOperator() // check if mysql-operator is running
 
 	// 9. Start debug tool
-	startDebugTool(ctx, cfg, scheme)
+	controllers.StartDebugTool(ctx, cfg, scheme)
 	fmt.Println("Setup completed")
 }, 120)
 
@@ -186,53 +180,4 @@ func checkMySQLOperator() {
 		log.Info("waiting until mysqlOperator Pods get ready", "Replicas", *deployment.Spec.Replicas, "AvailableReplicas", deployment.Status.AvailableReplicas)
 		return deployment.Status.AvailableReplicas == *deployment.Spec.Replicas
 	}, timeout, interval).Should(BeTrue())
-}
-
-func startDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Scheme) {
-	fmt.Println("startDebugTool")
-	mapper, err := apiutil.NewDynamicRESTMapper(cfg)
-	if err != nil {
-		log.Error(err, "failed to create mapper")
-	}
-
-	cache, err := cache.New(cfg, cache.Options{Scheme: scheme, Mapper: mapper})
-	if err != nil {
-		log.Error(err, "failed to create cache")
-	}
-	mysqluser := &mysqlv1alpha1.MySQLUser{}
-	cache.Get(ctx, client.ObjectKeyFromObject(mysqluser), mysqluser)
-	// Start Cache
-	go func() {
-		if err := cache.Start(ctx); err != nil { // func (m *InformersMap) Start(ctx context.Context) error {
-			log.Error(err, "failed to start cache")
-		}
-	}()
-	log.Info("cache is started")
-
-	kindWithCacheMysqlUser := source.NewKindWithCache(mysqluser, cache)
-	queue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "test")
-	eventHandler := handler.Funcs{
-		CreateFunc: func(e event.CreateEvent, q workqueue.RateLimitingInterface) {
-			log.Info("CreateFunc is called", "Name", e.Object.GetName(), "finalizers", e.Object.GetFinalizers())
-		},
-		UpdateFunc: func(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
-			log.Info("UpdateFunc is called", "Name", e.ObjectNew.GetName(), "finalizers", e.ObjectNew.GetFinalizers())
-		},
-		DeleteFunc: func(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
-			log.Info("DeleteFunc is called", "Name", e.Object.GetName(), "finalizers", e.Object.GetFinalizers())
-		},
-	}
-	log.Info("kindWithCacheMysqlUser starting")
-	if err := kindWithCacheMysqlUser.Start(ctx, eventHandler, queue); err != nil {
-		log.Error(err, "failed to start kind")
-	}
-	log.Info("waiting for kindWithCacheMysqlUser to be synced")
-	if err := kindWithCacheMysqlUser.WaitForSync(ctx); err != nil {
-		log.Error(err, "failed to wait cache")
-	}
-	log.Info("kindWithCacheMysqlUser is synced")
-	go func() {
-		// run until ctx is done.
-		<-ctx.Done()
-	}()
 }
