@@ -40,7 +40,7 @@ var _ = Describe("E2e", func() {
 		// deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
-		// deleteUserInMysql(mysqlUserName)
+		deleteUserInMysql(mysqlUserName)
 	})
 
 	AfterEach(func() {
@@ -48,7 +48,7 @@ var _ = Describe("E2e", func() {
 		// deleteMySQLServiceIfExist(ctx)
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
-		// deleteUserInMysql(mysqlUserName)
+		deleteUserInMysql(mysqlUserName)
 	})
 
 	Describe("Creating and deleting MySQL/MySQLUser object", func() {

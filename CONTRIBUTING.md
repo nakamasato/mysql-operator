@@ -1,6 +1,16 @@
 # Code Style
 
-- [golangci-lint](https://golangci-lint.run)
+[golangci-lint](https://golangci-lint.run)
+
+Install:
+```
+brew install golangci-lint
+```
+Run lint:
+```
+golangci-lint run ./...
+```
+
 
 # Run mysql-operator
 
