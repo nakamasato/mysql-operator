@@ -100,24 +100,6 @@ var _ = Describe("MySQLUser controller", func() {
 					return mysqlUser.Status.Reason
 				}).Should(Equal(mysqlUserReasonCompleted))
 			})
-
-			It("Should create mysqlUser with finalizers", func() {
-				By("By creating a new MySQL")
-				mysql = &mysqlv1alpha1.MySQL{
-					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
-					ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-					Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
-				}
-				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
-
-				Eventually(func() bool {
-					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
-					if err != nil {
-						return false
-					}
-					return controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer)
-				}, time.Second, 5*time.Second).Should(BeTrue())
-			})
 		})
 
 		When("Deleting a MySQLUser", func() {

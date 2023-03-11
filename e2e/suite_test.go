@@ -166,7 +166,7 @@ func checkMySQLOperator() {
 		err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlOperatorNamespace, Name: mysqlOperatorDeploymentName}, deployment)
 		log.Info("waiting until mysqlOperator Deployment is deployed")
 		return err
-	}, 3 * timeout, interval).Should(BeNil())
+	}, 3*timeout, interval).Should(BeNil())
 
 	Eventually(func() bool {
 		err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: mysqlOperatorNamespace, Name: mysqlOperatorDeploymentName}, deployment)
@@ -175,5 +175,5 @@ func checkMySQLOperator() {
 		}
 		log.Info("waiting until mysqlOperator Pods get ready", "Replicas", *deployment.Spec.Replicas, "AvailableReplicas", deployment.Status.AvailableReplicas)
 		return deployment.Status.AvailableReplicas == *deployment.Spec.Replicas
-	}, 3 * timeout, interval).Should(BeTrue())
+	}, 3*timeout, interval).Should(BeTrue())
 }
