@@ -127,8 +127,7 @@ var _ = Describe("E2e", func() {
 				// Expect(k8sClient.Create(ctx, mysql)).Should(Fail())
 			})
 			It("Create MySQL and MySQLUser after MySQL cluster gets available", func() {
-				// delete mysql
-				deleteMySQLDeploymentIfExist(ctx)
+				// Make mysql unavailable temporarily
 				deleteMySQLServiceIfExist(ctx)
 				// create mysql
 				mysql := newMySQL(mysqlName, mysqlNamespace)
@@ -193,14 +192,6 @@ func deleteMySQLServiceIfExist(ctx context.Context) {
 		}
 		Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 	}
-}
-
-func deleteMySQLDeploymentIfExist(ctx context.Context) {
-	object, err := getDeployment("mysql", mysqlNamespace)
-	if err != nil {
-		return
-	}
-	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
 func deleteMySQLIfExist(ctx context.Context) {
