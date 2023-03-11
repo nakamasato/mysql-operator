@@ -18,7 +18,6 @@ jobs:
       - name: setup go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18
           go-version-file: ./go.mod
           cache: true
 
