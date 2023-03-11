@@ -27,7 +27,7 @@ const (
 	mysqlNamespace     = "default"
 	mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
 	mysqlFinalizer     = "mysql.nakamasato.com/finalizer"
-	timeout            = 60 * time.Second
+	timeout            = 2 * time.Minute
 	interval           = 1 * time.Second
 	secretName         = "mysql-" + mysqlName + "-" + mysqlUserName
 )
