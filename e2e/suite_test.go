@@ -104,11 +104,8 @@ var _ = BeforeSuite(func() {
 	skaffold = &Skaffold{KubeconfigPath: kubeconfigPath}
 
 	// 7. Deploy CRDs and controllers with skaffold.
-	go func(ctx context.Context) {
-		err := skaffold.run(true) // To check log during running tests
-		Expect(err).To(BeNil())
-		<-ctx.Done()
-	}(ctx)
+	err = skaffold.run(ctx) // To check log during running tests
+	Expect(err).To(BeNil())
 
 	// 8. Check if mysql-operator is running.
 	checkMySQLOperator() // check if mysql-operator is running
@@ -122,7 +119,7 @@ var _ = AfterSuite(func() {
 	fmt.Println("Clean up mysql-operator and kind cluster")
 	cancel()
 	// 1. Remove the deployed resources
-	skaffold.delete()
+	skaffold.cleanup()
 
 	// 2. Stop kind cluster
 	cleanUpKind(kind)
