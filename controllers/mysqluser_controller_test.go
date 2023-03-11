@@ -116,7 +116,7 @@ var _ = Describe("MySQLUser controller", func() {
 						return false
 					}
 					return controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer)
-				}).Should(BeTrue())
+				}, time.Second, 5*time.Second).Should(BeTrue())
 			})
 		})
 
