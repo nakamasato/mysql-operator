@@ -8,7 +8,7 @@ import (
 	"path"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -106,7 +106,7 @@ var _ = BeforeSuite(func() {
 	// 9. Start debug tool
 	controllers.StartDebugTool(ctx, cfg, scheme)
 	fmt.Println("Setup completed")
-}, 300)
+})
 
 var _ = AfterSuite(func() {
 	fmt.Println("Clean up mysql-operator and kind cluster")

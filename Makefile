@@ -88,7 +88,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 test: ginkgo manifests generate fmt vet envtest ## Run tests.
-	ACK_GINKGO_DEPRECATIONS=1.16.5 KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GINKGO) -cover -coverprofile cover.out -covermode=atomic -skipPackage=e2e ./...
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GINKGO) -cover -coverprofile cover.out -covermode=atomic -skip-package=e2e ./...
 
 ##@ Build
 
@@ -134,7 +134,7 @@ envtest: ## Download envtest-setup locally if necessary.
 
 GINKGO = $(shell pwd)/bin/ginkgo
 ginkgo:
-	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/ginkgo@latest)
+	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@latest)
 
 # go-get-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -216,4 +216,4 @@ e2e-with-kuttl:
 
 .PHONY: e2e-with-ginkgo
 e2e-with-ginkgo: ginkgo
-	ACK_GINKGO_RC=true $(GINKGO) e2e
+	$(GINKGO) e2e
