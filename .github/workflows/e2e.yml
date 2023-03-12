@@ -24,7 +24,7 @@ jobs:
       - name: go dependencies
         run: go mod download
       - name: go build
-        run: go build -o myApp .
+        run: go build -a -o manager main.go
       - name: check cache
         run: go env | grep CACHE
 
