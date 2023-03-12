@@ -140,7 +140,7 @@ var _ = Describe("E2e", func() {
 				Consistently(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
 					return errors.IsNotFound(err)
-				}).Should(BeTrue())
+				}, 100 * time.Millisecond).Should(BeTrue())
 
 				By("Create MySQL Deployment and Service")
 				// create mysql deployment & service
