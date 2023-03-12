@@ -132,7 +132,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err // requeue
 	}
 	log.Info("[MySQLClient] Ping")
-	err = mysqlClient.Ping()
+	ctxPing, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	err = mysqlClient.PingContext(ctxPing)
 	if err != nil {
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
@@ -262,7 +264,9 @@ func (r *MySQLUserReconciler) finalizeMySQLUser(ctx context.Context, mysqlUser *
 	if err != nil {
 		return err
 	}
-	err = mysqlClient.Ping()
+	ctxPing, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	err = mysqlClient.PingContext(ctxPing)
 	if err != nil {
 		return err
 	}

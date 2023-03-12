@@ -438,5 +438,12 @@ UID in precondition and UID in object meta are different?
 
 https://github.com/kubernetes-sigs/controller-runtime/issues/2209
 
+## Slow build
+
+```
+time CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go  161.57s user 24.90s system 283% cpu 1:05.76 total
+```
+
 ## MySQL
 - http://go-database-sql.org/index.html

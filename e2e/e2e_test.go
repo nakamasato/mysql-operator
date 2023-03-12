@@ -38,13 +38,11 @@ var _ = Describe("E2e", func() {
 	BeforeEach(func() {
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
-		deleteMySQLSecretIfExist(ctx)
 	})
 
 	AfterEach(func() {
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
-		deleteMySQLSecretIfExist(ctx)
 	})
 
 	Describe("Creating and deleting MySQL/MySQLUser object", func() {
@@ -183,15 +181,6 @@ func checkMySQLHasUser(mysqluser string) (int, error) {
 		fmt.Printf("mysql.user count: %s, %d\n", mysqluser, count)
 		return count, nil
 	}
-}
-
-func deleteMySQLSecretIfExist(ctx context.Context) {
-	secret := &corev1.Secret{}
-	err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
-	if err != nil {
-		return
-	}
-	Expect(k8sClient.Delete(ctx, secret)).Should(Succeed())
 }
 
 func deleteMySQLServiceIfExist(ctx context.Context) {
@@ -391,6 +380,7 @@ func newMySQLDeployment() *appsv1.Deployment {
 }
 
 func createMySQLDeploymentAndService(ctx context.Context) {
+	startTime := time.Now()
 	log.Info("createMySQLDeploymentAndService started")
 	_, err := getDeployment("mysql", mysqlNamespace)
 	if err != nil { // try to create for any error
@@ -414,4 +404,5 @@ func createMySQLDeploymentAndService(ctx context.Context) {
 		svcNodePort := newMySQLServiceNodePort()
 		Expect(k8sClient.Create(ctx, svcNodePort)).Should(Succeed())
 	}
+	log.Info("createMySQLDeploymentAndService completed", "elapsed time", time.Since(startTime))
 }
