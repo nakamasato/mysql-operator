@@ -1,43 +1,46 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 )
 
 type Skaffold struct {
 	KubeconfigPath string
+	cmd            *exec.Cmd
 }
 
-func (s *Skaffold) run() {
-	s.execute(
-		"run",
-		"--kubeconfig",
-		s.KubeconfigPath,
+func (s *Skaffold) run(ctx context.Context) error {
+	fmt.Println("run")
+	args := []string{"run", "--kubeconfig", s.KubeconfigPath, "--tail"}
+	s.cmd = exec.CommandContext(
+		ctx,
+		"skaffold",
+		args...,
 	)
+	s.cmd.Stdout = os.Stdout
+	s.cmd.Stderr = os.Stderr
+	return s.cmd.Start() // Run in background
 }
 
-func (s *Skaffold) delete() {
-	s.execute(
+func (s *Skaffold) cleanup() error {
+	fmt.Println("skaffold cleanup")
+	fmt.Println("skaffold kill process")
+	errKill := s.cmd.Process.Kill()
+	s.cmd = exec.Command(
+		"skaffold",
 		"delete",
 		"--kubeconfig",
 		s.KubeconfigPath,
 	)
-}
-
-func (s *Skaffold) execute(args ...string) {
-	cmd := exec.Command(
-		"skaffold",
-		args...,
-	)
-	// cmd.Dir = "."
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal("failed to run skaffold command.", err)
+	fmt.Println("skaffold delete")
+	errRun := s.cmd.Run()
+	if errKill != nil {
+		return errKill
+	} else if errRun != nil {
+		return errRun
 	}
-	fmt.Println("skaffold completed")
+	return nil
 }

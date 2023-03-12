@@ -23,6 +23,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	"go.uber.org/zap/zapcore"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,7 +37,6 @@ import (
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	"github.com/nakamasato/mysql-operator/controllers"
 	"github.com/nakamasato/mysql-operator/internal/mysql"
-	"github.com/redhat-cop/operator-utils/pkg/util"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -63,6 +63,7 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	opts := zap.Options{
 		Development: true,
+		TimeEncoder: zapcore.ISO8601TimeEncoder,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -70,13 +71,12 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                     scheme,
-		MetricsBindAddress:         metricsAddr,
-		Port:                       9443,
-		HealthProbeBindAddress:     probeAddr,
-		LeaderElection:             enableLeaderElection,
-		LeaderElectionID:           "dfc6d3c2.nakamasato.com",
-		LeaderElectionResourceLock: "configmaps",
+		Scheme:                 scheme,
+		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
+		HealthProbeBindAddress: probeAddr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "dfc6d3c2.nakamasato.com",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -84,8 +84,7 @@ func main() {
 	}
 
 	if err = (&controllers.MySQLUserReconciler{
-		ReconcilerBase:     util.NewReconcilerBase(mgr.GetClient(), mgr.GetScheme(), mgr.GetConfig(), mgr.GetEventRecorderFor("mysqluser_controller"), mgr.GetAPIReader()),
-		Log:                ctrl.Log.WithName("controllers").WithName("MySQLUser"),
+		Client:             mgr.GetClient(),
 		Scheme:             mgr.GetScheme(),
 		MySQLClientFactory: mysql.NewMySQLClient,
 	}).SetupWithManager(mgr); err != nil {

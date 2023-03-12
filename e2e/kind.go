@@ -34,7 +34,7 @@ func (k *Kind) createCluster() (bool, error) {
 		"--config",
 		"kind-config.yml", // to expose node port
 		"--wait",          // block until the control plane reaches a ready status
-		"30s",
+		"60s",
 	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
