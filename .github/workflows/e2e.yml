@@ -67,7 +67,7 @@ jobs:
 
       - name: skaffold run
         working-directory: e2e
-        run: skaffold run --kubeconfig kubeconfig --tail
+        run: skaffold run --kubeconfig kubeconfig
 
       - name: e2e-with-ginkgo
         run: make e2e-with-ginkgo
