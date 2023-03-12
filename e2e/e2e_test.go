@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"database/sql"
@@ -140,7 +139,7 @@ var _ = Describe("E2e", func() {
 				Consistently(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
 					return errors.IsNotFound(err)
-				}, 100 * time.Millisecond).Should(BeTrue())
+				}, time.Second, time.Second).Should(BeTrue())
 
 				By("Create MySQL Deployment and Service")
 				// create mysql deployment & service
@@ -150,10 +149,10 @@ var _ = Describe("E2e", func() {
 				Eventually(func() error {
 					mysqlUser, err := getMySQLUser(mysqlUserName, mysqlNamespace)
 					if err != nil {
-						fmt.Println("failed to get mysqluer")
+						log.Info("failed to get mysqluer")
 						return err
 					}
-					fmt.Printf("mysqluser: Status: %v, ResourceVersion: %s\n", mysqlUser.Status, mysqlUser.ObjectMeta.ResourceVersion)
+					log.Info("Successfully got mysqluser", "status", mysqlUser.Status, "ResourceVersion", mysqlUser.ObjectMeta.ResourceVersion)
 					return k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
 				}, timeout, interval).Should(Succeed())
 
@@ -178,7 +177,7 @@ func checkMySQLHasUser(mysqluser string) (int, error) {
 	if err := row.Scan(&count); err != nil {
 		return 0, err
 	} else {
-		fmt.Printf("mysql.user count: %s, %d\n", mysqluser, count)
+		log.Info("mysql.user count: %s, %d\n", mysqluser, count)
 		return count, nil
 	}
 }
