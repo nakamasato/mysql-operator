@@ -53,9 +53,10 @@ jobs:
         with:
           context: .
           push: false
-          tags: mysql-operator
+          tags: mysql-operator:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          load: true # a shorthand for --output=type=docker
 
       - name: kuttl test
         run: |
