@@ -16,6 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
+      - name: go dependencies
+        run: go mod download
+      - name: go build
+        run: go build -o myApp .
+      - name: check cache
+        run: go env | grep CACHE
+
       # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
       - name: krew - install
         run: |
