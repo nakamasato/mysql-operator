@@ -6,7 +6,7 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 
 ## Versions
 
-- Go: 1.18
+- Go: 1.19
 ## Components
 
 - `MySQL`: MySQL cluster
