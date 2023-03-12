@@ -141,7 +141,6 @@ var _ = Describe("E2e", func() {
 				secret := &corev1.Secret{}
 				Consistently(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: mysqlNamespace, Name: secretName}, secret)
-					log.Info("secret", "err", err)
 					return errors.IsNotFound(err)
 				}).Should(BeTrue())
 

@@ -14,12 +14,7 @@ jobs:
   e2e-with-kuttl:
     runs-on: ubuntu-latest
     steps:
-      - name: set up
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.18
-
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
 
       # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
       - name: krew - install
@@ -50,17 +45,26 @@ jobs:
   e2e-with-ginkgo:
     runs-on: ubuntu-latest
     steps:
-      - name: set up
+      - uses: actions/checkout@v3
+
+      - name: setup go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version-file: ./go.mod
+          cache: true
 
       - name: install skaffold # TODO: #69 Enable to install skaffold in e2e
         run: |
           curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
           sudo install skaffold /usr/local/bin/
 
-      - uses: actions/checkout@master
+      - name: create kind cluster
+        working-directory: e2e
+        run: kind create cluster --name mysql-operator-e2e --kubeconfig kubeconfig --config kind-config.yml --wait 30s
+
+      - name: skaffold run
+        working-directory: e2e
+        run: skaffold run --kubeconfig kubeconfig --tail
 
       - name: e2e-with-ginkgo
         run: make e2e-with-ginkgo
