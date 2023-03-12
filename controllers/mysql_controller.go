@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/go-logr/logr"
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 )
 
@@ -51,7 +50,7 @@ type MySQLReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	log := log.FromContext(ctx).WithName("MySQLReconciler")
 
 	// Fetch MySQL
 	mysql := &mysqlv1alpha1.MySQL{}
@@ -67,7 +66,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	// Get referenced number
-	referencedNum, err := r.countReferencesByMySQLUser(ctx, log, mysql)
+	referencedNum, err := r.countReferencesByMySQLUser(ctx, mysql)
 	if err != nil {
 		log.Error(err, "[countReferences] Failed get referencedNum")
 		return ctrl.Result{}, err
@@ -96,7 +95,7 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, log logr.Logger, mysql *mysqlv1alpha1.MySQL) (int, error) {
+func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (int, error) {
 	// 1. Get the referenced MySQLUser instances.
 	// 2. Return the number of referencing MySQLUser.
 	mysqlUserList := &mysqlv1alpha1.MySQLUserList{}

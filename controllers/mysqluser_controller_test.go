@@ -5,7 +5,6 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo"
-	"github.com/redhat-cop/operator-utils/pkg/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -13,7 +12,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	. "github.com/nakamasato/mysql-operator/internal/mysql"
@@ -27,19 +25,12 @@ var _ = Describe("MySQLUser controller", func() {
 		var stopFunc func()
 		BeforeEach(func() {
 			k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-				Scheme: scheme.Scheme,
+				Scheme: scheme,
 			})
 			Expect(err).ToNot(HaveOccurred())
 
 			err = (&MySQLUserReconciler{
-				ReconcilerBase: util.NewReconcilerBase(
-					k8sManager.GetClient(),
-					k8sManager.GetScheme(),
-					k8sManager.GetConfig(),
-					k8sManager.GetEventRecorderFor("mysqluser_controller"),
-					k8sManager.GetAPIReader(),
-				),
-				Log:                nil,
+				Client:             k8sManager.GetClient(),
 				Scheme:             k8sManager.GetScheme(),
 				MySQLClientFactory: NewFakeMySQLClient,
 			}).SetupWithManager(k8sManager)
@@ -186,19 +177,12 @@ var _ = Describe("MySQLUser controller", func() {
 		var stopFunc func()
 		BeforeEach(func() {
 			k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-				Scheme: scheme.Scheme,
+				Scheme: scheme,
 			})
 			Expect(err).ToNot(HaveOccurred())
 
 			err = (&MySQLUserReconciler{
-				ReconcilerBase: util.NewReconcilerBase(
-					k8sManager.GetClient(),
-					k8sManager.GetScheme(),
-					k8sManager.GetConfig(),
-					k8sManager.GetEventRecorderFor("mysqluser_controller"),
-					k8sManager.GetAPIReader(),
-				),
-				Log:                nil,
+				Client:             k8sManager.GetClient(),
 				Scheme:             k8sManager.GetScheme(),
 				MySQLClientFactory: NewMySQLClient, // real mysql client
 			}).SetupWithManager(k8sManager)

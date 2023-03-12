@@ -1,6 +1,16 @@
 # Code Style
 
-- [golangci-lint](https://golangci-lint.run)
+[golangci-lint](https://golangci-lint.run)
+
+Install:
+```
+brew install golangci-lint
+```
+Run lint:
+```
+golangci-lint run ./...
+```
+
 
 # Run mysql-operator
 
@@ -53,6 +63,33 @@
     kubectl delete -f config/samples/mysql_v1alpha1_mysqluser.yaml
     kubectl delete -f config/samples/mysql_v1alpha1_mysql.yaml
     ```
+
+    TODO: get stuck in deletion.
+
+    <details>
+
+    ```
+    1.6780545572555468e+09  INFO    [FetchMySQL] Not found  {"controller": "mysql", "controllerGroup": "mysql.nakamasato.com", "controllerKind": "MySQL", "mySQL": {"name":"mysql-sample","namespace":"default"}, "namespace": "default", "name": "mysql-sample", "reconcileID": "0b6db5c6-8b3b-43ce-b903-a4959d55064e", "mysql.Name": "", "mysql.Namespace": ""}
+    1.678054557255548e+09   INFO    [FetchMySQLUser] Found. {"controller": "mysqluser", "controllerGroup": "mysql.nakamasato.com", "controllerKind": "MySQLUser", "mySQLUser": {"name":"nakamasato","namespace":"default"}, "namespace": "default", "name": "nakamasato", "reconcileID": "78d4a7cf-5be0-4d47-82c0-38c7fdcf675b", "name": "nakamasato", "mysqlUser.Namespace": "default"}
+    1.678054557255587e+09   ERROR   [FetchMySQL] Failed     {"controller": "mysqluser", "controllerGroup": "mysql.nakamasato.com", "controllerKind": "MySQLUser", "mySQLUser": {"name":"nakamasato","namespace":"default"}, "namespace": "default", "name": "nakamasato", "reconcileID": "78d4a7cf-5be0-4d47-82c0-38c7fdcf675b", "error": "MySQL.mysql.nakamasato.com \"mysql-sample\" not found"}
+    sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).Reconcile
+            /Users/m.naka/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.12.3/pkg/internal/controller/controller.go:121
+    sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).reconcileHandler
+            /Users/m.naka/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.12.3/pkg/internal/controller/controller.go:320
+    sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).processNextWorkItem
+            /Users/m.naka/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.12.3/pkg/internal/controller/controller.go:273
+    sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).Start.func2.2
+            /Users/m.naka/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.12.3/pkg/internal/controller/controller.go:234
+    ```
+
+    When getting stuck:
+
+    ```
+    kubectl patch mysqluser nakamasato -p '{"metadata":{"finalizers": []}}' --type=merge
+    ```
+
+    </details>
+
     1. Secret is deleted.
         ```
         kubectl get secret
@@ -83,6 +120,7 @@
 
 ```
 make uninstall
+docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 ```
 
 ## Local kubernetes
@@ -135,6 +173,14 @@ make uninstall
     kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysqluser.yaml
     kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysql.yaml
     ```
+
+    TODO: Get stuck:
+
+    ```
+    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'delete from mysql.user where User = "nakamasato";'
+    kubectl patch mysqluser nakamasato -p '{"metadata":{"finalizers": []}}' --type=merge
+    ```
+
 1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
 # Test
 
@@ -206,7 +252,7 @@ make e2e-with-ginkgo
         ```
 1. Deploy `CRD`, `mysql-operator`, and MySQL with `Deployment`:
     ```
-    cd e2e && skaffold run --kubeconfig kubeconfig
+    cd e2e && skaffold run --kubeconfig kubeconfig --tail
     ```
 
 </details>
@@ -381,6 +427,23 @@ PASS
 https://cloud.redhat.com/blog/kubernetes-operators-best-practices
 1. Return the error in the status of the object. https://pkg.go.dev/github.com/shivanshs9/operator-utils@v1.0.1#section-readme
 1. Generate an event describing the error.
+
+### Error1: `Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \"john\": StorageError: invalid object, Code: 4, Key: /registry/mysql.nakamasato.com/mysqlusers/default/john, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: cd9c94d1-992a-457d-8fab-489b21ed02e9, UID in object meta:`
+
+```
+[manager] 1.6781410047933352e+09        ERROR   Reconciler error        {"controller": "mysqluser", "controllerGroup": "mysql.nakamasato.com", "controllerKind": "MySQLUser", "mySQLUser": {"name":"john","namespace":"default"}, "namespace": "default", "name": "john", "reconcileID": "85fc0e64-f2b9-413f-af44-46ff1daad7f7", "error": "Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \"john\": StorageError: invalid object, Code: 4, Key: /registry/mysql.nakamasato.com/mysqlusers/default/john, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: cd9c94d1-992a-457d-8fab-489b21ed02e9, UID in object meta: "}
+```
+
+UID in precondition and UID in object meta are different?
+
+https://github.com/kubernetes-sigs/controller-runtime/issues/2209
+
+## Slow build
+
+```
+time CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go  161.57s user 24.90s system 283% cpu 1:05.76 total
+```
 
 ## MySQL
 - http://go-database-sql.org/index.html

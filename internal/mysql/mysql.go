@@ -1,7 +1,9 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
+
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -13,7 +15,7 @@ type MySQLConfig struct {
 
 type MySQLClient interface {
 	Exec(query string) error
-	Ping() error
+	PingContext(ctx context.Context) error
 	Close()
 }
 
@@ -32,7 +34,7 @@ func (mc fakeMysqlClient) Exec(query string) error {
 	return nil
 }
 
-func (mc fakeMysqlClient) Ping() error {
+func (mc fakeMysqlClient) PingContext(ctx context.Context) error {
 	return nil
 }
 
@@ -57,8 +59,8 @@ func (mc mysqlClient) Exec(query string) error {
 	return nil
 }
 
-func (mc mysqlClient) Ping() error {
-	return mc.db.Ping()
+func (mc mysqlClient) PingContext(ctx context.Context) error {
+	return mc.db.PingContext(ctx)
 }
 
 func (mc mysqlClient) Close() {
