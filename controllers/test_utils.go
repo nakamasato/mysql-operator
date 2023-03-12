@@ -72,8 +72,8 @@ func addOwnerReferenceToMySQL(mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1
 			Kind:               "MySQL",
 			Name:               mysql.Name,
 			UID:                mysql.UID,
-			BlockOwnerDeletion: pointer.BoolPtr(true),
-			Controller:         pointer.BoolPtr(true),
+			BlockOwnerDeletion: pointer.Bool(true),
+			Controller:         pointer.Bool(true),
 		},
 	}
 	return mysqlUser
