@@ -11,7 +11,7 @@ on:
       - kuttl-test.yaml
 
 jobs:
-  e2e-with-kuttl:
+  kuttl:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -39,12 +39,6 @@ jobs:
           kubectl krew install kuttl
           kubectl kuttl -v
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -52,11 +46,11 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: false
+          push: false # a shorthand for --output=type=registry if set to true
+          load: true # a shorthand for --output=type=docker if set to true
           tags: mysql-operator:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-          load: true # a shorthand for --output=type=docker
 
       - name: kuttl test
         run: |
@@ -71,7 +65,7 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-  # e2e-with-ginkgo:
+  # ginkgo:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - uses: actions/checkout@v3
