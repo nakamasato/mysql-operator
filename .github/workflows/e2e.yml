@@ -46,6 +46,9 @@ jobs:
           kubectl krew install kuttl
           kubectl kuttl -v
 
+      - name: docker layer cache
+        uses: satackey/action-docker-layer-caching@v0.0.11
+
       - name: docker build
         run: docker build --tag mysql-operator:latest .
 
