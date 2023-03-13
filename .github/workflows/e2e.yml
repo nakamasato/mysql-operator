@@ -10,15 +10,11 @@ on:
       - 'go.*'
       - kuttl-test.yaml
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   kuttl:
-    permissions:
-      contents: read
-      packages: write
+    # permissions:
+    #   contents: read
+    #   packages: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -46,16 +42,21 @@ jobs:
           kubectl krew install kuttl
           kubectl kuttl -v
 
-      - name: docker layer cache
-        uses: satackey/action-docker-layer-caching@v0.0.11
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: docker build
-        run: docker build --tag mysql-operator:latest .
+      - name: Build with gha
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false # a shorthand for --output=type=registry if set to true
+          load: true # a shorthand for --output=type=docker if set to true
+          tags: mysql-operator:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: kuttl test
-        run: |
-          docker images
-          make kuttl
+        run: make kuttl
 
   # ginkgo:
   #   runs-on: ubuntu-latest
