@@ -12,9 +12,6 @@ on:
 
 jobs:
   kuttl:
-    # permissions:
-    #   contents: read
-    #   packages: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -58,29 +55,29 @@ jobs:
       - name: kuttl test
         run: make kuttl
 
-  # ginkgo:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
+  ginkgo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-  #     - name: setup go
-  #       uses: actions/setup-go@v3
-  #       with:
-  #         go-version-file: ./go.mod
-  #         cache: true
+      - name: setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: ./go.mod
+          cache: true
 
-  #     - name: install skaffold # TODO: #69 Enable to install skaffold in e2e
-  #       run: |
-  #         curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
-  #         sudo install skaffold /usr/local/bin/
+      - name: install skaffold # TODO: #69 Enable to install skaffold in e2e
+        run: |
+          curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+          sudo install skaffold /usr/local/bin/
 
-  #     - name: create kind cluster
-  #       working-directory: e2e
-  #       run: kind create cluster --name mysql-operator-e2e --kubeconfig kubeconfig --config kind-config.yml --wait 30s
+      - name: create kind cluster
+        working-directory: e2e
+        run: kind create cluster --name mysql-operator-e2e --kubeconfig kubeconfig --config kind-config.yml --wait 30s
 
-  #     - name: skaffold run
-  #       working-directory: e2e
-  #       run: skaffold run --kubeconfig kubeconfig
+      - name: skaffold run
+        working-directory: e2e
+        run: skaffold run --kubeconfig kubeconfig
 
-  #     - name: e2e-with-ginkgo
-  #       run: make e2e-with-ginkgo
+      - name: e2e-with-ginkgo
+        run: make e2e-with-ginkgo
