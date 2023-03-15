@@ -17,23 +17,56 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 
 1. Install CRD
     ```
-    kubectl apply -k https://github.com/nakamasato/mysql-operator/config/default
+    kubectl apply -k https://github.com/nakamasato/mysql-operator/config/install
+    ```
+1. (Optional) prepare MySQL.
+    ```
+    kubectl apply -k https://github.com/nakamasato/mysql-operator/config/mysql
     ```
 1. Apply custom resources (`MySQL`, `MySQLUser`).
 
-    Example: apply MySQL Deployment and Service and `MySQL` `MySQLUser`:
-    ```
-    kubectl apply -k config/samples-on-k8s
+    `mysql.yaml` credentials to connect to the MySQL:
+
+    ```yaml
+    apiVersion: mysql.nakamasato.com/v1alpha1
+    kind: MySQL
+    metadata:
+      name: mysql-sample
+    spec:
+      host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
+      admin_user: root
+      admin_password: password
     ```
 
+    `mysqluser.yaml`: MySQL user
+
+    ```yaml
+    apiVersion: mysql.nakamasato.com/v1alpha1
+    kind: MySQLUser
+    metadata:
+      name: nakamasato
+    spec:
+      mysqlName: mysql-sample
+      host: '%'
+    ```
+
+    ```
+    kubectl apply -f mysql.yaml,mysqluser.yaml
+    ```
+1. Check secret for the MySQL user
+    ```
+    kubectl get secret
+    NAME                            TYPE     DATA   AGE
+    mysql-mysql-sample-nakamasato   Opaque   1      10s
+    ```
 1. Delete custom resources (`MySQL`, `MySQLUser`).
     Example:
     ```
-    kubectl delete -k config/samples-on-k8s
+    kubectl delete -f mysql.yaml,mysqluser.yaml
     ```
 
     NOTICE: custom resources might get stuck if MySQL is deleted before (to be improved). → Remove finalizers to forcifully delete the stuck objects
-    `kubectl patch mysqluser <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge` or `kubectl patch mysql <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge`
+    `kubectl patch mysqluser <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge` or `kubectl patch mysql <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge` (Bug: https://github.com/nakamasato/mysql-operator/issues/162)
 
 1. Uninstall
     ```
