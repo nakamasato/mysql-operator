@@ -15,10 +15,9 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 
 ## Getting Started
 
-1. Install `mysql-operator-controller-manager` in `mysql-operator-system` namespace.
-
+1. Install CRD
     ```
-    make deploy IMG="ghcr.io/nakamasato/mysql-operator"
+    kubectl apply -k https://github.com/nakamasato/mysql-operator/config/default
     ```
 1. Apply custom resources (`MySQL`, `MySQLUser`).
 
@@ -38,7 +37,7 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 
 1. Uninstall
     ```
-    make undeploy
+    kubectl delete -k https://github.com/nakamasato/mysql-operator/config/default
     ```
 
 ## Exposed Metrics
