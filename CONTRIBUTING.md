@@ -1,4 +1,4 @@
-# Code Style
+# 1. Code Style
 
 [golangci-lint](https://golangci-lint.run)
 
@@ -12,9 +12,9 @@ golangci-lint run ./...
 ```
 
 
-# Run mysql-operator
+# 2. Run mysql-operator
 
-## Local
+## 2.1. Local
 
 1. Run MySQL with Docker.
     ```
@@ -123,7 +123,7 @@ make uninstall
 docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 ```
 
-## Local kubernetes
+## 2.2. Local kubernetes
 
 1. Deploy controller with [skaffold](https://skaffold.dev/)
 
@@ -182,22 +182,67 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     ```
 
 1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
-# Test
 
-## Versions
+# 3. Monitoring
+
+1. Prepare Prometheus with Prometheus Operator
+    1. Monitor with Prometheus
+        ```
+        kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
+        ```
+    1. Create `Prometheus`
+
+        ```
+        kubectl create ns monitoring
+        kubectl apply -k https://github.com/nakamasato/kubernetes-training/contents/prometheus-operator
+        ```
+    1. port forward
+        ```
+        kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090
+        ```
+1. Run mysql-operator with ServiceMonitor (a CRD of PrometheusOperator)
+    1. Update `config/default/kustomization.yaml` to uncomment
+        ```yaml
+        - ../prometheus
+        ```
+    1. Run operator
+        ```
+        skaffold dev
+        ```
+1. Check Prometheus on http://localhost:9090/targets
+    ![](docs/prometheus.png)
+
+    You can see the graph with custom metrics with `{__name__=~"mysqloperator_.*"}`
+    ![](docs/prometheus-graph.png)
+1. Clean up
+    1. Remove CRD
+        ```
+        kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysqluser.yaml
+        kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysql.yaml
+        ```
+    1. Stop skaffold dev
+    1. Remove Proemetheus and Prometheus Operator
+        ```
+        kubectl delete -k https://github.com/nakamasato/kubernetes-training/contents/prometheus-operator
+        kubectl delete -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
+        ```
+
+# 4. Test
+
+## 4.1. Versions
 
 - Ginkgo: v1.16.4
 - Gomega: v1.13.0
 
-## Controller Test
+## 4.2. Controller Test
 
 ```
 make test
 ```
 
-## e2e
+## 4.3. e2e
 
-### e2e (kind + skaffold + ginkgo + gomega)
+### 4.3.1. e2e (kind + skaffold + ginkgo + gomega)
 
 Prerequisite:
 - [kind](https://kind.sigs.k8s.io/): local Kubernetes cluster
@@ -257,7 +302,7 @@ make e2e-with-ginkgo
 
 </details>
 
-### e2e with kuttl
+### 4.3.2. e2e with kuttl
 
 Prerequisite:
 
@@ -412,23 +457,10 @@ PASS
 
 </details>
 
-# OLM (ToDo)
-# Reference
-## Finalizers
-- https://book.kubebuilder.io/reference/using-finalizers.html
-- https://zdyxry.github.io/2019/09/13/Kubernetes-%E5%AE%9E%E6%88%98-Operator-Finalizers/
-- https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/
+# 5. OLM (ToDo)
 
-## Testing
-- https://blog.bullgare.com/2021/02/mocking-for-unit-tests-and-e2e-tests-in-golang/
-- https://int128.hatenablog.com/entry/2020/02/05/114940
-
-## Managing errors:
-https://cloud.redhat.com/blog/kubernetes-operators-best-practices
-1. Return the error in the status of the object. https://pkg.go.dev/github.com/shivanshs9/operator-utils@v1.0.1#section-readme
-1. Generate an event describing the error.
-
-### Error1: `Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \"john\": StorageError: invalid object, Code: 4, Key: /registry/mysql.nakamasato.com/mysqlusers/default/john, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: cd9c94d1-992a-457d-8fab-489b21ed02e9, UID in object meta:`
+# 6. Tips
+## 6.1. Error: `Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \"john\": StorageError: invalid object, Code: 4, Key: /registry/mysql.nakamasato.com/mysqlusers/default/john, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: cd9c94d1-992a-457d-8fab-489b21ed02e9, UID in object meta:`
 
 ```
 [manager] 1.6781410047933352e+09        ERROR   Reconciler error        {"controller": "mysqluser", "controllerGroup": "mysql.nakamasato.com", "controllerKind": "MySQLUser", "mySQLUser": {"name":"john","namespace":"default"}, "namespace": "default", "name": "john", "reconcileID": "85fc0e64-f2b9-413f-af44-46ff1daad7f7", "error": "Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \"john\": StorageError: invalid object, Code: 4, Key: /registry/mysql.nakamasato.com/mysqlusers/default/john, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: cd9c94d1-992a-457d-8fab-489b21ed02e9, UID in object meta: "}
@@ -438,12 +470,27 @@ UID in precondition and UID in object meta are different?
 
 https://github.com/kubernetes-sigs/controller-runtime/issues/2209
 
-## Slow build
+## 6.2. Slow build
 
 ```
 time CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go  161.57s user 24.90s system 283% cpu 1:05.76 total
 ```
 
-## MySQL
+# 7. Reference
+## 7.1. Finalizers
+- https://book.kubebuilder.io/reference/using-finalizers.html
+- https://zdyxry.github.io/2019/09/13/Kubernetes-%E5%AE%9E%E6%88%98-Operator-Finalizers/
+- https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/
+
+## 7.2. Testing
+- https://blog.bullgare.com/2021/02/mocking-for-unit-tests-and-e2e-tests-in-golang/
+- https://int128.hatenablog.com/entry/2020/02/05/114940
+
+## 7.3. Managing errors:
+https://cloud.redhat.com/blog/kubernetes-operators-best-practices
+1. Return the error in the status of the object. https://pkg.go.dev/github.com/shivanshs9/operator-utils@v1.0.1#section-readme
+1. Generate an event describing the error.
+
+## 7.4. MySQL
 - http://go-database-sql.org/index.html
