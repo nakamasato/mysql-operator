@@ -213,7 +213,9 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return ctrl.Result{}, err // requeue
 		}
 	} else { // exists -> get password from Secret
-		password = string(secret.Data["password"])
+		// password = string(secret.Data["password"])
+		// TODO: check if the password is valid
+		return ctrl.Result{}, nil
 	}
 
 	// Create MySQL user if not exists with the password set above.
