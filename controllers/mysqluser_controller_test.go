@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -98,6 +99,32 @@ var _ = Describe("MySQLUser controller", func() {
 					}
 					return mysqlUser.Status.Reason
 				}).Should(Equal(mysqlUserReasonCompleted))
+			})
+
+			It("Should have finalizer", func() {
+				By("By creating a new MySQL")
+				mysql = &mysqlv1alpha1.MySQL{
+					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
+					ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
+					Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
+				}
+				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
+				By("By creating a new MySQLUser")
+				mysqlUser = &mysqlv1alpha1.MySQLUser{
+					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLUser"},
+					ObjectMeta: metav1.ObjectMeta{Namespace: Namespace, Name: MySQLUserName},
+					Spec:       mysqlv1alpha1.MySQLUserSpec{MysqlName: MySQLName},
+					Status:     mysqlv1alpha1.MySQLUserStatus{},
+				}
+				Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLUserName}, mysqlUser)
+					if err != nil {
+						return false
+					}
+					return controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer)
+				}).Should(BeTrue())
 			})
 		})
 
