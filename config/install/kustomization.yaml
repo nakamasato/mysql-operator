@@ -1,11 +1,10 @@
 namespace: mysql-operator-system
 namePrefix: mysql-operator-
-bases:
-- ../crd
-- ../rbac
 
 resources:
 - manager.yaml
+- ../crd
+- ../rbac
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -19,4 +18,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: ghcr.io/nakamasato/mysql-operator
-  newTag: v0.0.7
+  newTag: v0.0.10
