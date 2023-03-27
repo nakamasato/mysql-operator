@@ -49,8 +49,13 @@ jobs:
       - name: Update kustomization
         run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF:10} make release
 
-      - name: Create pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # used by gh
-        run: |
-          gh pr create -t "chore: update kustomization for install to ${GITHUB_REF:10}" -b ""
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "chore: update kustomization for install to ${GITHUB_REF:10}"
+          body: |
+            # Why
+            - New version was released.
+            # What
+            - Update kustomization for installation
