@@ -21,6 +21,10 @@ spec:
       jsonPath: .status.phase
       name: Phase
       type: string
+    - description: The reason for the current phase of this MySQLDB
+      jsonPath: .status.reason
+      name: Reason
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -41,15 +45,23 @@ spec:
           spec:
             description: MySQLDBSpec defines the desired state of MySQLDB
             properties:
-              name:
-                description: MySQL database name
+              dbName:
+                description: MySQL Database name
                 type: string
+              mysqlName:
+                description: MySQL name
+                type: string
+            required:
+            - dbName
+            - mysqlName
             type: object
           status:
             description: MySQLDBStatus defines the observed state of MySQLDB
             properties:
               phase:
                 description: database is created or not
+                type: string
+              reason:
                 type: string
             type: object
         type: object

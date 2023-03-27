@@ -53,7 +53,7 @@ func (mc mysqlClient) Exec(query string) error {
 	var log = logf.Log.WithName("mysql")
 	_, err := mc.db.Exec(query)
 	if err != nil {
-		log.Error(err, "Failed to execute query", query)
+		log.Error(err, "Failed to execute query", "Query", query)
 		return err
 	}
 	return nil

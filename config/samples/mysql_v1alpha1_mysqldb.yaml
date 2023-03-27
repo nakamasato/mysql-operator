@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/part-of: mysql-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: mysql-operator
-  name: mysqldb-sample
+  name: sample-db # this is not a name for MySQL database but just a Kubernetes object name
 spec:
-  name: test-db
+  dbName: sample_db # this is MySQL database name
+  mysqlName: mysql-sample

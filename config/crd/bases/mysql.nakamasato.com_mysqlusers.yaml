@@ -49,6 +49,7 @@ spec:
                 default: '%'
                 type: string
               mysqlName:
+                description: MySQL name
                 type: string
             required:
             - mysqlName

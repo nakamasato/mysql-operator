@@ -28,19 +28,24 @@ type MySQLDBSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// MySQL database name
-	Name string `json:"name,omitempty"`
+	// MySQL Database name
+	DBName string `json:"dbName"`
+
+	// MySQL name
+	MysqlName string `json:"mysqlName"`
 }
 
 // MySQLDBStatus defines the observed state of MySQLDB
 type MySQLDBStatus struct {
 	// database is created or not
-	Phase string `json:"phase,omitempty"`
+	Phase  string `json:"phase,omitempty"`
+	Reason string `json:"reason,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="The phase of MySQLDB"
+//+kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.reason",description="The reason for the current phase of this MySQLDB"
 
 // MySQLDB is the Schema for the mysqldbs API
 type MySQLDB struct {

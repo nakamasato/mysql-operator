@@ -109,8 +109,9 @@ func main() {
 	}
 
 	if err = (&controllers.MySQLDBReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:             mgr.GetClient(),
+		Scheme:             mgr.GetScheme(),
+		MySQLClientFactory: mysql.NewMySQLClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQLDB")
 		os.Exit(1)
