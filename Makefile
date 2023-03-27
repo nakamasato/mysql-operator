@@ -217,3 +217,6 @@ e2e-with-kuttl:
 .PHONY: e2e-with-ginkgo
 e2e-with-ginkgo: ginkgo
 	$(GINKGO) e2e
+
+release: kustomize
+	cd config/install && $(KUSTOMIZE) edit set image controller=${IMG}

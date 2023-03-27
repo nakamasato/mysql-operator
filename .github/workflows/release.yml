@@ -39,3 +39,18 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  create-pr-to-update-kustomization:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Update kustomization
+        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF:10} make release
+
+      - name: Create pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # used by gh
+        run: |
+          gh pr create -t "chore: update kustomization for install to ${GITHUB_REF:10}" -b ""
