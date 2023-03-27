@@ -143,7 +143,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil // requeue after 5 second
+		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 1 second
 	}
 	log.Info("[MySQLClient] Successfully connected")
 	defer mysqlClient.Close()
@@ -181,6 +181,20 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	log.Info("Add Finalizer for this CR")
 	// Add finalizer for this CR
+	if !controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
+		log.Info("not have finalizer")
+		if controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer) {
+			log.Info("Added Finalizer")
+			err = r.Update(ctx, mysqlUser)
+			if err != nil {
+				log.Info("Failed to update after adding finalizer")
+				return ctrl.Result{}, err // requeue
+			}
+			log.Info("Updated successfully after adding finalizer")
+		}
+	} else {
+		log.Info("already has finalizer")
+	}
 
 	// Get password from Secret if exists. Otherwise, generate new one.
 	secretName := getSecretName(mysqlName, mysqlUserName)
