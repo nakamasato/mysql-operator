@@ -98,8 +98,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	if !mysql.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
 		if r.finalizeMysql(ctx, mysql) {
 			if controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) {
-				err := r.Update(ctx, mysql)
-				if err != nil {
+				if err := r.Update(ctx, mysql); err != nil {
 					return ctrl.Result{}, err
 				}
 			}

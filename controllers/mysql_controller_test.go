@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 )
@@ -94,6 +95,21 @@ var _ = Describe("MySQL controller", func() {
 			cleanUpMySQLUser(ctx, k8sClient, Namespace)
 
 			checkMySQLUserCount(ctx, int32(0))
+		})
+
+		It("Should have finalizer", func() {
+			By("By creating a new MySQLUser")
+			mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
+			addOwnerReferenceToMySQL(mysqlUser, mysql)
+			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
+				if err != nil {
+					return false
+				}
+				return controllerutil.ContainsFinalizer(mysql, mysqlFinalizer)
+			}).Should(BeTrue())
 		})
 	})
 })
