@@ -29,6 +29,32 @@ rules:
 - apiGroups:
   - mysql.nakamasato.com
   resources:
+  - mysqldbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.nakamasato.com
+  resources:
+  - mysqldbs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.nakamasato.com
+  resources:
+  - mysqldbs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.nakamasato.com
+  resources:
   - mysqls
   verbs:
   - create
