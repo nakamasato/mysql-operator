@@ -19,4 +19,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: ghcr.io/nakamasato/mysql-operator
-  newTag: latest
+  newTag: v0.0.7
