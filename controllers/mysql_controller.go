@@ -19,15 +19,19 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 )
+
+const mysqlFinalizer = "mysql.nakamasato.com/finalizer"
 
 // MySQLReconciler reconciles a MySQL object
 type MySQLReconciler struct {
@@ -64,6 +68,13 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		log.Error(err, "[FetchMySQL] Failed to get MySQL")
 		return ctrl.Result{}, err
 	}
+	// Add a finalizer if not exists
+	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {
+		if err := r.Update(ctx, mysql); err != nil {
+			log.Error(err, "Failed to update MySQL after adding finalizer")
+			return ctrl.Result{}, err
+		}
+	}
 
 	// Get referenced number
 	referencedNum, err := r.countReferencesByMySQLUser(ctx, mysql)
@@ -84,6 +95,18 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		log.Info(fmt.Sprintf("[Status] updated with userCount=%d\n", referencedNum))
 	}
 
+	if !mysql.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
+		if r.finalizeMysql(ctx, mysql) {
+			if controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) {
+				if err := r.Update(ctx, mysql); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+		} else {
+			log.Info("Could not complete finalizer. waiting another 5 seconds")
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -105,4 +128,8 @@ func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, mysql 
 		return 0, err
 	}
 	return len(mysqlUserList.Items), nil
+}
+
+func (r *MySQLReconciler) finalizeMysql(ctx context.Context, mysql *mysqlv1alpha1.MySQL) bool {
+	return mysql.Status.UserCount == 0
 }

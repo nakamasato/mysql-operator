@@ -143,15 +143,13 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 5 second
+		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 1 second
 	}
 	log.Info("[MySQLClient] Successfully connected")
 	defer mysqlClient.Close()
 
 	// Finalize if DeletionTimestamp exists
-	isMysqlUserMarkedToBeDeleted := mysqlUser.GetDeletionTimestamp() != nil
-	log.Info("isMysqlUserMarkedToBeDeleted", "isMysqlUserMarkedToBeDeleted", isMysqlUserMarkedToBeDeleted)
-	if isMysqlUserMarkedToBeDeleted {
+	if !mysqlUser.GetDeletionTimestamp().IsZero() {
 		log.Info("isMysqlUserMarkedToBeDeleted is true")
 		if controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
 			log.Info("ContainsFinalizer is true")
@@ -159,9 +157,8 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
 			if err := r.finalizeMySQLUser(ctx, mysqlUser, mysql); err != nil {
-				log.Info("finalizeMySQLUser err")
-				// return ctrl.Result{}, err
-				return ctrl.Result{}, err // requeue
+				log.Error(err, "Failed to complete finalizeMySQLUser")
+				return ctrl.Result{}, err
 			}
 			log.Info("finalizeMySQLUser completed")
 			// Remove mysqlUserFinalizer. Once all finalizers have been
@@ -172,8 +169,8 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				err := r.Update(ctx, mysqlUser)
 				log.Info("Update")
 				if err != nil {
-					log.Info("Update err")
-					return ctrl.Result{}, err // requeue
+					log.Error(err, "Failed to update mysqlUser")
+					return ctrl.Result{}, err
 				}
 				log.Info("Update completed")
 			}
