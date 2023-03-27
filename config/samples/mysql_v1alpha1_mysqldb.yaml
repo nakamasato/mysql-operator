@@ -9,4 +9,4 @@ metadata:
     app.kubernetes.io/created-by: mysql-operator
   name: mysqldb-sample
 spec:
-  # TODO(user): Add fields here
+  name: test-db

@@ -16,7 +16,12 @@ spec:
     singular: mysqldb
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: The phase of MySQLDB
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: MySQLDB is the Schema for the mysqldbs API
@@ -36,13 +41,16 @@ spec:
           spec:
             description: MySQLDBSpec defines the desired state of MySQLDB
             properties:
-              foo:
-                description: Foo is an example field of MySQLDB. Edit mysqldb_types.go
-                  to remove/update
+              name:
+                description: MySQL database name
                 type: string
             type: object
           status:
             description: MySQLDBStatus defines the observed state of MySQLDB
+            properties:
+              phase:
+                description: database is created or not
+                type: string
             type: object
         type: object
     served: true

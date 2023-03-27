@@ -28,18 +28,19 @@ type MySQLDBSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of MySQLDB. Edit mysqldb_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// MySQL database name
+	Name string `json:"name,omitempty"`
 }
 
 // MySQLDBStatus defines the observed state of MySQLDB
 type MySQLDBStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// database is created or not
+	Phase string `json:"phase,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="The phase of MySQLDB"
 
 // MySQLDB is the Schema for the mysqldbs API
 type MySQLDB struct {
