@@ -175,17 +175,14 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	log.Info("Add Finalizer for this CR")
 	// Add finalizer for this CR
-	if !controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
-		log.Info("not have finalizer")
-		if controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer) {
-			log.Info("Added Finalizer")
-			err = r.Update(ctx, mysqlUser)
-			if err != nil {
-				log.Info("Failed to update after adding finalizer")
-				return ctrl.Result{}, err // requeue
-			}
-			log.Info("Updated successfully after adding finalizer")
+	if controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer) {
+		log.Info("Added Finalizer")
+		err = r.Update(ctx, mysqlUser)
+		if err != nil {
+			log.Info("Failed to update after adding finalizer")
+			return ctrl.Result{}, err // requeue
 		}
+		log.Info("Updated successfully after adding finalizer")
 	} else {
 		log.Info("already has finalizer")
 	}

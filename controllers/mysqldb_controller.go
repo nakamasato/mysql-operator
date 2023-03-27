@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
@@ -31,6 +32,7 @@ import (
 )
 
 const (
+	mysqlDBFinalizer                   = "mysqldb.nakamasato.com/finalizer"
 	mysqlDBPhaseNotReady               = "NotReady"
 	mysqlDBReasonMySQLFetchFailed      = "Failed to fetch MySQL"
 	mysqlDBReasonMySQLConnectionFailed = "Failed to connect to mysql"
@@ -114,6 +116,26 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	defer mysqlClient.Close()
 
 	// 4. Delete if NotFound with finalizer
+	if controllerutil.AddFinalizer(db, mysqlDBFinalizer) {
+		err = r.Update(ctx, db)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+	if !db.GetDeletionTimestamp().IsZero() {
+		if controllerutil.ContainsFinalizer(db, mysqlDBFinalizer) {
+			if err := r.finalizeMySQLDB(ctx, db, mysql); err != nil {
+				return ctrl.Result{}, err
+			}
+			if controllerutil.RemoveFinalizer(db, mysqlDBFinalizer) {
+				if err := r.Update(ctx, db); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, nil
+	}
 
 	// 5. Create if not exists
 	err = mysqlClient.Exec("CREATE DATABASE IF NOT EXISTS " + db.Spec.DBName + ";")
@@ -134,6 +156,27 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// finalizeMySQLDB drops MySQL database
+func (r *MySQLDBReconciler) finalizeMySQLDB(ctx context.Context, db *mysqlv1alpha1.MySQLDB, mysql *mysqlv1alpha1.MySQL) error {
+	mysqlClient, err := r.MySQLClientFactory(
+		mysqlinternal.MySQLConfig{
+			AdminUser:     mysql.Spec.AdminUser,
+			AdminPassword: mysql.Spec.AdminPassword,
+			Host:          mysql.Spec.Host,
+		})
+	if err != nil {
+		return err
+	}
+	ctxPing, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	err = mysqlClient.PingContext(ctxPing)
+	if err != nil {
+		return err
+	}
+	defer mysqlClient.Close()
+	return mysqlClient.Exec("DROP DATABASE IF EXISTS " + db.Spec.DBName + ";")
 }
 
 // SetupWithManager sets up the controller with the Manager.

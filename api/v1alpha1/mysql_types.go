@@ -42,7 +42,14 @@ type MySQLStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	//+kubebuilder:default=0
+
+	// The number of users in this MySQL
 	UserCount int32 `json:"userCount"`
+
+	//+kubebuilder:default=0
+
+	// The number of database in this MySQL
+	DBCount int32 `json:"dbCount"`
 }
 
 //+kubebuilder:object:root=true

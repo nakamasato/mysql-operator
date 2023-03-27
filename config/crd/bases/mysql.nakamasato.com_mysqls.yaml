@@ -64,11 +64,18 @@ spec:
           status:
             description: MySQLStatus defines the observed state of MySQL
             properties:
+              dbCount:
+                default: 0
+                description: The number of database in this MySQL
+                format: int32
+                type: integer
               userCount:
                 default: 0
+                description: The number of users in this MySQL
                 format: int32
                 type: integer
             required:
+            - dbCount
             - userCount
             type: object
         type: object
