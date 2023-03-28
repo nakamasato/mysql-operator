@@ -34,6 +34,12 @@ var _ = Describe("MySQL controller", func() {
 		if err := cache.IndexField(ctx, &mysqlv1alpha1.MySQLUser{}, "spec.mysqlName", indexFunc); err != nil {
 			panic(err)
 		}
+		indexFunc = func(obj client.Object) []string {
+			return []string{obj.(*mysqlv1alpha1.MySQLDB).Spec.MysqlName}
+		}
+		if err := cache.IndexField(ctx, &mysqlv1alpha1.MySQLDB{}, "spec.mysqlName", indexFunc); err != nil {
+			panic(err)
+		}
 
 		err = (&MySQLReconciler{
 			Client: k8sManager.GetClient(),
@@ -64,7 +70,7 @@ var _ = Describe("MySQL controller", func() {
 			mysql = &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-				Spec:       mysqlv1alpha1.MySQLSpec{Host: "localhost", AdminUser: "root", AdminPassword: "password"},
+				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 		})
