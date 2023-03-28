@@ -82,7 +82,7 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
     ```
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
     ```
-1. Delete custom resources (`MySQL`, `MySQLUser`).
+1. Delete custom resources (`MySQL`, `MySQLUser`, `MySQLDB`).
     Example:
     ```
     kubectl delete -k https://github.com/nakamasato/mysql-operator/config/samples-on-k8s
