@@ -6,31 +6,29 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
-  name: mysqls.mysql.nakamasato.com
+  name: mysqldbs.mysql.nakamasato.com
 spec:
   group: mysql.nakamasato.com
   names:
-    kind: MySQL
-    listKind: MySQLList
-    plural: mysqls
-    singular: mysql
+    kind: MySQLDB
+    listKind: MySQLDBList
+    plural: mysqldbs
+    singular: mysqldb
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.host
-      name: Host
+    - description: The phase of MySQLDB
+      jsonPath: .status.phase
+      name: Phase
       type: string
-    - jsonPath: .spec.admin_user
-      name: AdminUser
+    - description: The reason for the current phase of this MySQLDB
+      jsonPath: .status.reason
+      name: Reason
       type: string
-    - description: The number of MySQLUsers that belongs to the MySQL
-      jsonPath: .status.userCount
-      name: UserCount
-      type: integer
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MySQL is the Schema for the mysqls API
+        description: MySQLDB is the Schema for the mysqldbs API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -45,38 +43,26 @@ spec:
           metadata:
             type: object
           spec:
-            description: MySQLSpec defines the desired state of MySQL
+            description: MySQLDBSpec defines the desired state of MySQLDB
             properties:
-              admin_password:
-                description: AdminPassword is MySQL password to connect target MySQL
-                  cluster.
+              dbName:
+                description: MySQL Database name
                 type: string
-              admin_user:
-                description: AdminUser is MySQL user to connect target MySQL cluster.
-                type: string
-              host:
-                description: Host is MySQL host of target MySQL cluster.
+              mysqlName:
+                description: MySQL name
                 type: string
             required:
-            - admin_password
-            - admin_user
+            - dbName
+            - mysqlName
             type: object
           status:
-            description: MySQLStatus defines the observed state of MySQL
+            description: MySQLDBStatus defines the observed state of MySQLDB
             properties:
-              dbCount:
-                default: 0
-                description: The number of database in this MySQL
-                format: int32
-                type: integer
-              userCount:
-                default: 0
-                description: The number of users in this MySQL
-                format: int32
-                type: integer
-            required:
-            - dbCount
-            - userCount
+              phase:
+                description: database is created or not
+                type: string
+              reason:
+                type: string
             type: object
         type: object
     served: true

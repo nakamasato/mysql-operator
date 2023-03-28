@@ -28,6 +28,7 @@ type MySQLUserSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// MySQL name
 	MysqlName string `json:"mysqlName"`
 
 	// +kubebuilder:default=%

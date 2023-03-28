@@ -61,15 +61,9 @@ type MySQLUserReconciler struct {
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;update;patch
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the MySQLUser object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
+// Reconcile function is responsible for managing MySQLUser.
+// Create MySQL user if not exist in the target MySQL, and drop it
+// if the corresponding object is deleted.
 func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx).WithName("MySQLUserReconciler")
 
@@ -181,17 +175,14 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	log.Info("Add Finalizer for this CR")
 	// Add finalizer for this CR
-	if !controllerutil.ContainsFinalizer(mysqlUser, mysqlUserFinalizer) {
-		log.Info("not have finalizer")
-		if controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer) {
-			log.Info("Added Finalizer")
-			err = r.Update(ctx, mysqlUser)
-			if err != nil {
-				log.Info("Failed to update after adding finalizer")
-				return ctrl.Result{}, err // requeue
-			}
-			log.Info("Updated successfully after adding finalizer")
+	if controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer) {
+		log.Info("Added Finalizer")
+		err = r.Update(ctx, mysqlUser)
+		if err != nil {
+			log.Info("Failed to update after adding finalizer")
+			return ctrl.Result{}, err // requeue
 		}
+		log.Info("Updated successfully after adding finalizer")
 	} else {
 		log.Info("already has finalizer")
 	}

@@ -77,26 +77,31 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	// Get referenced number
-	referencedNum, err := r.countReferencesByMySQLUser(ctx, mysql)
+	referencedUserNum, err := r.countReferencesByMySQLUser(ctx, mysql)
 	if err != nil {
-		log.Error(err, "[countReferences] Failed get referencedNum")
+		log.Error(err, "[referencedUserNum] Failed get referencedNum")
 		return ctrl.Result{}, err
 	}
-	log.Info(fmt.Sprintf("[countReferences] Successfully got %d\n", referencedNum))
+	log.Info(fmt.Sprintf("[referencedUserNum] Successfully got %d\n", referencedUserNum))
+	referencedDbNum, err := r.countReferencesByMySQLDB(ctx, mysql)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	log.Info(fmt.Sprintf("[referencedDbNum] Successfully got %d\n", referencedDbNum))
 
 	// Update Status
-	if mysql.Status.UserCount != int32(referencedNum) {
-		mysql.Status.UserCount = int32(referencedNum)
+	if mysql.Status.UserCount != int32(referencedUserNum) {
+		mysql.Status.UserCount = int32(referencedUserNum)
 		err = r.Status().Update(ctx, mysql)
 		if err != nil {
 			log.Error(err, "[Status] Failed to update")
 			return ctrl.Result{}, err
 		}
-		log.Info(fmt.Sprintf("[Status] updated with userCount=%d\n", referencedNum))
+		log.Info(fmt.Sprintf("[Status] updated with userCount=%d\n", referencedUserNum))
 	}
 
 	if !mysql.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
-		if r.finalizeMysql(ctx, mysql) {
+		if r.finalizeMySQL(ctx, mysql) {
 			if controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) {
 				if err := r.Update(ctx, mysql); err != nil {
 					return ctrl.Result{}, err
@@ -130,6 +135,17 @@ func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, mysql 
 	return len(mysqlUserList.Items), nil
 }
 
-func (r *MySQLReconciler) finalizeMysql(ctx context.Context, mysql *mysqlv1alpha1.MySQL) bool {
-	return mysql.Status.UserCount == 0
+func (r *MySQLReconciler) countReferencesByMySQLDB(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (int, error) {
+	mysqlDBList := &mysqlv1alpha1.MySQLDBList{}
+	err := r.List(ctx, mysqlDBList, client.MatchingFields{"spec.mysqlName": mysql.Name})
+
+	if err != nil {
+		return 0, err
+	}
+	return len(mysqlDBList.Items), nil
+}
+
+// finalizeMySQL return true if no user and no db is referencing the given MySQL
+func (r *MySQLReconciler) finalizeMySQL(ctx context.Context, mysql *mysqlv1alpha1.MySQL) bool {
+	return mysql.Status.UserCount == 0 && mysql.Status.DBCount == 0
 }

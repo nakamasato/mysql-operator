@@ -20,7 +20,6 @@ golangci-lint run ./...
     ```
     docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:8
     ```
-1. `kubectl` is configured to a Kubernetes cluster.
 1. Install CRD and run the operator locally.
     ```
     make install run
@@ -29,39 +28,38 @@ golangci-lint run ./...
     ```
     kubectl apply -k config/samples
     ```
-    1. MySQL user is created in MySQL container.
+1. Check Custom resources
 
-        ```
-        docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -uroot -ppassword
-        ```
-
-        <details><summary>details</summary>
-
-        ```sql
-        select User, Host, password_last_changed, password_expired, password_lifetime from mysql.user where User = 'nakamasato';
-        +------------+------+-----------------------+------------------+-------------------+
-        | User       | Host | password_last_changed | password_expired | password_lifetime |
-        +------------+------+-----------------------+------------------+-------------------+
-        | nakamasato | %    | 2021-09-26 20:15:06   | N                |              NULL |
-        +------------+------+-----------------------+------------------+-------------------+
-        1 row in set (0.00 sec)
-        ```
-
-        </details>
-
-    1. `Secret` `mysql-mysql-sample-nakamasato` is created for MySQL user.
-        ```
-        kubectl get secret mysql-mysql-sample-nakamasato -o yaml
-        ```
-    1. You can connect to MySQL with the generated user.
-        ```
-        docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
-        ```
-
-1. Delete `MySQLUser`
     ```
-    kubectl delete -f config/samples/mysql_v1alpha1_mysqluser.yaml
-    kubectl delete -f config/samples/mysql_v1alpha1_mysql.yaml
+    kubectl get -k config/samples
+    NAME                                      HOST        ADMINUSER   USERCOUNT
+    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        1
+
+    NAME                                     PHASE   REASON
+    mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created
+
+    NAME                                        PHASE   REASON
+    mysqluser.mysql.nakamasato.com/nakamasato   Ready   Both secret and mysql user are successfully created.
+    ```
+
+1. Confirm MySQL user is created in MySQL container.
+
+    ```
+    docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -uroot -ppassword -e "select User, Host, password_last_changed, password_expired, password_lifetime from mysql.user where User = 'nakamasato';"
+    ```
+
+1. `Secret` `mysql-mysql-sample-nakamasato` is created for the MySQL user.
+    ```
+    kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}'
+    ```
+1. Confirm you can connect to MySQL with the generated user.
+    ```
+    docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+    ```
+
+1. Delete all the resources.
+    ```
+    kubectl delete -k config/samples
     ```
 
     TODO: get stuck in deletion.
