@@ -55,9 +55,34 @@ var _ = Describe("MySQLDB controller", func() {
 					return false
 				}
 				return controllerutil.ContainsFinalizer(db, mysqlDBFinalizer)
-			}, 5*time.Second).Should(BeTrue())
+			}).Should(BeTrue())
 		})
+
+		It("Should be ready", func() {
+			By("By creating a new MySQL")
+			mysql = &mysqlv1alpha1.MySQL{
+				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
+				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
+				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+			}
+			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
+			db := &mysqlv1alpha1.MySQLDB{
+				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLDB"},
+				ObjectMeta: metav1.ObjectMeta{Name: "sample-db", Namespace: Namespace},
+				Spec:       mysqlv1alpha1.MySQLDBSpec{DBName: "sample_db", MysqlName: MySQLName},
+			}
+			Expect(k8sClient.Create(ctx, db)).Should(Succeed())
+			Eventually(func() string {
+				err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: "sample-db"}, db)
+				if err != nil {
+					return ""
+				}
+				return db.Status.Phase
+			}).Should(Equal(mysqlDBPhaseReady))
+		})
+
 		AfterEach(func() {
+			cleanUpMySQLDB(ctx, k8sClient, Namespace)
 			cleanUpMySQL(ctx, k8sClient, Namespace)
 			stopFunc()
 			time.Sleep(100 * time.Millisecond)
