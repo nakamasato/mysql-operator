@@ -9,9 +9,9 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 - Go: 1.19
 ## Components
 
-- `MySQL`: MySQL cluster
+- `MySQL`: MySQL cluster (holds credentials to connect to MySQL)
 - `MySQLUser`: MySQL user (`mysqlName` and `host`)
-- `MySQLDB`: MySQL database including schema repository (ToDo)
+- `MySQLDB`: MySQL database (`mysqlName` and `dbName`)
 
 ## Getting Started
 
@@ -23,7 +23,7 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
     ```
     kubectl apply -k https://github.com/nakamasato/mysql-operator/config/mysql
     ```
-1. Apply custom resources (`MySQL`, `MySQLUser`).
+1. Apply custom resources (`MySQL`, `MySQLUser`, `MySQLDB`).
 
     `mysql.yaml` credentials to connect to the MySQL:
 
@@ -48,6 +48,18 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
     spec:
       mysqlName: mysql-sample
       host: '%'
+    ```
+
+    `mysqldb.yaml`: MySQL database
+
+    ```yaml
+    apiVersion: mysql.nakamasato.com/v1alpha1
+    kind: MySQLDB
+    metadata:
+      name: sample-db # this is not a name for MySQL database but just a Kubernetes object name
+    spec:
+      dbName: sample_db # this is MySQL database name
+      mysqlName: mysql-sample
     ```
 
     ```
@@ -83,7 +95,7 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
     ```
     kubectl delete -k https://github.com/nakamasato/mysql-operator/config/mysql
     ```
-1. Uninstall
+1. Uninstall `mysql-operator`
     ```
     kubectl delete -k https://github.com/nakamasato/mysql-operator/config/install
     ```
