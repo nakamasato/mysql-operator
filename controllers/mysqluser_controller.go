@@ -18,11 +18,13 @@ package controllers
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,19 +42,20 @@ import (
 )
 
 const (
-	mysqlUserFinalizer                   = "mysqluser.nakamasato.com/finalizer"
-	mysqlUserReasonCompleted             = "Both secret and mysql user are successfully created."
-	mysqlUserReasonMySQLConnectionFailed = "Failed to connect to mysql"
-	mysqlUserReasonMySQLFetchFailed      = "Failed to fetch MySQL"
-	mysqlUserPhaseReady                  = "Ready"
-	mysqlUserPhaseNotReady               = "NotReady"
+	mysqlUserFinalizer                     = "mysqluser.nakamasato.com/finalizer"
+	mysqlUserReasonCompleted               = "Both secret and mysql user are successfully created."
+	mysqlUserReasonMySQLConnectionFailed   = "Failed to connect to mysql"
+	mysqlUserReasonMySQLFailedToCreateUser = "Failed to create MySQL user"
+	mysqlUserReasonMySQLFetchFailed        = "Failed to fetch MySQL"
+	mysqlUserPhaseReady                    = "Ready"
+	mysqlUserPhaseNotReady                 = "NotReady"
 )
 
 // MySQLUserReconciler reconciles a MySQLUser object
 type MySQLUserReconciler struct {
 	client.Client
-	Scheme             *runtime.Scheme
-	MySQLClientFactory mysqlinternal.MySQLClientFactory
+	Scheme       *runtime.Scheme
+	MySQLClients mysqlinternal.MySQLClients
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers,verbs=get;list;watch;create;update;patch;delete
@@ -109,26 +112,13 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 	}
 
-	// Connect to MySQL
-	cfg := mysqlinternal.MySQLConfig{
-		AdminUser:     mysql.Spec.AdminUser,
-		AdminPassword: mysql.Spec.AdminPassword,
-		Host:          mysql.Spec.Host,
-	}
-	mysqlClient, err := r.MySQLClientFactory(cfg)
+	// Get MySQL client
+	mysqlClient, err := r.MySQLClients.GetClient(mysqlUser.Spec.MysqlName)
 	if err != nil {
-		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
-		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
-		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
-			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
-		}
-		log.Error(err, "[MySQLClient] Failed to create")
-		return ctrl.Result{}, err // requeue
+		log.Error(err, "Failed to get MySQL client", "mysqlName", mysqlUser.Spec.MysqlName)
+		return ctrl.Result{}, err
 	}
-	log.Info("[MySQLClient] Ping")
-	ctxPing, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-	err = mysqlClient.PingContext(ctxPing)
+
 	if err != nil {
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLConnectionFailed
@@ -140,7 +130,6 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 1 second
 	}
 	log.Info("[MySQLClient] Successfully connected")
-	defer mysqlClient.Close()
 
 	// Finalize if DeletionTimestamp exists
 	if !mysqlUser.GetDeletionTimestamp().IsZero() {
@@ -150,7 +139,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// Run finalization logic for mysqlUserFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.finalizeMySQLUser(ctx, mysqlUser, mysql); err != nil {
+			if err := r.finalizeMySQLUser(ctx, mysqlClient, mysqlUser); err != nil {
 				log.Error(err, "Failed to complete finalizeMySQLUser")
 				return ctrl.Result{}, err
 			}
@@ -207,14 +196,22 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// Create MySQL user if not exists with the password set above.
-	err = mysqlClient.Exec("CREATE USER IF NOT EXISTS '" + mysqlUserName + "'@'" + mysqlUser.Spec.Host + "' IDENTIFIED BY '" + password + "';")
+	_, err = mysqlClient.ExecContext(ctx,
+		fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'%s' IDENTIFIED BY '%s'", mysqlUserName, mysqlUser.Spec.Host, password))
 	if err != nil {
 		log.Error(err, "[MySQL] Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
-		return ctrl.Result{}, err // requeue
+		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
+		mysqlUser.Status.Reason = mysqlUserReasonMySQLFailedToCreateUser
+		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
+			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
+		}
+		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 1 second
 	}
+
 	log.Info("[MySQL] Created or updated", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
-	metrics.MysqlUserCreatedTotal.Increment()
-	mysqlUser.Status.Phase = mysqlUserPhaseReady
+	metrics.MysqlUserCreatedTotal.Increment() // TODO: increment only when a user is created
+	mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 	mysqlUser.Status.Reason = "mysql user is successfully created. Secret is being created."
 
 	err = r.createSecret(ctx, password, secretName, mysqlUser.Namespace, mysqlUser)
@@ -239,38 +236,18 @@ func (r *MySQLUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MySQLUserReconciler) finalizeMySQLUser(ctx context.Context, mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1alpha1.MySQL) error {
-	// 1. Get the referenced MySQL instance.
-	// 2. Connect to MySQL.
-	// 3. Delete the MySQL user.
-	log := log.FromContext(ctx)
-
-	cfg := mysqlinternal.MySQLConfig{
-		AdminUser:     mysql.Spec.AdminUser,
-		AdminPassword: mysql.Spec.AdminPassword,
-		Host:          mysql.Spec.Host,
+// finalizeMySQLUser drops MySQL user
+func (r *MySQLUserReconciler) finalizeMySQLUser(ctx context.Context, mysqlClient *sql.DB, mysqlUser *mysqlv1alpha1.MySQLUser) error {
+	if mysqlUser.Status.Phase != mysqlDBPhaseReady {
+		// TODO: make the condition precise
+		return nil
 	}
-	mysqlClient, err := r.MySQLClientFactory(cfg)
+	_, err := mysqlClient.ExecContext(ctx, fmt.Sprintf("DROP USER IF EXISTS '%s'@'%s'", mysqlUser.Name, mysqlUser.Spec.Host))
 	if err != nil {
-		return err
-	}
-	ctxPing, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-	err = mysqlClient.PingContext(ctxPing)
-	if err != nil {
-		return err
-	}
-
-	defer mysqlClient.Close()
-
-	err = mysqlClient.Exec("DROP USER IF EXISTS '" + mysqlUser.ObjectMeta.Name + "'@'" + mysqlUser.Spec.Host + "';")
-	if err != nil {
-		log.Error(err, "Failed to drop MySQL user.", "mysqlUser", mysqlUser.ObjectMeta.Name)
 		return err
 	}
 	metrics.MysqlUserDeletedTotal.Increment()
 
-	log.Info("Successfully finalized mysqlUser")
 	return nil
 }
 

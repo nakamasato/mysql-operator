@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	internalmysql "github.com/nakamasato/mysql-operator/internal/mysql"
 )
 
 var _ = Describe("MySQL controller", func() {
@@ -42,8 +43,10 @@ var _ = Describe("MySQL controller", func() {
 		}
 
 		err = (&MySQLReconciler{
-			Client: k8sManager.GetClient(),
-			Scheme: k8sManager.GetScheme(),
+			Client:          k8sManager.GetClient(),
+			Scheme:          k8sManager.GetScheme(),
+			MySQLClients:    internalmysql.MySQLClients{},
+			MySQLDriverName: "testdbdriver",
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 

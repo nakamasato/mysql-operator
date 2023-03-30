@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -43,8 +45,8 @@ const (
 // MySQLDBReconciler reconciles a MySQLDB object
 type MySQLDBReconciler struct {
 	client.Client
-	Scheme             *runtime.Scheme
-	MySQLClientFactory mysqlinternal.MySQLClientFactory
+	Scheme       *runtime.Scheme
+	MySQLClients mysqlinternal.MySQLClients
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqldbs,verbs=get;list;watch;create;update;patch;delete
@@ -82,38 +84,12 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	// 3. Connect to MySQL
-	cfg := mysqlinternal.MySQLConfig{
-		AdminUser:     mysql.Spec.AdminUser,
-		AdminPassword: mysql.Spec.AdminPassword,
-		Host:          mysql.Spec.Host,
-	}
-	mysqlClient, err := r.MySQLClientFactory(cfg)
+	// 3. Get MySQL client
+	mysqlClient, err := r.MySQLClients.GetClient(db.Spec.MysqlName)
 	if err != nil {
-		db.Status.Phase = mysqlDBPhaseNotReady
-		db.Status.Reason = mysqlDBReasonMySQLConnectionFailed
-		if serr := r.Status().Update(ctx, db); serr != nil {
-			log.Error(serr, "Failed to update db status", "db", db.Name)
-		}
-		log.Error(err, "[MySQLClient] Failed to create")
-		return ctrl.Result{}, err // requeue
+		log.Error(err, "Failed to get MySQL client", "mysqlName", db.Spec.MysqlName)
+		return ctrl.Result{}, err
 	}
-	log.Info("[MySQLClient] Ping")
-	ctxPing, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-	err = mysqlClient.PingContext(ctxPing)
-	if err != nil {
-		db.Status.Phase = mysqlDBPhaseNotReady
-		db.Status.Reason = mysqlDBReasonMySQLConnectionFailed
-		log.Error(err, "[MySQLClient] Failed to connect to MySQL", "mysqlName", mysql.Name)
-		if serr := r.Status().Update(ctx, db); serr != nil {
-			log.Error(serr, "Failed to update db status", "db", db.Name)
-			return ctrl.Result{RequeueAfter: time.Second}, nil
-		}
-		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 1 second
-	}
-	log.Info("[MySQLClient] Successfully connected")
-	defer mysqlClient.Close()
 
 	// 4. Delete if NotFound with finalizer
 	if controllerutil.AddFinalizer(db, mysqlDBFinalizer) {
@@ -124,7 +100,7 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	if !db.GetDeletionTimestamp().IsZero() {
 		if controllerutil.ContainsFinalizer(db, mysqlDBFinalizer) {
-			if err := r.finalizeMySQLDB(ctx, db, mysql); err != nil {
+			if err := r.finalizeMySQLDB(ctx, mysqlClient, db); err != nil {
 				return ctrl.Result{}, err
 			}
 			if controllerutil.RemoveFinalizer(db, mysqlDBFinalizer) {
@@ -138,7 +114,7 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// 5. Create if not exists
-	err = mysqlClient.Exec("CREATE DATABASE IF NOT EXISTS " + db.Spec.DBName + ";")
+	res, err := mysqlClient.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", db.Spec.DBName))
 	if err != nil {
 		log.Error(err, "[MySQL] Failed to create MySQL database.", "mysql", mysql.Name, "database", db.Spec.DBName)
 		db.Status.Phase = mysqlDBPhaseNotReady
@@ -149,34 +125,28 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return ctrl.Result{}, err
 	}
-	db.Status.Phase = mysqlDBPhaseReady
-	db.Status.Reason = mysqlDBReasonCompleted
-	if serr := r.Status().Update(ctx, db); serr != nil {
-		log.Error(serr, "Failed to update MySQLDB status", "Name", db.Spec.DBName)
+	rows, err := res.RowsAffected()
+	if err != nil {
+		log.Error(err, "Failed to get res.RowsAffected")
+		return ctrl.Result{}, err
+	}
+	if rows > 0 {
+		db.Status.Phase = mysqlDBPhaseReady
+		db.Status.Reason = mysqlDBReasonCompleted
+		if serr := r.Status().Update(ctx, db); serr != nil {
+			log.Error(serr, "Failed to update MySQLDB status", "Name", db.Spec.DBName)
+		}
+	} else {
+		log.Info("database already exists", "database", db.Spec.DBName)
 	}
 
 	return ctrl.Result{}, nil
 }
 
 // finalizeMySQLDB drops MySQL database
-func (r *MySQLDBReconciler) finalizeMySQLDB(ctx context.Context, db *mysqlv1alpha1.MySQLDB, mysql *mysqlv1alpha1.MySQL) error {
-	mysqlClient, err := r.MySQLClientFactory(
-		mysqlinternal.MySQLConfig{
-			AdminUser:     mysql.Spec.AdminUser,
-			AdminPassword: mysql.Spec.AdminPassword,
-			Host:          mysql.Spec.Host,
-		})
-	if err != nil {
-		return err
-	}
-	ctxPing, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-	err = mysqlClient.PingContext(ctxPing)
-	if err != nil {
-		return err
-	}
-	defer mysqlClient.Close()
-	return mysqlClient.Exec("DROP DATABASE IF EXISTS " + db.Spec.DBName + ";")
+func (r *MySQLDBReconciler) finalizeMySQLDB(ctx context.Context, mysqlClient *sql.DB, db *mysqlv1alpha1.MySQLDB) error {
+	_, err := mysqlClient.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s", db.Spec.DBName))
+	return err
 }
 
 // SetupWithManager sets up the controller with the Manager.

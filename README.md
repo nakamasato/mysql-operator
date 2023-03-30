@@ -9,6 +9,8 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 - Go: 1.19
 ## Components
 
+![](diagram.drawio.svg)
+
 - `MySQL`: MySQL cluster (holds credentials to connect to MySQL)
 - `MySQLUser`: MySQL user (`mysqlName` and `host`)
 - `MySQLDB`: MySQL database (`mysqlName` and `dbName`)
@@ -88,8 +90,21 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
     kubectl delete -k https://github.com/nakamasato/mysql-operator/config/samples-on-k8s
     ```
 
-    NOTICE: custom resources might get stuck if MySQL is deleted before (to be improved). → Remove finalizers to forcifully delete the stuck objects
-    `kubectl patch mysqluser <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge` or `kubectl patch mysql <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge` (Bug: https://github.com/nakamasato/mysql-operator/issues/162)
+    <details><summary>NOTICE</summary>
+
+    custom resources might get stuck if MySQL is deleted before (to be improved). → Remove finalizers to forcifully delete the stuck objects:
+    ```
+    kubectl patch mysqluser <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge
+    ```
+    ```
+    kubectl patch mysql <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge
+    ```
+
+    ```
+    kubectl patch mysqldb <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge
+    ```
+
+    </details>
 
 1. (Optional) Delete MySQL
     ```

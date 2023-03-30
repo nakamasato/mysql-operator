@@ -1,68 +1,44 @@
 package mysql
 
 import (
-	"context"
 	"database/sql"
-
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"errors"
 )
 
-type MySQLConfig struct {
-	AdminUser     string
-	AdminPassword string
-	Host          string
+type MySQLClients map[string]*sql.DB
+
+var ErrMySQLClientNotFound = errors.New("MySQL client not found")
+
+func (m MySQLClients) GetClient(name string) (*sql.DB, error) {
+	mysqlClient, ok := m[name]
+	if ok {
+		return mysqlClient, nil
+	} else {
+		return nil, ErrMySQLClientNotFound
+	}
 }
 
-type MySQLClient interface {
-	Exec(query string) error
-	PingContext(ctx context.Context) error
-	Close()
-}
-
-type mysqlClient struct {
-	db *sql.DB
-}
-
-type fakeMysqlClient struct {
-}
-
-func NewFakeMySQLClient(cfg MySQLConfig) (MySQLClient, error) {
-	return &fakeMysqlClient{}, nil
-}
-
-func (mc fakeMysqlClient) Exec(query string) error {
-	return nil
-}
-
-func (mc fakeMysqlClient) PingContext(ctx context.Context) error {
-	return nil
-}
-
-func (mc fakeMysqlClient) Close() {
-}
-
-type MySQLClientFactory func(cfg MySQLConfig) (MySQLClient, error)
-
-func NewMySQLClient(config MySQLConfig) (MySQLClient, error) {
-	db, err := sql.Open("mysql", config.AdminUser+":"+config.AdminPassword+"@tcp("+config.Host+":3306)/")
-	// TODO error handling
-	return &mysqlClient{db: db}, err
-}
-
-func (mc mysqlClient) Exec(query string) error {
-	var log = logf.Log.WithName("mysql")
-	_, err := mc.db.Exec(query)
-	if err != nil {
-		log.Error(err, "Failed to execute query", "Query", query)
+// Cloase a MySQL client
+func (m MySQLClients) Close(name string) error {
+	mysqlClient, ok := m[name]
+	if !ok {
+		return ErrMySQLClientNotFound
+	}
+	if err := mysqlClient.Close(); err != nil {
 		return err
 	}
+	delete(m, name)
 	return nil
 }
 
-func (mc mysqlClient) PingContext(ctx context.Context) error {
-	return mc.db.PingContext(ctx)
-}
-
-func (mc mysqlClient) Close() {
-	mc.db.Close()
+// Close all MySQL clients.
+// Return error immediately when error occurs for a client.
+func (m MySQLClients) CloseAll() error {
+	for name, _ := range m {
+		err := m.Close(name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -24,16 +25,19 @@ var _ = Describe("MySQLUser controller", func() {
 
 		ctx := context.Background()
 		var stopFunc func()
+		var close func() error
 		BeforeEach(func() {
 			k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 				Scheme: scheme,
 			})
 			Expect(err).ToNot(HaveOccurred())
-
+			db, err := sql.Open("testdbdriver", "test")
+			close = db.Close
+			Expect(err).ToNot(HaveOccurred())
 			err = (&MySQLUserReconciler{
-				Client:             k8sManager.GetClient(),
-				Scheme:             k8sManager.GetScheme(),
-				MySQLClientFactory: NewFakeMySQLClient,
+				Client:       k8sManager.GetClient(),
+				Scheme:       k8sManager.GetScheme(),
+				MySQLClients: MySQLClients{MySQLName: db},
 			}).SetupWithManager(k8sManager)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -48,6 +52,7 @@ var _ = Describe("MySQLUser controller", func() {
 
 		AfterEach(func() {
 			stopFunc()
+			close()
 			time.Sleep(100 * time.Millisecond)
 		})
 
@@ -202,16 +207,19 @@ var _ = Describe("MySQLUser controller", func() {
 	Context("With MySQL with unnconnectable configuration", func() {
 		ctx := context.Background()
 		var stopFunc func()
+		var close func() error
 		BeforeEach(func() {
 			k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 				Scheme: scheme,
 			})
 			Expect(err).ToNot(HaveOccurred())
-
+			db, err := sql.Open("mysql", "test_user:password@tcp(nonexistinghost:3306)/")
+			Expect(err).NotTo(HaveOccurred())
+			close = db.Close
 			err = (&MySQLUserReconciler{
-				Client:             k8sManager.GetClient(),
-				Scheme:             k8sManager.GetScheme(),
-				MySQLClientFactory: NewMySQLClient, // real mysql client
+				Client:       k8sManager.GetClient(),
+				Scheme:       k8sManager.GetScheme(),
+				MySQLClients: MySQLClients{MySQLName: db},
 			}).SetupWithManager(k8sManager)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -241,6 +249,7 @@ var _ = Describe("MySQLUser controller", func() {
 			}).ShouldNot(Succeed())
 
 			stopFunc()
+			close()
 			time.Sleep(100 * time.Millisecond)
 		})
 
@@ -307,7 +316,7 @@ var _ = Describe("MySQLUser controller", func() {
 						return ""
 					}
 					return mysqlUser.Status.Reason
-				}).Should(Equal(mysqlUserReasonMySQLConnectionFailed))
+				}).Should(Equal(mysqlUserReasonMySQLFailedToCreateUser))
 			})
 		})
 
