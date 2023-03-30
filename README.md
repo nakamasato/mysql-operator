@@ -9,9 +9,16 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 - Go: 1.19
 ## Components
 
-- `MySQL`: MySQL cluster (holds credentials to connect to MySQL)
-- `MySQLUser`: MySQL user (`mysqlName` and `host`)
-- `MySQLDB`: MySQL database (`mysqlName` and `dbName`)
+![](diagram.drawio.svg)
+
+1. Custom Resource
+    1. `MySQL`: MySQL cluster (holds credentials to connect to MySQL)
+    1. `MySQLUser`: MySQL user (`mysqlName` and `host`)
+    1. `MySQLDB`: MySQL database (`mysqlName` and `dbName`)
+1. Reconciler
+    1. `MySQLReconciler` is responsible for updating `MySQLClients` based on `MySQL` resource
+    1. `MySQLUserReconciler` is responsible for managing `MySQLUser` using `MySQLClients`
+    1. `MySQLDBReconciler` is responsible for managing `MySQLDB` using `MySQLClients`
 
 ## Getting Started
 
@@ -88,8 +95,21 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
     kubectl delete -k https://github.com/nakamasato/mysql-operator/config/samples-on-k8s
     ```
 
-    NOTICE: custom resources might get stuck if MySQL is deleted before (to be improved). → Remove finalizers to forcifully delete the stuck objects
-    `kubectl patch mysqluser <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge` or `kubectl patch mysql <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge` (Bug: https://github.com/nakamasato/mysql-operator/issues/162)
+    <details><summary>NOTICE</summary>
+
+    custom resources might get stuck if MySQL is deleted before (to be improved). → Remove finalizers to forcifully delete the stuck objects:
+    ```
+    kubectl patch mysqluser <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge
+    ```
+    ```
+    kubectl patch mysql <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge
+    ```
+
+    ```
+    kubectl patch mysqldb <resource_name> -p '{"metadata":{"finalizers": []}}' --type=merge
+    ```
+
+    </details>
 
 1. (Optional) Delete MySQL
     ```

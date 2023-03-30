@@ -22,21 +22,18 @@ import (
 	"testing"
 	"time"
 
+	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	testdbdriver "github.com/nakamasato/test-db-driver"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-
-	// "k8s.io/client-go/rest"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -64,6 +61,7 @@ var cancel context.CancelFunc
 func init() {
 	utilruntime.Must(mysqlv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	testdbdriver.Register("testdbdriver", "testdb", "test_user@/test_db")
 }
 
 func TestAPIs(t *testing.T) {

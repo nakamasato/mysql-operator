@@ -83,19 +83,31 @@ func main() {
 		os.Exit(1)
 	}
 
+	mysqlClients := mysql.MySQLClients{}
+
 	if err = (&controllers.MySQLUserReconciler{
-		Client:             mgr.GetClient(),
-		Scheme:             mgr.GetScheme(),
-		MySQLClientFactory: mysql.NewMySQLClient,
+		Client:       mgr.GetClient(),
+		Scheme:       mgr.GetScheme(),
+		MySQLClients: mysqlClients,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQLUser")
 		os.Exit(1)
 	}
 	if err = (&controllers.MySQLReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		MySQLClients:    mysqlClients,
+		MySQLDriverName: "mysql",
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQL")
+		os.Exit(1)
+	}
+	if err = (&controllers.MySQLDBReconciler{
+		Client:       mgr.GetClient(),
+		Scheme:       mgr.GetScheme(),
+		MySQLClients: mysqlClients,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MySQLDB")
 		os.Exit(1)
 	}
 
@@ -115,14 +127,6 @@ func main() {
 		panic(err)
 	}
 
-	if err = (&controllers.MySQLDBReconciler{
-		Client:             mgr.GetClient(),
-		Scheme:             mgr.GetScheme(),
-		MySQLClientFactory: mysql.NewMySQLClient,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MySQLDB")
-		os.Exit(1)
-	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

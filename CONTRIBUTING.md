@@ -11,7 +11,6 @@ Run lint:
 golangci-lint run ./...
 ```
 
-
 # 2. Run mysql-operator
 
 ## 2.1. Local
@@ -236,6 +235,12 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 ```
 make test
+```
+
+Run individual test
+
+```
+KUBEBUILDER_ASSETS="/Users/m.naka/Library/Application Support/io.kubebuilder.envtest/k8s/1.24.2-darwin-arm64" bin/ginkgo -skip-package=e2e --focus "Should have finalizer" --failFast ./...
 ```
 
 ## 4.3. e2e

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -29,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
+	mysqlinternal "github.com/nakamasato/mysql-operator/internal/mysql"
 )
 
 const mysqlFinalizer = "mysql.nakamasato.com/finalizer"
@@ -36,7 +38,9 @@ const mysqlFinalizer = "mysql.nakamasato.com/finalizer"
 // MySQLReconciler reconciles a MySQL object
 type MySQLReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme          *runtime.Scheme
+	MySQLClients    mysqlinternal.MySQLClients
+	MySQLDriverName string
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls,verbs=get;list;watch;create;update;patch;delete
@@ -68,6 +72,12 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		log.Error(err, "[FetchMySQL] Failed to get MySQL")
 		return ctrl.Result{}, err
 	}
+
+	// Update MySQLClients
+	if err := r.UpdateMySQLClients(ctx, mysql); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// Add a finalizer if not exists
 	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {
 		if err := r.Update(ctx, mysql); err != nil {
@@ -123,6 +133,28 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) error {
+	log := log.FromContext(ctx).WithName("MySQLReconciler")
+	if db, _ := r.MySQLClients.GetClient(mysql.Name); db != nil {
+		log.Info("MySQLClient already exists", "mysql.Name", mysql.Name)
+		return nil
+	}
+	// db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tpc(%s:%d)/", mysql.Spec.AdminUser, mysql.Spec.AdminPassword, mysql.Spec.Host, 3306))
+	db, err := sql.Open(r.MySQLDriverName, mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
+	if err != nil {
+		log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
+		return err
+	}
+	r.MySQLClients[mysql.Name] = db
+	err = db.PingContext(ctx)
+	if err != nil {
+		log.Error(err, "Ping failed", "mysql.Name", mysql.Name)
+		return err
+	}
+	log.Info("Successfully added MySQL client", "mysql.Name", mysql.Name)
+	return nil
+}
+
 func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (int, error) {
 	// 1. Get the referenced MySQLUser instances.
 	// 2. Return the number of referencing MySQLUser.
@@ -147,5 +179,17 @@ func (r *MySQLReconciler) countReferencesByMySQLDB(ctx context.Context, mysql *m
 
 // finalizeMySQL return true if no user and no db is referencing the given MySQL
 func (r *MySQLReconciler) finalizeMySQL(ctx context.Context, mysql *mysqlv1alpha1.MySQL) bool {
-	return mysql.Status.UserCount == 0 && mysql.Status.DBCount == 0
+	log := log.FromContext(ctx).WithName("MySQLReconciler")
+	if mysql.Status.UserCount > 0 || mysql.Status.DBCount > 0 {
+		log.Info("there's referencing user or database", "UserCount", mysql.Status.UserCount, "DBCount", mysql.Status.DBCount)
+		return false
+	}
+	if db, ok := r.MySQLClients[mysql.Name]; ok {
+		if err := db.Close(); err != nil {
+			return false
+		}
+		delete(r.MySQLClients, mysql.Name)
+	}
+	log.Info("Closed and removed MySQL client", "mysql.Name", mysql.Name)
+	return true
 }
