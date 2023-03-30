@@ -74,7 +74,9 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	// Update MySQLClients
-	r.UpdateMySQLClients(ctx, mysql)
+	if err := r.UpdateMySQLClients(ctx, mysql); err!= nil {
+		return ctrl.Result{}, err
+	}
 
 	// Add a finalizer if not exists
 	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {

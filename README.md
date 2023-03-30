@@ -11,9 +11,14 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 
 ![](diagram.drawio.svg)
 
-- `MySQL`: MySQL cluster (holds credentials to connect to MySQL)
-- `MySQLUser`: MySQL user (`mysqlName` and `host`)
-- `MySQLDB`: MySQL database (`mysqlName` and `dbName`)
+1. Custom Resource
+    1. `MySQL`: MySQL cluster (holds credentials to connect to MySQL)
+    1. `MySQLUser`: MySQL user (`mysqlName` and `host`)
+    1. `MySQLDB`: MySQL database (`mysqlName` and `dbName`)
+1. Reconciler
+    1. `MySQLReconciler` is responsible for updating `MySQLClients` based on `MySQL` resource
+    1. `MySQLUserReconciler` is responsible for managing `MySQLUser` using `MySQLClients`
+    1. `MySQLDBReconciler` is responsible for managing `MySQLDB` using `MySQLClients`
 
 ## Getting Started
 

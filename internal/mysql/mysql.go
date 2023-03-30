@@ -34,7 +34,7 @@ func (m MySQLClients) Close(name string) error {
 // Close all MySQL clients.
 // Return error immediately when error occurs for a client.
 func (m MySQLClients) CloseAll() error {
-	for name, _ := range m {
+	for name := range m {
 		err := m.Close(name)
 		if err != nil {
 			return err

@@ -52,7 +52,8 @@ var _ = Describe("MySQLUser controller", func() {
 
 		AfterEach(func() {
 			stopFunc()
-			close()
+			err := close()
+			Expect(err).NotTo(HaveOccurred())
 			time.Sleep(100 * time.Millisecond)
 		})
 
@@ -249,7 +250,8 @@ var _ = Describe("MySQLUser controller", func() {
 			}).ShouldNot(Succeed())
 
 			stopFunc()
-			close()
+			err = close()
+			Expect(err).NotTo(HaveOccurred())
 			time.Sleep(100 * time.Millisecond)
 		})
 
