@@ -57,6 +57,10 @@ spec:
               host:
                 description: Host is MySQL host of target MySQL cluster.
                 type: string
+              port:
+                default: 3306
+                description: Port is MySQL port of target MySQL cluster.
+                type: integer
             required:
             - admin_password
             - admin_user

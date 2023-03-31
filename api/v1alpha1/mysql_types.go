@@ -30,6 +30,11 @@ type MySQLSpec struct {
 
 	// Host is MySQL host of target MySQL cluster.
 	Host string `json:"host,omitempty"`
+
+	//+kubebuilder:default=3306
+
+	// Port is MySQL port of target MySQL cluster.
+	Port int16 `json:"port,omitempty"`
 	// AdminUser is MySQL user to connect target MySQL cluster.
 	AdminUser string `json:"admin_user"`
 	// AdminPassword is MySQL password to connect target MySQL cluster.

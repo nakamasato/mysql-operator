@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"time"
 
+	. "github.com/go-sql-driver/mysql"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -139,8 +140,13 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 		log.Info("MySQLClient already exists", "mysql.Name", mysql.Name)
 		return nil
 	}
-	// db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tpc(%s:%d)/", mysql.Spec.AdminUser, mysql.Spec.AdminPassword, mysql.Spec.Host, 3306))
-	db, err := sql.Open(r.MySQLDriverName, mysql.Spec.AdminUser+":"+mysql.Spec.AdminPassword+"@tcp("+mysql.Spec.Host+":3306)/")
+	c := Config{
+		User:   mysql.Spec.AdminUser,
+		Passwd: mysql.Spec.AdminPassword,
+		Addr:   fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
+		Net:    "tcp",
+	}
+	db, err := sql.Open(r.MySQLDriverName, c.FormatDSN())
 	if err != nil {
 		log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
 		return err
