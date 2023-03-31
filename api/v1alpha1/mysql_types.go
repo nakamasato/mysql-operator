@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -70,6 +72,10 @@ type MySQL struct {
 
 	Spec   MySQLSpec   `json:"spec,omitempty"`
 	Status MySQLStatus `json:"status,omitempty"`
+}
+
+func (m MySQL) GetKey() string {
+	return fmt.Sprintf("%s-%s", m.Namespace, m.Name)
 }
 
 //+kubebuilder:object:root=true

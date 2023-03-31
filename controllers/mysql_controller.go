@@ -136,7 +136,7 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) error {
 	log := log.FromContext(ctx).WithName("MySQLReconciler")
-	if db, _ := r.MySQLClients.GetClient(mysql.Name); db != nil {
+	if db, _ := r.MySQLClients.GetClient(mysql.GetKey()); db != nil {
 		log.Info("MySQLClient already exists", "mysql.Name", mysql.Name)
 		return nil
 	}
@@ -151,7 +151,8 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 		log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
 		return err
 	}
-	r.MySQLClients[mysql.Name] = db
+	// key: mysql.Namespace-mysql.Name
+	r.MySQLClients[mysql.GetKey()] = db
 	err = db.PingContext(ctx)
 	if err != nil {
 		log.Error(err, "Ping failed", "mysql.Name", mysql.Name)
