@@ -28,11 +28,13 @@ type MySQLUserSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// MySQL name
+	// MySQL (CRD) name to reference to, which decides the destination MySQL server
 	MysqlName string `json:"mysqlName"`
 
 	// +kubebuilder:default=%
 	// +kubebuilder:validation:Optional
+
+	// MySQL hostname for MySQL account
 	Host string `json:"host"`
 }
 
@@ -45,11 +47,19 @@ type MySQLUserStatus struct {
 	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
-	Conditions       []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-	Phase            string             `json:"phase,omitempty"`
-	Reason           string             `json:"reason,omitempty"`
-	MySQLUserCreated bool               `json:"mysql_user_created,omitempty"`
-	SecretCreated    bool               `json:"secret_created,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Phase      string             `json:"phase,omitempty"`
+	Reason     string             `json:"reason,omitempty"`
+
+	// +kubebuilder:default=false
+
+	// true if MySQL user is created
+	MySQLUserCreated bool `json:"mysql_user_created,omitempty"`
+
+	// +kubebuilder:default=false
+
+	// true if Secret is created
+	SecretCreated bool `json:"secret_created,omitempty"`
 }
 
 func (m *MySQLUser) GetConditions() []metav1.Condition {

@@ -55,9 +55,11 @@ spec:
             properties:
               host:
                 default: '%'
+                description: MySQL hostname for MySQL account
                 type: string
               mysqlName:
-                description: MySQL name
+                description: MySQL (CRD) name to reference to, which decides the destination
+                  MySQL server
                 type: string
             required:
             - mysqlName
@@ -139,12 +141,16 @@ spec:
                 - type
                 x-kubernetes-list-type: map
               mysql_user_created:
+                default: false
+                description: true if MySQL user is created
                 type: boolean
               phase:
                 type: string
               reason:
                 type: string
               secret_created:
+                default: false
+                description: true if Secret is created
                 type: boolean
             type: object
         type: object
