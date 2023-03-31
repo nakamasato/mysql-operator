@@ -247,15 +247,13 @@ func (r *MySQLUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // finalizeMySQLUser drops MySQL user
 func (r *MySQLUserReconciler) finalizeMySQLUser(ctx context.Context, mysqlClient *sql.DB, mysqlUser *mysqlv1alpha1.MySQLUser) error {
-	if mysqlUser.Status.Phase != mysqlDBPhaseReady {
-		// TODO: make the condition precise
-		return nil
+	if mysqlUser.Status.MySQLUserCreated {
+		_, err := mysqlClient.ExecContext(ctx, fmt.Sprintf("DROP USER IF EXISTS '%s'@'%s'", mysqlUser.Name, mysqlUser.Spec.Host))
+		if err != nil {
+			return err
+		}
+		metrics.MysqlUserDeletedTotal.Increment()
 	}
-	_, err := mysqlClient.ExecContext(ctx, fmt.Sprintf("DROP USER IF EXISTS '%s'@'%s'", mysqlUser.Name, mysqlUser.Spec.Host))
-	if err != nil {
-		return err
-	}
-	metrics.MysqlUserDeletedTotal.Increment()
 
 	return nil
 }

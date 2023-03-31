@@ -62,6 +62,8 @@ func (m *MySQLUser) SetConditions(conditions []metav1.Condition) {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="MySQLUser",type="boolean",JSONPath=".status.mysql_user_created",description="true if MySQL user is created"
+//+kubebuilder:printcolumn:name="Secret",type="boolean",JSONPath=".status.secret_created",description="true if Secret is created"
 //+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="The phase of this MySQLUser"
 //+kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.reason",description="The reason for the current phase of this MySQLUser"
 

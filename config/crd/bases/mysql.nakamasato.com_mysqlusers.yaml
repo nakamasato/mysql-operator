@@ -17,6 +17,14 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
+    - description: true if MySQL user is created
+      jsonPath: .status.mysql_user_created
+      name: MySQLUser
+      type: boolean
+    - description: true if Secret is created
+      jsonPath: .status.secret_created
+      name: Secret
+      type: boolean
     - description: The phase of this MySQLUser
       jsonPath: .status.phase
       name: Phase
