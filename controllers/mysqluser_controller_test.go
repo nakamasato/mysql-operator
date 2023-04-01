@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -37,7 +38,7 @@ var _ = Describe("MySQLUser controller", func() {
 			err = (&MySQLUserReconciler{
 				Client:       k8sManager.GetClient(),
 				Scheme:       k8sManager.GetScheme(),
-				MySQLClients: MySQLClients{MySQLName: db},
+				MySQLClients: MySQLClients{fmt.Sprintf("%s-%s", Namespace, MySQLName): db},
 			}).SetupWithManager(k8sManager)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -220,7 +221,7 @@ var _ = Describe("MySQLUser controller", func() {
 			err = (&MySQLUserReconciler{
 				Client:       k8sManager.GetClient(),
 				Scheme:       k8sManager.GetScheme(),
-				MySQLClients: MySQLClients{MySQLName: db},
+				MySQLClients: MySQLClients{fmt.Sprintf("%s-%s", Namespace, MySQLName): db},
 			}).SetupWithManager(k8sManager)
 			Expect(err).ToNot(HaveOccurred())
 
