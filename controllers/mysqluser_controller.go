@@ -82,8 +82,8 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "[FetchMySQLUser] Failed")
 		return ctrl.Result{}, err
 	}
-	log.Info("[FetchMySQLUser] Found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
-	mysqlUserName := mysqlUser.ObjectMeta.Name
+	log.Info("[FetchMySQLUser] Found.", "name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+	mysqlUserName := mysqlUser.Name
 	mysqlName := mysqlUser.Spec.MysqlName
 
 	// Fetch MySQL
@@ -93,7 +93,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "[FetchMySQL] Failed")
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLFetchFailed
-		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
+		if serr := r.updateStatus(ctx, mysqlUser, mysqlUserPhaseNotReady, mysqlUserReasonMySQLFetchFailed, bool, mySQLUserCreated bool); serr != nil {
 			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -200,42 +200,43 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'%s' IDENTIFIED BY '%s'", mysqlUserName, mysqlUser.Spec.Host, password))
 	if err != nil {
 		log.Error(err, "[MySQL] Failed to create MySQL user.", "mysqlName", mysqlName, "mysqlUserName", mysqlUserName)
-		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
-		mysqlUser.Status.Reason = mysqlUserReasonMySQLFailedToCreateUser
-		mysqlUser.Status.MySQLUserCreated = false
-		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
-			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
-			return ctrl.Result{RequeueAfter: time.Second}, nil
+		if err := r.updateStatus(ctx, mysqlUser, mysqlUserPhaseNotReady, mysqlUserReasonMySQLFailedToCreateUser, false, false); err != nil {
+			return ctrl.Result{}, err
 		}
 		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 1 second
 	}
 
 	log.Info("[MySQL] Created or updated", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
 	metrics.MysqlUserCreatedTotal.Increment() // TODO: increment only when a user is created
-	mysqlUser.Status.Phase = mysqlUserPhaseNotReady
-	mysqlUser.Status.Reason = "mysql user is successfully created. Secret is being created."
-	mysqlUser.Status.MySQLUserCreated = true
+	if err := r.updateStatus(ctx, mysqlUser, mysqlUserPhaseNotReady, "mysql user is successfully created. Secret is being created.", true, false); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	err = r.createSecret(ctx, password, secretName, mysqlUser.Namespace, mysqlUser)
 	// TODO: #35 add test if mysql user is successfully created but secret is failed to create
 	if err != nil {
 		log.Error(err, "Failed to create secret", "secretName", secretName, "namespace", mysqlUser.Namespace, "mysqlUser", mysqlUser.Name)
-		mysqlUser.Status.Reason = "Failed to create Secret"
-		mysqlUser.Status.SecretCreated = false
-		if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
-			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
-			return ctrl.Result{RequeueAfter: time.Second}, nil
+		if err := r.updateStatus(ctx, mysqlUser, mysqlUserPhaseNotReady, "Failed to create Secret", false, true); err != nil {
+			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, err
 	}
-	mysqlUser.Status.Phase = mysqlUserPhaseReady
-	mysqlUser.Status.Reason = mysqlUserReasonCompleted
-	mysqlUser.Status.SecretCreated = true
-	if serr := r.Status().Update(ctx, mysqlUser); serr != nil {
-		log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
+
+	if err = r.updateStatus(ctx, mysqlUser, mysqlUserPhaseReady, mysqlUserReasonCompleted, true, true); err != nil {
+		log.Error(err, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *MySQLUserReconciler) updateStatus(ctx context.Context, mysqlUser *mysqlv1alpha1.MySQLUser, phase, reason string, secretCreated, mySQLUserCreated bool) error {
+	mysqlUser.Status = mysqlv1alpha1.MySQLUserStatus{
+		Phase:            phase,
+		Reason:           reason,
+		MySQLUserCreated: mySQLUserCreated,
+		SecretCreated:    secretCreated,
+	}
+	return r.Status().Update(ctx, mysqlUser)
 }
 
 // SetupWithManager sets up the controller with the Manager.
