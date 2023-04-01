@@ -85,9 +85,9 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// 3. Get MySQL client
-	mysqlClient, err := r.MySQLClients.GetClient(db.Spec.MysqlName)
+	mysqlClient, err := r.MySQLClients.GetClient(mysql.GetKey())
 	if err != nil {
-		log.Error(err, "Failed to get MySQL client", "mysqlName", db.Spec.MysqlName)
+		log.Error(err, "Failed to get MySQL client", "key", mysql.GetKey())
 		return ctrl.Result{}, err
 	}
 

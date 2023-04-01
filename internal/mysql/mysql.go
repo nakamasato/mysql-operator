@@ -9,8 +9,8 @@ type MySQLClients map[string]*sql.DB
 
 var ErrMySQLClientNotFound = errors.New("MySQL client not found")
 
-func (m MySQLClients) GetClient(name string) (*sql.DB, error) {
-	mysqlClient, ok := m[name]
+func (m MySQLClients) GetClient(key string) (*sql.DB, error) {
+	mysqlClient, ok := m[key]
 	if ok {
 		return mysqlClient, nil
 	} else {

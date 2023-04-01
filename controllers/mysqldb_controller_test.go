@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
@@ -37,7 +38,7 @@ var _ = Describe("MySQLDB controller", func() {
 			err = (&MySQLDBReconciler{
 				Client:       k8sManager.GetClient(),
 				Scheme:       k8sManager.GetScheme(),
-				MySQLClients: MySQLClients{MySQLName: db},
+				MySQLClients: MySQLClients{fmt.Sprintf("%s-%s", Namespace, MySQLName): db},
 			}).SetupWithManager(k8sManager)
 			Expect(err).ToNot(HaveOccurred())
 			ctx, cancel := context.WithCancel(ctx)
