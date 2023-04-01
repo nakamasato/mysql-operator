@@ -137,7 +137,7 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) error {
 	log := log.FromContext(ctx).WithName("MySQLReconciler")
 	if db, _ := r.MySQLClients.GetClient(mysql.GetKey()); db != nil {
-		log.Info("MySQLClient already exists", "mysql.Name", mysql.Name)
+		log.Info("MySQLClient already exists", "key", mysql.GetKey())
 		return nil
 	}
 	c := Config{
