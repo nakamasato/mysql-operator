@@ -1,0 +1,7 @@
+apiVersion: mysql.nakamasato.com/v1alpha1
+kind: MySQL
+metadata:
+  name: mysql-sample
+spec:
+  host: localhost
+  gcp_secret_name: mysql-password # echo -n "password" | gcloud secrets create mysql-password --data-file=-

@@ -180,6 +180,64 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
 
+
+## 2.3. Local with GCP Secret Manager
+
+1. Setup gcloud
+    ```bash
+    gcloud auth login
+    gcloud config set project <your project_id>
+    gcloud auth application-default login
+    gcloud services enable secretmanager.googleapis.com # only first time
+    ```
+1. Create secret `mysql-password`
+    ```
+    echo -n "password" | gcloud secrets create mysql-password --data-file=-
+    ```
+1. Run MySQL with docker
+    ```
+    docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:8
+    ```
+1. Install and run operator
+    ```
+    make install
+    go run main.go --cloud-secret-manager gcp
+    ```
+1. Create custom resources
+    ```
+    kubectl apply -k config/samples-wtih-gcp-secretmanager
+    ```
+1. Check
+    ```
+    kubectl get -k config/samples-wtih-gcp-secretmanager
+    NAME                                      HOST        ADMINUSER   USERCOUNT
+    mysql.mysql.nakamasato.com/mysql-sample   localhost               1
+
+    NAME                                     PHASE   REASON
+    mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created
+
+    NAME                                        MYSQLUSER   SECRET   PHASE   REASON
+    mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
+    ```
+1. Clean up
+
+    1. Remove CR:
+        ```
+        kubectl delete -k config/samples-wtih-gcp-secretmanager
+        ```
+    1. Stop controller `ctrl+c`
+    1. Uninstall
+        ```
+        make uninstall
+        ```
+1. Clean up GCP
+    ```
+    gcloud secrets delete mysql-password
+    gcloud auth revoke
+    gcloud auth application-default revoke
+    gcloud config unset project
+    ```
+
 # 3. Monitoring
 
 1. Prepare Prometheus with Prometheus Operator

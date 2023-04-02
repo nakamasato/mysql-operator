@@ -120,6 +120,17 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
     kubectl delete -k https://github.com/nakamasato/mysql-operator/config/install
     ```
 
+## GCP Secret Manager
+
+Instead of writing raw password in `MySQL.Spec.AdminPassword`, you can get the password for root user from an external secret manager (e.g. GCP)
+1. Create Secret
+1. Create service-account
+1. Run operator with service account
+1. Create custom resources
+    ```
+    kubectl apply -k config/samples-wtih-gcp-secretmanager
+    ```
+
 ## Exposed Metrics
 
 - `mysql_user_created_total`

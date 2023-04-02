@@ -1,0 +1,13 @@
+apiVersion: mysql.nakamasato.com/v1alpha1
+kind: MySQLDB
+metadata:
+  labels:
+    app.kubernetes.io/name: mysqldb
+    app.kubernetes.io/instance: mysqldb-sample
+    app.kubernetes.io/part-of: mysql-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: mysql-operator
+  name: sample-db # this is not a name for MySQL database but just a Kubernetes object name
+spec:
+  dbName: sample_db # this is MySQL database name
+  mysqlName: mysql-sample

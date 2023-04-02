@@ -32,6 +32,7 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	mysqlinternal "github.com/nakamasato/mysql-operator/internal/mysql"
+	secret "github.com/nakamasato/mysql-operator/internal/secret"
 )
 
 const mysqlFinalizer = "mysql.nakamasato.com/finalizer"
@@ -42,6 +43,7 @@ type MySQLReconciler struct {
 	Scheme          *runtime.Scheme
 	MySQLClients    mysqlinternal.MySQLClients
 	MySQLDriverName string
+	SecretManager   secret.SecretManager
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls,verbs=get;list;watch;create;update;patch;delete
@@ -140,13 +142,13 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 		log.Info("MySQLClient already exists", "key", mysql.GetKey())
 		return nil
 	}
-	c := Config{
-		User:   mysql.Spec.AdminUser,
-		Passwd: mysql.Spec.AdminPassword,
-		Addr:   fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
-		Net:    "tcp",
+
+	// Update by raw username and password or GCP secret manager
+	cfg, err := r.getMySQLConfig(ctx, mysql)
+	if err != nil {
+		return err
 	}
-	db, err := sql.Open(r.MySQLDriverName, c.FormatDSN())
+	db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
 	if err != nil {
 		log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
 		return err
@@ -160,6 +162,27 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 	}
 	log.Info("Successfully added MySQL client", "mysql.Name", mysql.Name)
 	return nil
+}
+
+// If GcpSecretName is set, get password from GCP secret manager
+// Otherwise user MySQL.Spec.AdminPassword
+func (r *MySQLReconciler) getMySQLConfig(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (Config, error) {
+	log := log.FromContext(ctx)
+	adminPassword := mysql.Spec.AdminPassword // Set raw AdminPassword for the default value
+	if mysql.Spec.GcpSecretName != "" {
+		password, err := r.SecretManager.GetSecret(ctx, mysql.Spec.GcpSecretName)
+		if err != nil {
+			log.Error(err, "failed to get secret from GCP secret manager", "secret", mysql.Spec.GcpSecretName)
+		} else {
+			adminPassword = password // update with the one obtained from GCP
+		}
+	}
+	return Config{
+		User:   mysql.Spec.AdminUser,
+		Passwd: adminPassword,
+		Addr:   fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
+		Net:    "tcp",
+	}, nil
 }
 
 func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (int, error) {

@@ -37,10 +37,14 @@ type MySQLSpec struct {
 
 	// Port is MySQL port of target MySQL cluster.
 	Port int16 `json:"port,omitempty"`
+
 	// AdminUser is MySQL user to connect target MySQL cluster.
-	AdminUser string `json:"admin_user"`
+	AdminUser string `json:"admin_user,omitempty"`
 	// AdminPassword is MySQL password to connect target MySQL cluster.
-	AdminPassword string `json:"admin_password"`
+	AdminPassword string `json:"admin_password,omitempty"`
+
+	// Secret Name in GCP Secret Manager
+	GcpSecretName string `json:"gcp_secret_name,omitempty"`
 }
 
 // MySQLStatus defines the observed state of MySQL
