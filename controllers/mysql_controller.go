@@ -143,7 +143,7 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 		return nil
 	}
 
-	// Update by raw username and password or GCP secret manager
+	// Get MySQL config from raw username and password or GCP secret manager
 	cfg, err := r.getMySQLConfig(ctx, mysql)
 	if err != nil {
 		return err

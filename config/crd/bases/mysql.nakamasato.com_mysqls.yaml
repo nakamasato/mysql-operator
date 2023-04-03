@@ -64,6 +64,8 @@ spec:
                 default: 3306
                 description: Port is MySQL port of target MySQL cluster.
                 type: integer
+            required:
+            - admin_user
             type: object
           status:
             description: MySQLStatus defines the observed state of MySQL
