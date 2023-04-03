@@ -59,9 +59,10 @@ spec:
             description: MySQLDBStatus defines the observed state of MySQLDB
             properties:
               phase:
-                description: database is created or not
+                description: The phase of database creation
                 type: string
               reason:
+                description: The reason for the current phase
                 type: string
             type: object
         type: object

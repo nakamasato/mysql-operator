@@ -45,7 +45,8 @@ spec:
           metadata:
             type: object
           spec:
-            description: MySQLSpec defines the desired state of MySQL
+            description: MySQLSpec holds the connection information for the target
+              MySQL cluster.
             properties:
               admin_password:
                 description: AdminPassword is MySQL password to connect target MySQL
@@ -66,6 +67,7 @@ spec:
                 type: integer
             required:
             - admin_user
+            - host
             type: object
           status:
             description: MySQLStatus defines the observed state of MySQL

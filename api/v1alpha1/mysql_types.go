@@ -26,7 +26,7 @@ import (
 type MySQLSpec struct {
 
 	// Host is MySQL host of target MySQL cluster.
-	Host string `json:"host,omitempty"`
+	Host string `json:"host"`
 
 	//+kubebuilder:default=3306
 
