@@ -93,7 +93,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "[FetchMySQL] Failed")
 		mysqlUser.Status.Phase = mysqlUserPhaseNotReady
 		mysqlUser.Status.Reason = mysqlUserReasonMySQLFetchFailed
-		if serr := r.updateStatus(ctx, mysqlUser, mysqlUserPhaseNotReady, mysqlUserReasonMySQLFetchFailed, bool, mySQLUserCreated bool); serr != nil {
+		if serr := r.updateStatus(ctx, mysqlUser, mysqlUserPhaseNotReady, mysqlUserReasonMySQLFetchFailed, mysqlUser.Status.SecretCreated, mysqlUser.Status.MySQLUserCreated); serr != nil {
 			log.Error(serr, "Failed to update mysqluser status", "mysqlUser", mysqlUser.Name)
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
