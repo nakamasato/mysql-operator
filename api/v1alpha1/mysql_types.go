@@ -22,13 +22,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// MySQLSpec defines the desired state of MySQL
+// MySQLSpec holds the connection information for the target MySQL cluster.
 type MySQLSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 
 	// Host is MySQL host of target MySQL cluster.
 	Host string `json:"host,omitempty"`
@@ -40,17 +35,16 @@ type MySQLSpec struct {
 
 	// AdminUser is MySQL user to connect target MySQL cluster.
 	AdminUser string `json:"admin_user"`
+
 	// AdminPassword is MySQL password to connect target MySQL cluster.
 	AdminPassword string `json:"admin_password,omitempty"`
 
-	// Secret Name in GCP Secret Manager
+	// Secret name for admin password in GCP Secret Manager.
 	GcpSecretName string `json:"gcp_secret_name,omitempty"`
 }
 
 // MySQLStatus defines the observed state of MySQL
 type MySQLStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 
 	//+kubebuilder:default=0
 

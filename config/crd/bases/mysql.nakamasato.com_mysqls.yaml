@@ -55,7 +55,7 @@ spec:
                 description: AdminUser is MySQL user to connect target MySQL cluster.
                 type: string
               gcp_secret_name:
-                description: Secret Name in GCP Secret Manager
+                description: Secret name for admin password in GCP Secret Manager.
                 type: string
               host:
                 description: Host is MySQL host of target MySQL cluster.
