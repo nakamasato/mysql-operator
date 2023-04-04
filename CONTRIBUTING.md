@@ -61,8 +61,6 @@ golangci-lint run ./...
     kubectl delete -k config/samples
     ```
 
-    TODO: get stuck in deletion.
-
     <details>
 
     ```
@@ -167,11 +165,10 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 1. Clean up the Custom Resources (`MySQL` and `MySQLUser` resources).
 
     ```bash
-    kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysqluser.yaml
-    kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysql.yaml
+    kubectl delete -k config/samples-on-k8s
     ```
 
-    TODO: Get stuck:
+    If getting stuck in deletion:
 
     ```
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'delete from mysql.user where User = "nakamasato";'
@@ -185,8 +182,9 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 1. Setup gcloud
     ```bash
+    PROJECT_ID=<project_id>
     gcloud auth login
-    gcloud config set project <your project_id>
+    gcloud config set project $PROJECT_ID
     gcloud auth application-default login
     gcloud services enable secretmanager.googleapis.com # only first time
     ```
@@ -194,6 +192,13 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     ```
     echo -n "password" | gcloud secrets create mysql-password --data-file=-
     ```
+
+    Check secrets:
+
+    ```
+    gcloud secrets list
+    ```
+
 1. Run MySQL with docker
     ```
     docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:8

@@ -19,15 +19,12 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+
 	"go.uber.org/zap/zapcore"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/compute/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -104,31 +101,25 @@ func main() {
 	}
 
 	ctx := context.Background()
-	var secretManager secret.SecretManager
+	secretManagers := map[string]secret.SecretManager{
+		"raw": secret.RawSecretManager{},
+	}
 	if cloudSecretManagerType == "gcp" {
-		setupLog.Info("cloudSecretManager type is set to GCP")
-		c, err := secretmanager.NewClient(ctx)
+		gcpSecretManager, err := secret.NewGCPSecretManager(ctx)
 		if err != nil {
-			setupLog.Error(err, "failed to set up GCP secretmanager client")
+			setupLog.Error(err, "failed to initialize GCPSecretManager")
 			os.Exit(1)
 		}
-		defer c.Close()
-
-		credentials, err := google.FindDefaultCredentials(ctx, compute.ComputeScope)
-		if err != nil {
-			fmt.Println(err)
-		}
-		secretManager = secret.GCPSecretManager{
-			ProjectId: credentials.ProjectID,
-			Client:    c,
-		}
+		defer gcpSecretManager.Close()
+		setupLog.Info("Initialized gcpSecretManager")
+		secretManagers["gcp"] = gcpSecretManager
 	}
 	if err = (&controllers.MySQLReconciler{
 		Client:          mgr.GetClient(),
 		Scheme:          mgr.GetScheme(),
 		MySQLClients:    mysqlClients,
 		MySQLDriverName: "mysql",
-		SecretManager:   secretManager,
+		SecretManagers:  secretManagers,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQL")
 		os.Exit(1)

@@ -5,4 +5,6 @@ metadata:
 spec:
   host: localhost
   admin_user: root
-  admin_password: password
+  admin_password:
+    name: password
+    type: raw

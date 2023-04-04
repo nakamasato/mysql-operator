@@ -70,7 +70,7 @@ var _ = Describe("MySQLUser controller", func() {
 				mysql = &mysqlv1alpha1.MySQL{
 					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 					ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-					Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+					Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"}},
 				}
 				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 
@@ -113,7 +113,7 @@ var _ = Describe("MySQLUser controller", func() {
 				mysql = &mysqlv1alpha1.MySQL{
 					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 					ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-					Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+					Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"}},
 				}
 				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 				By("By creating a new MySQLUser")
@@ -148,7 +148,7 @@ var _ = Describe("MySQLUser controller", func() {
 				mysql = &mysqlv1alpha1.MySQL{
 					TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 					ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-					Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+					Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"}},
 				}
 				Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 
@@ -237,7 +237,7 @@ var _ = Describe("MySQLUser controller", func() {
 			mysql = &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"}},
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 		})

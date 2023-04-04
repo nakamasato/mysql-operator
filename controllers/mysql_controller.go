@@ -43,7 +43,7 @@ type MySQLReconciler struct {
 	Scheme          *runtime.Scheme
 	MySQLClients    mysqlinternal.MySQLClients
 	MySQLDriverName string
-	SecretManager   secret.SecretManager
+	SecretManagers  map[string]secret.SecretManager
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls,verbs=get;list;watch;create;update;patch;delete
@@ -168,18 +168,18 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 // Otherwise user MySQL.Spec.AdminPassword
 func (r *MySQLReconciler) getMySQLConfig(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (Config, error) {
 	log := log.FromContext(ctx)
-	adminPassword := mysql.Spec.AdminPassword // Set raw AdminPassword for the default value
-	if mysql.Spec.GcpSecretName != "" {
-		password, err := r.SecretManager.GetSecret(ctx, mysql.Spec.GcpSecretName)
-		if err != nil {
-			log.Error(err, "failed to get secret from GCP secret manager", "secret", mysql.Spec.GcpSecretName)
-		} else {
-			adminPassword = password // update with the one obtained from GCP
-		}
+	secretManager, ok := r.SecretManagers[mysql.Spec.AdminPassword.Type]
+	if !ok {
+		return Config{}, fmt.Errorf("the specified SecretManager type (%s) doesn't exist", mysql.Spec.AdminPassword.Type)
+	}
+	password, err := secretManager.GetSecret(ctx, mysql.Spec.AdminPassword.Name)
+	if err != nil {
+		log.Error(err, "failed to get secret from secret manager", "secret", mysql.Spec.AdminPassword.Name)
+		return Config{}, err
 	}
 	return Config{
 		User:   mysql.Spec.AdminUser,
-		Passwd: adminPassword,
+		Passwd: password,
 		Addr:   fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
 		Net:    "tcp",
 	}, nil

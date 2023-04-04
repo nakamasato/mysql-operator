@@ -50,12 +50,19 @@ spec:
               admin_password:
                 description: AdminPassword is MySQL password to connect target MySQL
                   cluster.
-                type: string
+                properties:
+                  name:
+                    description: Secret Name
+                    type: string
+                  type:
+                    description: Secret Type (e.g. gcp, raw)
+                    type: string
+                required:
+                - name
+                - type
+                type: object
               admin_user:
                 description: AdminUser is MySQL user to connect target MySQL cluster.
-                type: string
-              gcp_secret_name:
-                description: Secret name for admin password in GCP Secret Manager.
                 type: string
               host:
                 description: Host is MySQL host of target MySQL cluster.
@@ -65,6 +72,7 @@ spec:
                 description: Port is MySQL port of target MySQL cluster.
                 type: integer
             required:
+            - admin_password
             - admin_user
             - host
             type: object

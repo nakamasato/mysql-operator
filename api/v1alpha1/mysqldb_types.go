@@ -33,7 +33,7 @@ type MySQLDBSpec struct {
 // MySQLDBStatus defines the observed state of MySQLDB
 type MySQLDBStatus struct {
 	// The phase of database creation
-	Phase  string `json:"phase,omitempty"`
+	Phase string `json:"phase,omitempty"`
 
 	// The reason for the current phase
 	Reason string `json:"reason,omitempty"`

@@ -37,10 +37,7 @@ type MySQLSpec struct {
 	AdminUser string `json:"admin_user"`
 
 	// AdminPassword is MySQL password to connect target MySQL cluster.
-	AdminPassword string `json:"admin_password,omitempty"`
-
-	// Secret name for admin password in GCP Secret Manager.
-	GcpSecretName string `json:"gcp_secret_name,omitempty"`
+	AdminPassword Secret `json:"admin_password"`
 }
 
 // MySQLStatus defines the observed state of MySQL
@@ -83,6 +80,14 @@ type MySQLList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []MySQL `json:"items"`
+}
+
+type Secret struct {
+	// Secret Name
+	Name string `json:"name"`
+
+	// Secret Type (e.g. gcp, raw)
+	Type string `json:"type"`
 }
 
 func init() {

@@ -14,6 +14,7 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	internalmysql "github.com/nakamasato/mysql-operator/internal/mysql"
+	"github.com/nakamasato/mysql-operator/internal/secret"
 )
 
 var _ = Describe("MySQL controller", func() {
@@ -47,6 +48,7 @@ var _ = Describe("MySQL controller", func() {
 			Scheme:          k8sManager.GetScheme(),
 			MySQLClients:    internalmysql.MySQLClients{},
 			MySQLDriverName: "testdbdriver",
+			SecretManagers:  map[string]secret.SecretManager{"raw": secret.RawSecretManager{}},
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -73,7 +75,7 @@ var _ = Describe("MySQL controller", func() {
 			mysql = &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"}},
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 		})
