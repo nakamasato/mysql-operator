@@ -34,7 +34,7 @@ type MySQLSpec struct {
 	Port int16 `json:"port,omitempty"`
 
 	// AdminUser is MySQL user to connect target MySQL cluster.
-	AdminUser string `json:"admin_user"`
+	AdminUser Secret `json:"admin_user"`
 
 	// AdminPassword is MySQL password to connect target MySQL cluster.
 	AdminPassword Secret `json:"admin_password"`

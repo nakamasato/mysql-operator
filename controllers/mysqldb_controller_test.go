@@ -56,7 +56,7 @@ var _ = Describe("MySQLDB controller", func() {
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
 				Spec: mysqlv1alpha1.MySQLSpec{
 					Host:          "nonexistinghost",
-					AdminUser:     "root",
+					AdminUser:     mysqlv1alpha1.Secret{Name: "root", Type: "raw"},
 					AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"},
 				},
 			}
@@ -83,7 +83,7 @@ var _ = Describe("MySQLDB controller", func() {
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
 				Spec: mysqlv1alpha1.MySQLSpec{
 					Host:          "nonexistinghost",
-					AdminUser:     "root",
+					AdminUser:     mysqlv1alpha1.Secret{Name: "root", Type: "raw"},
 					AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"},
 				},
 			}

@@ -177,8 +177,17 @@ func (r *MySQLReconciler) getMySQLConfig(ctx context.Context, mysql *mysqlv1alph
 		log.Error(err, "failed to get secret from secret manager", "secret", mysql.Spec.AdminPassword.Name)
 		return Config{}, err
 	}
+	secretManager, ok = r.SecretManagers[mysql.Spec.AdminUser.Type]
+	if !ok {
+		return Config{}, fmt.Errorf("the specified SecretManager type (%s) doesn't exist", mysql.Spec.AdminUser.Type)
+	}
+	user, err := secretManager.GetSecret(ctx, mysql.Spec.AdminUser.Name)
+	if err != nil {
+		return Config{}, err
+	}
+
 	return Config{
-		User:   mysql.Spec.AdminUser,
+		User:   user,
 		Passwd: password,
 		Addr:   fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
 		Net:    "tcp",

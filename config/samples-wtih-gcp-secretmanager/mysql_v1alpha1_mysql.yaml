@@ -4,7 +4,9 @@ metadata:
   name: mysql-sample
 spec:
   host: localhost
-  admin_user: root
+  admin_user:
+    name: root
+    type: raw
   admin_password: # echo -n "password" | gcloud secrets create mysql-password --data-file=-
     name: mysql-password
     type: gcp

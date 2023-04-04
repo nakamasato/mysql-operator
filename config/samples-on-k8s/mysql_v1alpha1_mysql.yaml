@@ -4,7 +4,9 @@ metadata:
   name: mysql-sample
 spec:
   host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
-  admin_user: root
+  admin_user:
+    name: root
+    type: raw
   admin_password:
     name: password
     type: raw # you can choose one of gcp or raw
