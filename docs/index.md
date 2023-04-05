@@ -10,6 +10,8 @@
     - [Reconciliation](developer-guide/reconciliation.md)
     - [API Resource](developer-guide/api-resources.md)
     - [Debug](developer-guide/debug.md)
+- Usage
+    - [GCP SecretManager](usage/gcp-secretmanager.md)
 
 ## Getting Started
 
