@@ -9,25 +9,40 @@
 MySQL represents a MySQL cluster with root acess.
 
 - Spec
-    - adminUser
+    - AdminUser
     - AdminPassword
 - Status
     - UserCount
+    - DBCount
 
 TODO:
 
-1. Credential management.
-1. Change to `ClusterResource` so `MySQLUser` in any namespace can reference it. (No need of changing `OwnerReference`)
+- [x] Credential management. ([#190 GCP SecretManager](https://github.com/nakamasato/mysql-operator/pull/190))
+- [ ] Change to `ClusterResource` so `MySQLUser` in any namespace can reference it. (No need of changing `OwnerReference`)
+
     > Namespaced dependents can specify cluster-scoped or namespaced owners.
+    Ref: [Owner references in object specifications](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/#owner-references-in-object-specifications)
 
 ## `MySQLUser`
 
 When `MySQLUser` is created/edited/deleted, MySQL user will be created/edited/deleted by the controller.
 
 - Spec
-    - MysqlName
-    - Host
+    - MysqlName: The name of `MySQL` object
+    - Host: MySQL user's host
 - Status
     - Conditions
-    - Phase
-    - Reason
+    - Phase: `Ready` if Secret and MySQL user are created, otherwise `NotReady`
+    - Reason: Reason for `NotReady`
+
+## `MySQLDB`
+
+You can create MySQL database with this custom resource.
+
+- Spec
+    - DBName: The database name. (The reason for not directly using the object's name is becase some object name can't be used for database name)
+    - MysqlName: The name of `MySQL` object
+
+ToDo:
+
+- [ ] Validate `DBName`

@@ -17,6 +17,9 @@ extra:
     property: G-9NTB93RVPJ
 markdown_extensions:
   - pymdownx.superfences
+  - pymdownx.magiclink
+  - pymdownx.tasklist:
+      custom_checkbox: true
 nav:
   - Home: 'index.md'
   - 'Developer Guide':
@@ -24,3 +27,5 @@ nav:
     - 'Reconciliation': 'developer-guide/reconciliation.md'
     - 'Testing': 'developer-guide/testing.md'
     - 'Debug': 'developer-guide/debug.md'
+  - Usage:
+    - 'GCP SecretManager': usage/gcp-secretmanager.md
