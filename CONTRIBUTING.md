@@ -140,17 +140,17 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     kubectl apply -k config/samples-on-k8s
     ```
 
-1. Check `Secret` and MySQL user.
+1. Check Custom resources
 
-    Secret:
+    ```
+    NAME                                      HOST            ADMINUSER   CONNECTED   REASON                                   USERCOUNT   DBCOUNT
+    mysql.mysql.nakamasato.com/mysql-sample   mysql.default   root        true        Ping succeded and updated MySQLClients   1           0
 
-    ```bash
-    kubectl get secret mysql-mysql-sample-nakamasato
-    NAME                            TYPE     DATA   AGE
-    mysql-mysql-sample-nakamasato   Opaque   1      109s
+    NAME                                        MYSQLUSER   SECRET   PHASE   REASON
+    mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
     ```
 
-    MySQL user:
+1. Confirm MySQL user is created in MySQL container.
 
     ```bash
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'select User, Host from mysql.user where User = "nakamasato";'
@@ -160,6 +160,12 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     +------------+------+
     | nakamasato | %    |
     +------------+------+
+    ```
+
+1. `Secret` `mysql-mysql-sample-nakamasato` is created for the MySQL user.
+
+    ```
+    kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}'
     ```
 
 1. Clean up the Custom Resources (`MySQL` and `MySQLUser` resources).

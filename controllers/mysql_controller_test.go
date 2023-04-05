@@ -137,6 +137,9 @@ var _ = Describe("MySQL controller", func() {
 				_, err := mySQLClients.GetClient(mysql.GetKey())
 				return err
 			}).Should(BeNil())
+			Eventually(func() int {
+				return len(mySQLClients)
+			}).Should(Equal(1))
 
 			By("By deleting MySQL")
 			Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
