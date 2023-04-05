@@ -59,6 +59,7 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var cloudSecretManagerType string
+	var projectId string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -67,6 +68,10 @@ func main() {
 	flag.StringVar(&cloudSecretManagerType, "cloud-secret-manager", "",
 		"The cloud secret manager to get credentials from. "+
 			"Currently, only support gcp")
+	flag.StringVar(&projectId, "gcp-project-id", "",
+		"GCP project id. Set this value to use cloudSecretManagerType=gcp. "+
+			"Also can be set by environment variable PROJECT_ID."+
+			"If both are set, the flag is used.")
 	opts := zap.Options{
 		Development: true,
 		TimeEncoder: zapcore.ISO8601TimeEncoder,
@@ -105,13 +110,16 @@ func main() {
 		"raw": secret.RawSecretManager{},
 	}
 	if cloudSecretManagerType == "gcp" {
-		gcpSecretManager, err := secret.NewGCPSecretManager(ctx)
+		if projectId == "" {
+			projectId = os.Getenv("PROJECT_ID")
+		}
+		gcpSecretManager, err := secret.NewGCPSecretManager(ctx, projectId)
 		if err != nil {
 			setupLog.Error(err, "failed to initialize GCPSecretManager")
 			os.Exit(1)
 		}
 		defer gcpSecretManager.Close()
-		setupLog.Info("Initialized gcpSecretManager")
+		setupLog.Info("Initialized gcpSecretManager", "projectId", projectId)
 		secretManagers["gcp"] = gcpSecretManager
 	}
 	if err = (&controllers.MySQLReconciler{

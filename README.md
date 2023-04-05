@@ -41,8 +41,12 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
       name: mysql-sample
     spec:
       host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
-      admin_user: root
-      admin_password: password
+      admin_user:
+        name: root
+        type: raw
+      admin_password:
+        name: password
+        type: raw
     ```
 
     `mysqluser.yaml`: MySQL user
@@ -173,8 +177,12 @@ Instead of writing raw password in `MySQL.Spec.AdminPassword`, you can get the p
       name: mysql-sample
     spec:
       host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
-      gcp_secret_name: mysql-password # echo -n "password" | gcloud secrets create mysql-password --data-file=-
-      admin_user: root
+      admin_user:
+        name: root
+        type: raw
+      admin_password:
+        name: mysql-password # echo -n "password" | gcloud secrets create mysql-password --data-file=-
+        type: gcp
     ```
 
     ```

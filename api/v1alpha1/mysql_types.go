@@ -42,6 +42,11 @@ type MySQLSpec struct {
 
 // MySQLStatus defines the observed state of MySQL
 type MySQLStatus struct {
+	// true if successfully connected to the MySQL cluster
+	Connected bool `json:"connected,omitempty"`
+
+	// Reason for connection failure
+	Reason string `json:"reason,omitempty"`
 
 	//+kubebuilder:default=0
 
@@ -57,8 +62,11 @@ type MySQLStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Host",type=string,JSONPath=`.spec.host`
-//+kubebuilder:printcolumn:name="AdminUser",type=string,JSONPath=`.spec.admin_user`
+//+kubebuilder:printcolumn:name="AdminUser",type=string,JSONPath=`.spec.admin_user.name`
+//+kubebuilder:printcolumn:name="Connected",type=boolean,JSONPath=`.status.connected`
+//+kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.reason`
 //+kubebuilder:printcolumn:name="UserCount",type="integer",JSONPath=".status.userCount",description="The number of MySQLUsers that belongs to the MySQL"
+//+kubebuilder:printcolumn:name="DBCount",type="integer",JSONPath=".status.dbCount",description="The number of MySQLDBs that belongs to the MySQL"
 
 // MySQL is the Schema for the mysqls API
 type MySQL struct {

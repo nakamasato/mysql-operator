@@ -215,12 +215,12 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 1. Check
     ```
     kubectl get -k config/samples-wtih-gcp-secretmanager
-    NAME                                      HOST        ADMINUSER   USERCOUNT
-    mysql.mysql.nakamasato.com/mysql-sample   localhost               1
-
+    NAME                                      HOST        ADMINUSER   CONNECTED   REASON                                   USERCOUNT   DBCOUNT
+    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        true        Ping succeded and updated MySQLClients   1           0
+    
     NAME                                     PHASE   REASON
     mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created
-
+    
     NAME                                        MYSQLUSER   SECRET   PHASE   REASON
     mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
     ```

@@ -19,12 +19,22 @@ spec:
     - jsonPath: .spec.host
       name: Host
       type: string
-    - jsonPath: .spec.admin_user
+    - jsonPath: .spec.admin_user.name
       name: AdminUser
+      type: string
+    - jsonPath: .status.connected
+      name: Connected
+      type: boolean
+    - jsonPath: .status.reason
+      name: Reason
       type: string
     - description: The number of MySQLUsers that belongs to the MySQL
       jsonPath: .status.userCount
       name: UserCount
+      type: integer
+    - description: The number of MySQLDBs that belongs to the MySQL
+      jsonPath: .status.dbCount
+      name: DBCount
       type: integer
     name: v1alpha1
     schema:
@@ -89,11 +99,17 @@ spec:
           status:
             description: MySQLStatus defines the observed state of MySQL
             properties:
+              connected:
+                description: true if successfully connected to the MySQL cluster
+                type: boolean
               dbCount:
                 default: 0
                 description: The number of database in this MySQL
                 format: int32
                 type: integer
+              reason:
+                description: Reason for connection failure
+                type: string
               userCount:
                 default: 0
                 description: The number of users in this MySQL

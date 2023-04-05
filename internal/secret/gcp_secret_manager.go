@@ -6,8 +6,6 @@ import (
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	secretmanagerpb "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/compute/v1"
 )
 
 type gcpSecretManager struct {
@@ -15,22 +13,19 @@ type gcpSecretManager struct {
 	client    *secretmanager.Client
 }
 
-func NewGCPSecretManager(ctx context.Context) (*gcpSecretManager, error) {
+// Initialize SecretManager with projectId
+func NewGCPSecretManager(ctx context.Context, projectId string) (*gcpSecretManager, error) {
 	c, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	credentials, err := google.FindDefaultCredentials(ctx, compute.ComputeScope)
-	if err != nil {
-		return nil, err
-	}
-	if credentials.ProjectID == "" {
-		return nil, fmt.Errorf("ProjectID must be provided")
+	if projectId == "" {
+		return nil, fmt.Errorf("ProjectID must not be empty")
 	}
 
 	return &gcpSecretManager{
-		projectId: credentials.ProjectID,
+		projectId: projectId,
 		client:    c,
 	}, nil
 }
