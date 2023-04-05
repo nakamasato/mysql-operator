@@ -7,6 +7,6 @@ spec:
   admin_user:
     name: root
     type: raw
-  admin_password:
-    name: password
-    type: raw
+  admin_password: # echo -n "password" | gcloud secrets create mysql-password --data-file=-
+    name: mysql-password
+    type: gcp

@@ -15,6 +15,8 @@ golangci-lint run ./...
 
 ## 2.1. Local
 
+![](docs/run-local.drawio.svg)
+
 1. Run MySQL with Docker.
     ```
     docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:8
@@ -60,8 +62,6 @@ golangci-lint run ./...
     ```
     kubectl delete -k config/samples
     ```
-
-    TODO: get stuck in deletion.
 
     <details>
 
@@ -122,6 +122,8 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 ## 2.2. Local kubernetes
 
+![](docs/run-local-kubernetes.drawio.svg)
+
 1. Deploy controller with [skaffold](https://skaffold.dev/)
 
     ```bash
@@ -142,17 +144,17 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     kubectl apply -k config/samples-on-k8s
     ```
 
-1. Check `Secret` and MySQL user.
+1. Check Custom resources
 
-    Secret:
+    ```
+    NAME                                      HOST            ADMINUSER   CONNECTED   REASON                                   USERCOUNT   DBCOUNT
+    mysql.mysql.nakamasato.com/mysql-sample   mysql.default   root        true        Ping succeded and updated MySQLClients   1           0
 
-    ```bash
-    kubectl get secret mysql-mysql-sample-nakamasato
-    NAME                            TYPE     DATA   AGE
-    mysql-mysql-sample-nakamasato   Opaque   1      109s
+    NAME                                        MYSQLUSER   SECRET   PHASE   REASON
+    mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
     ```
 
-    MySQL user:
+1. Confirm MySQL user is created in MySQL container.
 
     ```bash
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'select User, Host from mysql.user where User = "nakamasato";'
@@ -164,14 +166,19 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     +------------+------+
     ```
 
+1. `Secret` `mysql-mysql-sample-nakamasato` is created for the MySQL user.
+
+    ```
+    kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}'
+    ```
+
 1. Clean up the Custom Resources (`MySQL` and `MySQLUser` resources).
 
     ```bash
-    kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysqluser.yaml
-    kubectl delete -f config/samples-on-k8s/mysql_v1alpha1_mysql.yaml
+    kubectl delete -k config/samples-on-k8s
     ```
 
-    TODO: Get stuck:
+    If getting stuck in deletion:
 
     ```
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'delete from mysql.user where User = "nakamasato";'
@@ -179,6 +186,74 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     ```
 
 1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
+
+
+## 2.3. Local with GCP Secret Manager
+
+![](docs/run-local-with-gcp-secretmanager.drawio.svg)
+
+1. Setup gcloud
+    ```bash
+    PROJECT_ID=<project_id>
+    gcloud auth login
+    gcloud config set project $PROJECT_ID
+    gcloud auth application-default login
+    gcloud services enable secretmanager.googleapis.com # only first time
+    ```
+1. Create secret `mysql-password`
+    ```
+    echo -n "password" | gcloud secrets create mysql-password --data-file=-
+    ```
+
+    Check secrets:
+
+    ```
+    gcloud secrets list
+    ```
+
+1. Run MySQL with docker
+    ```
+    docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:8
+    ```
+1. Install and run operator
+    ```
+    make install
+    go run main.go --cloud-secret-manager gcp
+    ```
+1. Create custom resources
+    ```
+    kubectl apply -k config/samples-wtih-gcp-secretmanager
+    ```
+1. Check
+    ```
+    kubectl get -k config/samples-wtih-gcp-secretmanager
+    NAME                                      HOST        ADMINUSER   CONNECTED   REASON                                   USERCOUNT   DBCOUNT
+    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        true        Ping succeded and updated MySQLClients   1           0
+
+    NAME                                     PHASE   REASON
+    mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created
+
+    NAME                                        MYSQLUSER   SECRET   PHASE   REASON
+    mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
+    ```
+1. Clean up
+
+    1. Remove CR:
+        ```
+        kubectl delete -k config/samples-wtih-gcp-secretmanager
+        ```
+    1. Stop controller `ctrl+c`
+    1. Uninstall
+        ```
+        make uninstall
+        ```
+1. Clean up GCP
+    ```
+    gcloud secrets delete mysql-password
+    gcloud auth revoke
+    gcloud auth application-default revoke
+    gcloud config unset project
+    ```
 
 # 3. Monitoring
 

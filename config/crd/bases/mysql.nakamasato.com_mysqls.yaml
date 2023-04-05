@@ -1,10 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.9.0
   creationTimestamp: null
   name: mysqls.mysql.nakamasato.com
 spec:
@@ -20,12 +19,22 @@ spec:
     - jsonPath: .spec.host
       name: Host
       type: string
-    - jsonPath: .spec.admin_user
+    - jsonPath: .spec.admin_user.name
       name: AdminUser
+      type: string
+    - jsonPath: .status.connected
+      name: Connected
+      type: boolean
+    - jsonPath: .status.reason
+      name: Reason
       type: string
     - description: The number of MySQLUsers that belongs to the MySQL
       jsonPath: .status.userCount
       name: UserCount
+      type: integer
+    - description: The number of MySQLDBs that belongs to the MySQL
+      jsonPath: .status.dbCount
+      name: DBCount
       type: integer
     name: v1alpha1
     schema:
@@ -45,15 +54,42 @@ spec:
           metadata:
             type: object
           spec:
-            description: MySQLSpec defines the desired state of MySQL
+            description: MySQLSpec holds the connection information for the target
+              MySQL cluster.
             properties:
               admin_password:
                 description: AdminPassword is MySQL password to connect target MySQL
                   cluster.
-                type: string
+                properties:
+                  name:
+                    description: Secret Name
+                    type: string
+                  type:
+                    description: Secret Type (e.g. gcp, raw)
+                    enum:
+                    - raw
+                    - gcp
+                    type: string
+                required:
+                - name
+                - type
+                type: object
               admin_user:
                 description: AdminUser is MySQL user to connect target MySQL cluster.
-                type: string
+                properties:
+                  name:
+                    description: Secret Name
+                    type: string
+                  type:
+                    description: Secret Type (e.g. gcp, raw)
+                    enum:
+                    - raw
+                    - gcp
+                    type: string
+                required:
+                - name
+                - type
+                type: object
               host:
                 description: Host is MySQL host of target MySQL cluster.
                 type: string
@@ -64,15 +100,22 @@ spec:
             required:
             - admin_password
             - admin_user
+            - host
             type: object
           status:
             description: MySQLStatus defines the observed state of MySQL
             properties:
+              connected:
+                description: true if successfully connected to the MySQL cluster
+                type: boolean
               dbCount:
                 default: 0
                 description: The number of database in this MySQL
                 format: int32
                 type: integer
+              reason:
+                description: Reason for connection failure
+                type: string
               userCount:
                 default: 0
                 description: The number of users in this MySQL
@@ -87,9 +130,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

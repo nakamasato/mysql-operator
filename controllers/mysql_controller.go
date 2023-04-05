@@ -32,6 +32,7 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	mysqlinternal "github.com/nakamasato/mysql-operator/internal/mysql"
+	secret "github.com/nakamasato/mysql-operator/internal/secret"
 )
 
 const mysqlFinalizer = "mysql.nakamasato.com/finalizer"
@@ -42,6 +43,7 @@ type MySQLReconciler struct {
 	Scheme          *runtime.Scheme
 	MySQLClients    mysqlinternal.MySQLClients
 	MySQLDriverName string
+	SecretManagers  map[string]secret.SecretManager
 }
 
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls,verbs=get;list;watch;create;update;patch;delete
@@ -76,7 +78,20 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	// Update MySQLClients
 	if err := r.UpdateMySQLClients(ctx, mysql); err != nil {
+		mysql.Status.Connected = false
+		mysql.Status.Reason = err.Error()
+		if err := r.Status().Update(ctx, mysql); err != nil {
+			log.Error(err, "failed to update status")
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, err
+		}
 		return ctrl.Result{}, err
+	}
+
+	mysql.Status.Connected = true
+	mysql.Status.Reason = "Ping succeded and updated MySQLClients"
+	if err := r.Status().Update(ctx, mysql); err != nil {
+		log.Error(err, "failed to update status")
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
 	// Add a finalizer if not exists
@@ -140,26 +155,57 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 		log.Info("MySQLClient already exists", "key", mysql.GetKey())
 		return nil
 	}
-	c := Config{
-		User:   mysql.Spec.AdminUser,
-		Passwd: mysql.Spec.AdminPassword,
-		Addr:   fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
-		Net:    "tcp",
+
+	// Get MySQL config from raw username and password or GCP secret manager
+	cfg, err := r.getMySQLConfig(ctx, mysql)
+	if err != nil {
+		return err
 	}
-	db, err := sql.Open(r.MySQLDriverName, c.FormatDSN())
+	db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
 	if err != nil {
 		log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
 		return err
 	}
-	// key: mysql.Namespace-mysql.Name
-	r.MySQLClients[mysql.GetKey()] = db
 	err = db.PingContext(ctx)
 	if err != nil {
 		log.Error(err, "Ping failed", "mysql.Name", mysql.Name)
 		return err
 	}
+
+	// key: mysql.Namespace-mysql.Name
+	r.MySQLClients[mysql.GetKey()] = db
 	log.Info("Successfully added MySQL client", "mysql.Name", mysql.Name)
 	return nil
+}
+
+// If GcpSecretName is set, get password from GCP secret manager
+// Otherwise user MySQL.Spec.AdminPassword
+func (r *MySQLReconciler) getMySQLConfig(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (Config, error) {
+	log := log.FromContext(ctx)
+	secretManager, ok := r.SecretManagers[mysql.Spec.AdminPassword.Type]
+	if !ok {
+		return Config{}, fmt.Errorf("the specified SecretManager type (%s) doesn't exist", mysql.Spec.AdminPassword.Type)
+	}
+	password, err := secretManager.GetSecret(ctx, mysql.Spec.AdminPassword.Name)
+	if err != nil {
+		log.Error(err, "failed to get secret from secret manager", "secret", mysql.Spec.AdminPassword.Name)
+		return Config{}, err
+	}
+	secretManager, ok = r.SecretManagers[mysql.Spec.AdminUser.Type]
+	if !ok {
+		return Config{}, fmt.Errorf("the specified SecretManager type (%s) doesn't exist", mysql.Spec.AdminUser.Type)
+	}
+	user, err := secretManager.GetSecret(ctx, mysql.Spec.AdminUser.Name)
+	if err != nil {
+		return Config{}, err
+	}
+
+	return Config{
+		User:   user,
+		Passwd: password,
+		Addr:   fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
+		Net:    "tcp",
+	}, nil
 }
 
 func (r *MySQLReconciler) countReferencesByMySQLUser(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (int, error) {
@@ -191,12 +237,14 @@ func (r *MySQLReconciler) finalizeMySQL(ctx context.Context, mysql *mysqlv1alpha
 		log.Info("there's referencing user or database", "UserCount", mysql.Status.UserCount, "DBCount", mysql.Status.DBCount)
 		return false
 	}
-	if db, ok := r.MySQLClients[mysql.Name]; ok {
+	if db, ok := r.MySQLClients[mysql.GetKey()]; ok {
 		if err := db.Close(); err != nil {
 			return false
 		}
-		delete(r.MySQLClients, mysql.Name)
+		delete(r.MySQLClients, mysql.GetKey())
+		log.Info("Closed and removed MySQL client", "mysql.Key", mysql.GetKey())
+	} else {
+		log.Info("MySQL client doesn't exist", "mysql.Key", mysql.GetKey())
 	}
-	log.Info("Closed and removed MySQL client", "mysql.Name", mysql.Name)
 	return true
 }

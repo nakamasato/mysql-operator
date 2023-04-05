@@ -20,13 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // MySQLUserSpec defines the desired state of MySQLUser
 type MySQLUserSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 
 	// MySQL (CRD) name to reference to, which decides the destination MySQL server
 	MysqlName string `json:"mysqlName"`
@@ -40,8 +35,6 @@ type MySQLUserSpec struct {
 
 // MySQLUserStatus defines the observed state of MySQLUser
 type MySQLUserStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 
 	// +patchMergeKey=type
 	// +patchStrategy=merge

@@ -24,6 +24,12 @@ bases:
 # [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
 #- ../prometheus
 
+# [GCP SecretManager] Mount GCP service account key as secret
+# secretGenerator:
+# - name: gcp-sa-private-key
+#   files:
+#   - sa-private-key.json
+
 patchesStrategicMerge:
 # Protect the /metrics endpoint by putting it behind auth.
 # If you want your controller-manager to expose the /metrics
@@ -33,6 +39,9 @@ patchesStrategicMerge:
 # Mount the controller config file for loading manager configurations
 # through a ComponentConfig type
 #- manager_config_patch.yaml
+
+# [GCP SecretManager] Mount GCP service account key as secret
+# - manager_gcp_sa_secret_patch.yaml
 
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
 # crd/kustomization.yaml

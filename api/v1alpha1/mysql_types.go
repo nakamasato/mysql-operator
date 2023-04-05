@@ -22,31 +22,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// MySQLSpec defines the desired state of MySQL
+// MySQLSpec holds the connection information for the target MySQL cluster.
 type MySQLSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 
 	// Host is MySQL host of target MySQL cluster.
-	Host string `json:"host,omitempty"`
+	Host string `json:"host"`
 
 	//+kubebuilder:default=3306
 
 	// Port is MySQL port of target MySQL cluster.
 	Port int16 `json:"port,omitempty"`
+
 	// AdminUser is MySQL user to connect target MySQL cluster.
-	AdminUser string `json:"admin_user"`
+	AdminUser Secret `json:"admin_user"`
+
 	// AdminPassword is MySQL password to connect target MySQL cluster.
-	AdminPassword string `json:"admin_password"`
+	AdminPassword Secret `json:"admin_password"`
 }
 
 // MySQLStatus defines the observed state of MySQL
 type MySQLStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// true if successfully connected to the MySQL cluster
+	Connected bool `json:"connected,omitempty"`
+
+	// Reason for connection failure
+	Reason string `json:"reason,omitempty"`
 
 	//+kubebuilder:default=0
 
@@ -62,8 +62,11 @@ type MySQLStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Host",type=string,JSONPath=`.spec.host`
-//+kubebuilder:printcolumn:name="AdminUser",type=string,JSONPath=`.spec.admin_user`
+//+kubebuilder:printcolumn:name="AdminUser",type=string,JSONPath=`.spec.admin_user.name`
+//+kubebuilder:printcolumn:name="Connected",type=boolean,JSONPath=`.status.connected`
+//+kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.reason`
 //+kubebuilder:printcolumn:name="UserCount",type="integer",JSONPath=".status.userCount",description="The number of MySQLUsers that belongs to the MySQL"
+//+kubebuilder:printcolumn:name="DBCount",type="integer",JSONPath=".status.dbCount",description="The number of MySQLDBs that belongs to the MySQL"
 
 // MySQL is the Schema for the mysqls API
 type MySQL struct {
@@ -85,6 +88,16 @@ type MySQLList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []MySQL `json:"items"`
+}
+
+type Secret struct {
+	// Secret Name
+	Name string `json:"name"`
+
+	// +kubebuilder:validation:Enum=raw;gcp
+
+	// Secret Type (e.g. gcp, raw)
+	Type string `json:"type"`
 }
 
 func init() {

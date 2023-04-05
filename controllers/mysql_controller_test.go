@@ -14,12 +14,14 @@ import (
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	internalmysql "github.com/nakamasato/mysql-operator/internal/mysql"
+	"github.com/nakamasato/mysql-operator/internal/secret"
 )
 
 var _ = Describe("MySQL controller", func() {
 
 	ctx := context.Background()
 	var stopFunc func()
+	var mySQLClients internalmysql.MySQLClients
 
 	BeforeEach(func() {
 		k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
@@ -42,11 +44,13 @@ var _ = Describe("MySQL controller", func() {
 			panic(err)
 		}
 
+		mySQLClients = internalmysql.MySQLClients{}
 		err = (&MySQLReconciler{
 			Client:          k8sManager.GetClient(),
 			Scheme:          k8sManager.GetScheme(),
-			MySQLClients:    internalmysql.MySQLClients{},
+			MySQLClients:    mySQLClients,
 			MySQLDriverName: "testdbdriver",
+			SecretManagers:  map[string]secret.SecretManager{"raw": secret.RawSecretManager{}},
 		}).SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -73,7 +77,7 @@ var _ = Describe("MySQL controller", func() {
 			mysql = &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: mysqlv1alpha1.Secret{Name: "root", Type: "raw"}, AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"}},
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 		})
@@ -99,6 +103,7 @@ var _ = Describe("MySQL controller", func() {
 			mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
 			addOwnerReferenceToMySQL(mysqlUser, mysql)
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+			checkMySQLUserCount(ctx, int32(1))
 
 			By("By deleting the MySQLUser")
 			cleanUpMySQLUser(ctx, k8sClient, Namespace)
@@ -107,11 +112,6 @@ var _ = Describe("MySQL controller", func() {
 		})
 
 		It("Should have finalizer", func() {
-			By("By creating a new MySQLUser")
-			mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
-			addOwnerReferenceToMySQL(mysqlUser, mysql)
-			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
-
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
 				if err != nil {
@@ -119,6 +119,34 @@ var _ = Describe("MySQL controller", func() {
 				}
 				return controllerutil.ContainsFinalizer(mysql, mysqlFinalizer)
 			}).Should(BeTrue())
+		})
+
+		It("Should update MySQLClient", func() {
+			Eventually(func() error {
+				_, err := mySQLClients.GetClient(mysql.GetKey())
+				return err
+			}).Should(BeNil())
+			Eventually(func() int {
+				return len(mySQLClients)
+			}).Should(Equal(1))
+		})
+
+		It("Should clean up MySQLClient", func() {
+			// Wait until MySQLClients is updated
+			Eventually(func() error {
+				_, err := mySQLClients.GetClient(mysql.GetKey())
+				return err
+			}).Should(BeNil())
+			Eventually(func() int {
+				return len(mySQLClients)
+			}).Should(Equal(1))
+
+			By("By deleting MySQL")
+			Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
+
+			Eventually(func() int {
+				return len(mySQLClients)
+			}).Should(Equal(0))
 		})
 	})
 })

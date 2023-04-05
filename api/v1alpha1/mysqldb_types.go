@@ -20,13 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // MySQLDBSpec defines the desired state of MySQLDB
 type MySQLDBSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 
 	// MySQL Database name
 	DBName string `json:"dbName"`
@@ -37,8 +32,10 @@ type MySQLDBSpec struct {
 
 // MySQLDBStatus defines the observed state of MySQLDB
 type MySQLDBStatus struct {
-	// database is created or not
-	Phase  string `json:"phase,omitempty"`
+	// The phase of database creation
+	Phase string `json:"phase,omitempty"`
+
+	// The reason for the current phase
 	Reason string `json:"reason,omitempty"`
 }
 

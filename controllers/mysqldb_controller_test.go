@@ -54,7 +54,11 @@ var _ = Describe("MySQLDB controller", func() {
 			mysql = &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+				Spec: mysqlv1alpha1.MySQLSpec{
+					Host:          "nonexistinghost",
+					AdminUser:     mysqlv1alpha1.Secret{Name: "root", Type: "raw"},
+					AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"},
+				},
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 			mysqlDB := &mysqlv1alpha1.MySQLDB{
@@ -77,7 +81,11 @@ var _ = Describe("MySQLDB controller", func() {
 			mysql = &mysqlv1alpha1.MySQL{
 				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQL"},
 				ObjectMeta: metav1.ObjectMeta{Name: MySQLName, Namespace: Namespace},
-				Spec:       mysqlv1alpha1.MySQLSpec{Host: "nonexistinghost", AdminUser: "root", AdminPassword: "password"},
+				Spec: mysqlv1alpha1.MySQLSpec{
+					Host:          "nonexistinghost",
+					AdminUser:     mysqlv1alpha1.Secret{Name: "root", Type: "raw"},
+					AdminPassword: mysqlv1alpha1.Secret{Name: "password", Type: "raw"},
+				},
 			}
 			Expect(k8sClient.Create(ctx, mysql)).Should(Succeed())
 			mysqlDB := &mysqlv1alpha1.MySQLDB{

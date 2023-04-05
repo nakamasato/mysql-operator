@@ -23,6 +23,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+
 	"go.uber.org/zap/zapcore"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -37,6 +38,7 @@ import (
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	"github.com/nakamasato/mysql-operator/controllers"
 	"github.com/nakamasato/mysql-operator/internal/mysql"
+	"github.com/nakamasato/mysql-operator/internal/secret"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -56,11 +58,20 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var cloudSecretManagerType string
+	var projectId string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&cloudSecretManagerType, "cloud-secret-manager", "",
+		"The cloud secret manager to get credentials from. "+
+			"Currently, only support gcp")
+	flag.StringVar(&projectId, "gcp-project-id", "",
+		"GCP project id. Set this value to use cloudSecretManagerType=gcp. "+
+			"Also can be set by environment variable PROJECT_ID."+
+			"If both are set, the flag is used.")
 	opts := zap.Options{
 		Development: true,
 		TimeEncoder: zapcore.ISO8601TimeEncoder,
@@ -93,11 +104,30 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQLUser")
 		os.Exit(1)
 	}
+
+	ctx := context.Background()
+	secretManagers := map[string]secret.SecretManager{
+		"raw": secret.RawSecretManager{},
+	}
+	if cloudSecretManagerType == "gcp" {
+		if projectId == "" {
+			projectId = os.Getenv("PROJECT_ID")
+		}
+		gcpSecretManager, err := secret.NewGCPSecretManager(ctx, projectId)
+		if err != nil {
+			setupLog.Error(err, "failed to initialize GCPSecretManager")
+			os.Exit(1)
+		}
+		defer gcpSecretManager.Close()
+		setupLog.Info("Initialized gcpSecretManager", "projectId", projectId)
+		secretManagers["gcp"] = gcpSecretManager
+	}
 	if err = (&controllers.MySQLReconciler{
 		Client:          mgr.GetClient(),
 		Scheme:          mgr.GetScheme(),
 		MySQLClients:    mysqlClients,
 		MySQLDriverName: "mysql",
+		SecretManagers:  secretManagers,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MySQL")
 		os.Exit(1)

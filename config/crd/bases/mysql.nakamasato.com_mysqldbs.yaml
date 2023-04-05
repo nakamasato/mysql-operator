@@ -1,10 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.9.0
   creationTimestamp: null
   name: mysqldbs.mysql.nakamasato.com
 spec:
@@ -59,9 +58,10 @@ spec:
             description: MySQLDBStatus defines the observed state of MySQLDB
             properties:
               phase:
-                description: database is created or not
+                description: The phase of database creation
                 type: string
               reason:
+                description: The reason for the current phase
                 type: string
             type: object
         type: object
@@ -69,9 +69,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
