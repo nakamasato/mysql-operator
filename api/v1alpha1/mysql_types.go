@@ -94,6 +94,8 @@ type Secret struct {
 	// Secret Name
 	Name string `json:"name"`
 
+	// +kubebuilder:validation:Enum=raw;gcp
+
 	// Secret Type (e.g. gcp, raw)
 	Type string `json:"type"`
 }

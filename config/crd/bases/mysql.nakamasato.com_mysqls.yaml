@@ -66,6 +66,9 @@ spec:
                     type: string
                   type:
                     description: Secret Type (e.g. gcp, raw)
+                    enum:
+                    - raw
+                    - gcp
                     type: string
                 required:
                 - name
@@ -79,6 +82,9 @@ spec:
                     type: string
                   type:
                     description: Secret Type (e.g. gcp, raw)
+                    enum:
+                    - raw
+                    - gcp
                     type: string
                 required:
                 - name
