@@ -15,6 +15,8 @@ golangci-lint run ./...
 
 ## 2.1. Local
 
+![](docs/run-local.drawio.svg)
+
 1. Run MySQL with Docker.
     ```
     docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:8
@@ -120,6 +122,8 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 ## 2.2. Local kubernetes
 
+![](docs/run-local-kubernetes.drawio.svg)
+
 1. Deploy controller with [skaffold](https://skaffold.dev/)
 
     ```bash
@@ -185,6 +189,8 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 
 ## 2.3. Local with GCP Secret Manager
+
+![](docs/run-local-with-gcp-secretmanager.drawio.svg)
 
 1. Setup gcloud
     ```bash

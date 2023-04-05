@@ -9,7 +9,7 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 - Go: 1.19
 ## Components
 
-![](diagram.drawio.svg)
+![](docs/diagram.drawio.svg)
 
 1. Custom Resource
     1. `MySQL`: MySQL cluster (holds credentials to connect to MySQL)
