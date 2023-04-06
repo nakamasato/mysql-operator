@@ -27,5 +27,6 @@ nav:
     - 'Reconciliation': 'developer-guide/reconciliation.md'
     - 'Testing': 'developer-guide/testing.md'
     - 'Debug': 'developer-guide/debug.md'
+    - 'Versions': 'developer-guide/versions.md'
   - Usage:
     - 'GCP SecretManager': usage/gcp-secretmanager.md

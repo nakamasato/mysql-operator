@@ -33,14 +33,14 @@ golangci-lint run ./...
 
     ```
     kubectl get -k config/samples
-    NAME                                      HOST        ADMINUSER   USERCOUNT
-    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        1
+    NAME                                      HOST        ADMINUSER   CONNECTED   USERCOUNT   DBCOUNT   REASON
+    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        true        1           0         Ping succeded and updated MySQLClients
 
     NAME                                     PHASE   REASON
     mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created
 
-    NAME                                        PHASE   REASON
-    mysqluser.mysql.nakamasato.com/nakamasato   Ready   Both secret and mysql user are successfully created.
+    NAME                                        MYSQLUSER   SECRET   PHASE   REASON
+    mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
     ```
 
 1. Confirm MySQL user is created in MySQL container.
@@ -146,9 +146,13 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 1. Check Custom resources
 
+    ```bash
+    kubectl get -k config/samples-on-k8s
     ```
-    NAME                                      HOST            ADMINUSER   CONNECTED   REASON                                   USERCOUNT   DBCOUNT
-    mysql.mysql.nakamasato.com/mysql-sample   mysql.default   root        true        Ping succeded and updated MySQLClients   1           0
+
+    ```
+    NAME                                      HOST            ADMINUSER   CONNECTED   USERCOUNT   DBCOUNT   REASON
+    mysql.mysql.nakamasato.com/mysql-sample   mysql.default   root        true        1           0         Ping succeded and updated MySQLClients
 
     NAME                                        MYSQLUSER   SECRET   PHASE   REASON
     mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
@@ -158,6 +162,8 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
     ```bash
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'select User, Host from mysql.user where User = "nakamasato";'
+    ```
+    ```
     mysql: [Warning] Using a password on the command line interface can be insecure.
     +------------+------+
     | User       | Host |
@@ -178,12 +184,14 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     kubectl delete -k config/samples-on-k8s
     ```
 
-    If getting stuck in deletion:
+    <details><summary>If getting stuck in deletion</summary>
 
     ```
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'delete from mysql.user where User = "nakamasato";'
     kubectl patch mysqluser nakamasato -p '{"metadata":{"finalizers": []}}' --type=merge
     ```
+
+    </details>
 
 1. Stop the `skaffold dev` by `ctrl-c` -> will clean up the controller, CRDs, and installed resources.
 
@@ -218,7 +226,7 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 1. Install and run operator
     ```
     make install
-    go run main.go --cloud-secret-manager gcp
+    PRJECT_ID=$PROJECT_ID go run main.go --cloud-secret-manager gcp
     ```
 1. Create custom resources
     ```
@@ -227,8 +235,8 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 1. Check
     ```
     kubectl get -k config/samples-wtih-gcp-secretmanager
-    NAME                                      HOST        ADMINUSER   CONNECTED   REASON                                   USERCOUNT   DBCOUNT
-    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        true        Ping succeded and updated MySQLClients   1           0
+    NAME                                      HOST        ADMINUSER   CONNECTED   USERCOUNT   DBCOUNT   REASON
+    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        true        1           0         Ping succeded and updated MySQLClients
 
     NAME                                     PHASE   REASON
     mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created
