@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.9.0
+    controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
   name: mysqls.mysql.nakamasato.com
 spec:
@@ -25,9 +25,6 @@ spec:
     - jsonPath: .status.connected
       name: Connected
       type: boolean
-    - jsonPath: .status.reason
-      name: Reason
-      type: string
     - description: The number of MySQLUsers that belongs to the MySQL
       jsonPath: .status.userCount
       name: UserCount
@@ -36,6 +33,9 @@ spec:
       jsonPath: .status.dbCount
       name: DBCount
       type: integer
+    - jsonPath: .status.reason
+      name: Reason
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
