@@ -91,7 +91,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	mysql.Status.Reason = "Ping succeded and updated MySQLClients"
 	if err := r.Status().Update(ctx, mysql); err != nil {
 		log.Error(err, "failed to update status")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
 	// Add a finalizer if not exists
@@ -135,7 +135,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			}
 		} else {
 			log.Info("Could not complete finalizer. waiting another 5 seconds")
-			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 	}
 	return ctrl.Result{}, nil
