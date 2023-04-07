@@ -281,3 +281,13 @@ e2e-with-ginkgo: ginkgo
 
 release: kustomize
 	cd config/install && $(KUSTOMIZE) edit set image controller=${IMG}
+
+HELMIFY ?= $(LOCALBIN)/helmify
+
+.PHONY: helmify
+helmify: $(HELMIFY) ## Download helmify locally if necessary.
+$(HELMIFY): $(LOCALBIN)
+	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
+
+helm: manifests kustomize helmify
+	$(KUSTOMIZE) build config/install | $(HELMIFY)

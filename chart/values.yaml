@@ -1,0 +1,31 @@
+controllerManager:
+  manager:
+    image:
+      repository: ghcr.io/nakamasato/mysql-operator
+      tag: v0.2.0
+    resources:
+      limits:
+        cpu: 200m
+        memory: 100Mi
+      requests:
+        cpu: 100m
+        memory: 20Mi
+  replicas: 1
+managerConfig:
+  controllerManagerConfigYaml:
+    health:
+      healthProbeBindAddress: :8081
+    leaderElection:
+      leaderElect: true
+      resourceName: dfc6d3c2.nakamasato.com
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+metricsService:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: https
+  type: ClusterIP

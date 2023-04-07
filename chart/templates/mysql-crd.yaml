@@ -1,0 +1,138 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mysqls.mysql.nakamasato.com
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+spec:
+  group: mysql.nakamasato.com
+  names:
+    kind: MySQL
+    listKind: MySQLList
+    plural: mysqls
+    singular: mysql
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.host
+      name: Host
+      type: string
+    - jsonPath: .spec.admin_user.name
+      name: AdminUser
+      type: string
+    - jsonPath: .status.connected
+      name: Connected
+      type: boolean
+    - description: The number of MySQLUsers that belongs to the MySQL
+      jsonPath: .status.userCount
+      name: UserCount
+      type: integer
+    - description: The number of MySQLDBs that belongs to the MySQL
+      jsonPath: .status.dbCount
+      name: DBCount
+      type: integer
+    - jsonPath: .status.reason
+      name: Reason
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: MySQL is the Schema for the mysqls API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MySQLSpec holds the connection information for the target MySQL
+              cluster.
+            properties:
+              admin_password:
+                description: AdminPassword is MySQL password to connect target MySQL
+                  cluster.
+                properties:
+                  name:
+                    description: Secret Name
+                    type: string
+                  type:
+                    description: Secret Type (e.g. gcp, raw)
+                    enum:
+                    - raw
+                    - gcp
+                    type: string
+                required:
+                - name
+                - type
+                type: object
+              admin_user:
+                description: AdminUser is MySQL user to connect target MySQL cluster.
+                properties:
+                  name:
+                    description: Secret Name
+                    type: string
+                  type:
+                    description: Secret Type (e.g. gcp, raw)
+                    enum:
+                    - raw
+                    - gcp
+                    type: string
+                required:
+                - name
+                - type
+                type: object
+              host:
+                description: Host is MySQL host of target MySQL cluster.
+                type: string
+              port:
+                default: 3306
+                description: Port is MySQL port of target MySQL cluster.
+                type: integer
+            required:
+            - admin_password
+            - admin_user
+            - host
+            type: object
+          status:
+            description: MySQLStatus defines the observed state of MySQL
+            properties:
+              connected:
+                description: true if successfully connected to the MySQL cluster
+                type: boolean
+              dbCount:
+                default: 0
+                description: The number of database in this MySQL
+                format: int32
+                type: integer
+              reason:
+                description: Reason for connection failure
+                type: string
+              userCount:
+                default: 0
+                description: The number of users in this MySQL
+                format: int32
+                type: integer
+            required:
+            - dbCount
+            - userCount
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
