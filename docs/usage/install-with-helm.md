@@ -16,5 +16,3 @@ helm install $HELM_PATH --generate-name
 
 
 ## Without GCP credentials json (e.g. Run on GCP resource)
-
-
