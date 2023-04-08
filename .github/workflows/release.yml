@@ -58,7 +58,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: "chore: update kustomization for install to ${{ env.RELEASE_VERSION }}"
+          title: "chore: bump version to ${{ env.RELEASE_VERSION }} in install/kustomization.yaml"
           body: |
             # Why
             - New version [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }}) was released.
@@ -87,6 +87,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_TO_UPDATE_HELM_CHARTS_REPO }} # when expired, need to update in https://github.com/settings/tokens
           title: "chore: bump mysql-operator version to ${{ env.RELEASE_VERSION }}"
+          branch: bump-mysql-operator-chart
           body: |
             # Why
             - New version [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }}) was released.
