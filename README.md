@@ -22,10 +22,18 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 
 ## Getting Started
 
-1. Install CRD
+1. Install (Create CRD and operator objects)
+    With kustomize:
     ```
     kubectl apply -k https://github.com/nakamasato/mysql-operator/config/install
     ```
+    With Helm:
+    ```
+    helm repo add nakamasato https://nakamasato.github.io/helm-charts
+    helm repo update
+    helm install mysql-operator nakamasato/mysql-operator
+    ```
+
 1. (Optional) prepare MySQL.
     ```
     kubectl apply -k https://github.com/nakamasato/mysql-operator/config/mysql
@@ -127,6 +135,44 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 ## With GCP Secret Manager
 
 Instead of writing raw password in `MySQL.Spec.AdminPassword`, you can get the password for root user from an external secret manager (e.g. GCP) (ref: [Authenticate to Google Cloud using a service account](https://cloud.google.com/kubernetes-engine/docs/tutorials/authenticating-to-cloud-platform))
+
+1. Create `SecretManager`
+    ```
+    echo -n "password" | gcloud secrets create mysql-password --data-file=-
+    echo -n "root" | gcloud secrets create mysql-user --data-file=-
+    ```
+1. Create a `Secret` for credentials json for **service account** with `roles/secretm
+anager.secretAccessor` permission
+    ```
+    kubectl create secret generic gcp-sa-private-key --from-file=sa-private-key.json
+    ```
+1. Install mysql-operator with `--set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID`
+    ```
+    helm repo add nakamasato https://nakamasato.github.io/helm-charts
+    helm repo update
+    helm install mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
+    ```
+1. You can specify `type: gcp` for `admin_user` and `admin_password`.
+
+    ```yaml
+    apiVersion: mysql.nakamasato.com/v1alpha1
+    kind: MySQL
+    metadata:
+      name: mysql-sample
+    spec:
+      host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
+      admin_user:
+        name: mysql-user # secret name in SecretManager
+        type: gcp
+      admin_password:
+        name: mysql-password # secret name in SecretManager
+        type: gcp
+    ```
+
+    Example: (you need to run `kubectl apply -k config/mysql`)
+    ```
+    kubectl apply -k config/samples-on-k8s-with-gcp-secretmanager
+    ```
 
 [Read credentials from GCP SecretManager](docs/usage/gcp-secretmanager.md)
 
