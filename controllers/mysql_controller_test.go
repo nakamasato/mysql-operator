@@ -115,7 +115,7 @@ var _ = Describe("MySQL controller", func() {
 
 		It("Should increase status.DBCount by one", func() {
 			By("By creating a new MySQLDB")
-			mysqlDB := newMySQLDB(APIVersion, Namespace, MySQLDBName, DatabaseName, MySQLName)
+			mysqlDB = newMySQLDB(APIVersion, Namespace, MySQLDBName, DatabaseName, MySQLName)
 			Expect(controllerutil.SetOwnerReference(mysql, mysqlDB, scheme)).Should(Succeed())
 			Expect(k8sClient.Create(ctx, mysqlDB)).Should(Succeed())
 
@@ -174,7 +174,7 @@ func checkMySQLUserCount(ctx context.Context, expectedUserCount int32) {
 
 func checkMySQLDBCount(ctx context.Context, expectedDBCount int32) {
 	Eventually(func() int32 {
-		err := k8sClient.Get(ctx, types.NamespacedName{Name: MySQLDBName, Namespace: Namespace}, mysql)
+		err := k8sClient.Get(ctx, types.NamespacedName{Name: MySQLName, Namespace: Namespace}, mysql)
 		if err != nil {
 			return -1
 		}

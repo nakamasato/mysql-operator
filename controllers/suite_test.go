@@ -45,6 +45,7 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var mysql *mysqlv1alpha1.MySQL
 var mysqlUser *mysqlv1alpha1.MySQLUser
+var mysqlDB *mysqlv1alpha1.MySQLDB
 
 const (
 	APIVersion    = "mysql.nakamasato.com/v1alpha1"

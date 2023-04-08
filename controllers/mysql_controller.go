@@ -124,7 +124,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			log.Error(err, "[Status] Failed to update")
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
-		log.Info(fmt.Sprintf("[Status] updated with userCount=%d\n", referencedUserNum))
+		log.Info("[Status] updated", "UserCount", referencedUserNum, "DBCount", referencedDbNum)
 	}
 
 	if !mysql.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
