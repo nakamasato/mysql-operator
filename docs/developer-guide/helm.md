@@ -45,7 +45,7 @@ With [helmify](https://github.com/arttor/helmify), you can create a helm chart
     name: mysql-operator
     ```
 1. Update `chart/templates/deployment.yaml` for your purpose
-    What we do here is basically to enable to change `Deployment` from `Values`. (ref: )
+    What we do here is basically to enable to change `Deployment` from `Values`. (ref: [#199](https://github.com/nakamasato/mysql-operator/pull/199/commits/cc245343a9a24eee35425ef7d665c9d17996c7a8))
 1. Package
     ```
     helm package chart --app-version v0.2.0
