@@ -135,7 +135,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 				}
 			}
 		} else {
-			log.Info("Could not complete finalizer. waiting another 5 seconds")
+			log.Info("Could not complete finalizer. waiting another second")
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	. "github.com/onsi/gomega"
@@ -31,7 +32,7 @@ func cleanUpMySQL(ctx context.Context, k8sClient client.Client, namespace string
 			return -1
 		}
 		return len(mysqlList.Items)
-	}).Should(Equal(0))
+	}, 5*time.Second).Should(Equal(0))
 }
 
 func cleanUpMySQLUser(ctx context.Context, k8sClient client.Client, namespace string) {

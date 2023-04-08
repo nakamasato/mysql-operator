@@ -53,7 +53,6 @@ const (
 	MySQLDBName   = "test-mysql-db" // Kubernetes object name
 	DatabaseName  = "test_db"       // MySQL database name
 	Namespace     = "default"
-	timeout       = time.Second * 40
 	interval      = time.Millisecond * 250
 )
 
