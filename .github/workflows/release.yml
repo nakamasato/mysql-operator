@@ -49,7 +49,7 @@ jobs:
           ref: 'main'
 
       - name: Update kustomization
-        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF:10} make release
+        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF:10} make update-version-to-install
 
       - name: Set env
         run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
@@ -58,9 +58,38 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: "chore: update kustomization for install to ${{ env.RELEASE_VERSION }}"
+          title: "chore: bump version to ${{ env.RELEASE_VERSION }} in install/kustomization.yaml"
           body: |
             # Why
             - New version [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }}) was released.
             # What
             - Update kustomization for installation
+
+  create-pr-for-helm-charts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          repository: nakamasato/helm-charts
+
+      - name: Set env
+        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
+
+      - name: Update app version
+        run: |
+          yq e -i ".version = \"${{ env.RELEASE_VERSION }}\"" charts/mysql-operator/Chart.yaml
+          yq e -i ".appVersion = \"${{ env.RELEASE_VERSION }}\"" charts/mysql-operator/Chart.yaml
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PAT_TO_UPDATE_HELM_CHARTS_REPO }} # when expired, need to update in https://github.com/settings/tokens
+          title: "chore: bump mysql-operator version to ${{ env.RELEASE_VERSION }}"
+          branch: bump-mysql-operator-chart
+          body: |
+            # Why
+            - New version [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }}) was released.
+            # What
+            - bump mysql-operator chart version to [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }})

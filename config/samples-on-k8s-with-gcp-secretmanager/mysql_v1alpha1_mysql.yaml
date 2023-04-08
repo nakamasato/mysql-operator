@@ -1,0 +1,12 @@
+apiVersion: mysql.nakamasato.com/v1alpha1
+kind: MySQL
+metadata:
+  name: mysql-sample
+spec:
+  host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
+  admin_user:
+    name: root
+    type: raw
+  admin_password: # echo -n "password" | gcloud secrets create mysql-password --data-file=-
+    name: mysql-password
+    type: gcp

@@ -37,6 +37,19 @@ Steps:
         ```
         GINKGO = $(LOCALBIN)/ginkgo
         ginkgo:
-            test -s $(LOCALBIN)/ginkgo && $(LOCALBIN)/ginkgo --version | grep -q $(GINKGO_VERSION) || \
+            test -s $(LOCALBIN)/ginkgo && $(LOCALBIN)/ginkgo version | grep -q $(GINKGO_VERSION) || \
             GOBIN=$(LOCALBIN) go install github.com/onsi/ginkgo/v2/ginkgo@$(GINKGO_VERSION)
+        ```
+    1. helmify
+
+        ```
+        HELMIFY ?= $(LOCALBIN)/helmify
+
+        .PHONY: helmify
+        helmify: $(HELMIFY) ## Download helmify locally if necessary.
+        $(HELMIFY): $(LOCALBIN)
+        	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
+
+        helm: manifests kustomize helmify
+        	$(KUSTOMIZE) build config/default | $(HELMIFY)
         ```
