@@ -71,6 +71,7 @@ var _ = Describe("MySQL controller", func() {
 	Context("With available MySQL", func() {
 		BeforeEach(func() {
 			cleanUpMySQLUser(ctx, k8sClient, Namespace)
+			cleanUpMySQLDB(ctx, k8sClient, Namespace)
 			cleanUpMySQL(ctx, k8sClient, Namespace)
 
 			// Create MySQL
@@ -83,6 +84,7 @@ var _ = Describe("MySQL controller", func() {
 		})
 		AfterEach(func() {
 			cleanUpMySQLUser(ctx, k8sClient, Namespace)
+			cleanUpMySQLDB(ctx, k8sClient, Namespace)
 			cleanUpMySQL(ctx, k8sClient, Namespace)
 		})
 		It("Should have status.UserCount=0", func() {
