@@ -13,10 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -73,23 +73,29 @@ func newMySQLUser(apiVersion, namespace, name, mysqlName string) *mysqlv1alpha1.
 			Namespace: namespace,
 			Name:      name,
 		},
-		Spec:   mysqlv1alpha1.MySQLUserSpec{MysqlName: mysqlName},
-		Status: mysqlv1alpha1.MySQLUserStatus{},
+		Spec: mysqlv1alpha1.MySQLUserSpec{MysqlName: mysqlName},
 	}
 }
 
-func addOwnerReferenceToMySQL(mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1alpha1.MySQL) *mysqlv1alpha1.MySQLUser {
-	mysqlUser.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
-		{
-			APIVersion:         "mysql.nakamasato.com/v1alpha1",
-			Kind:               "MySQL",
-			Name:               mysql.Name,
-			UID:                mysql.UID,
-			BlockOwnerDeletion: pointer.Bool(true),
-			Controller:         pointer.Bool(true),
+func newMySQLDB(apiVersion, namespace, objName, dbName, mysqlName string) *mysqlv1alpha1.MySQLDB {
+	return &mysqlv1alpha1.MySQLDB{
+		TypeMeta: metav1.TypeMeta{APIVersion: apiVersion, Kind: "MySQLDB"},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      objName,
 		},
+		Spec: mysqlv1alpha1.MySQLDBSpec{MysqlName: mysqlName, DBName: dbName},
 	}
+}
+
+func addOwnerReferenceToMySQLUser(mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1alpha1.MySQL, scheme *runtime.Scheme) *mysqlv1alpha1.MySQLUser {
+	controllerutil.SetOwnerReference(mysql, mysqlUser, scheme)
 	return mysqlUser
+}
+
+func addOwnerReferenceToMySQLDB(mysqlDB *mysqlv1alpha1.MySQLDB, mysql *mysqlv1alpha1.MySQL, scheme *runtime.Scheme) *mysqlv1alpha1.MySQLDB {
+	controllerutil.SetOwnerReference(mysql, mysqlDB, scheme)
+	return mysqlDB
 }
 
 func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Scheme) {

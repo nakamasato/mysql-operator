@@ -82,7 +82,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		mysql.Status.Reason = err.Error()
 		if err := r.Status().Update(ctx, mysql); err != nil {
 			log.Error(err, "failed to update status")
-			return ctrl.Result{RequeueAfter: 5 * time.Second}, err
+			return ctrl.Result{RequeueAfter: time.Second}, err
 		}
 		return ctrl.Result{}, err
 	}
@@ -116,8 +116,9 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	log.Info(fmt.Sprintf("[referencedDbNum] Successfully got %d\n", referencedDbNum))
 
 	// Update Status
-	if mysql.Status.UserCount != int32(referencedUserNum) {
+	if mysql.Status.UserCount != int32(referencedUserNum) || mysql.Status.DBCount != int32(referencedDbNum) {
 		mysql.Status.UserCount = int32(referencedUserNum)
+		mysql.Status.DBCount = int32(referencedDbNum)
 		err = r.Status().Update(ctx, mysql)
 		if err != nil {
 			log.Error(err, "[Status] Failed to update")
