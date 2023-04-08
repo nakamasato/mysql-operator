@@ -1,18 +1,21 @@
 namespace: mysql-operator-system
 namePrefix: mysql-operator-
 
-resources:
-- manager.yaml
+bases:
 - ../crd
 - ../rbac
+- ../manager
 
-generatorOptions:
-  disableNameSuffixHash: true
+# [GCP SecretManager] Mount GCP service account key as secret
+secretGenerator:
+- name: gcp-sa-private-key
+  files:
+  - sa-private-key.json
 
-configMapGenerator:
-- files:
-  - controller_manager_config.yaml
-  name: manager-config
+patchesStrategicMerge:
+# [GCP SecretManager] Mount GCP service account key as secret
+- manager_gcp_sa_secret_patch.yaml
+
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:

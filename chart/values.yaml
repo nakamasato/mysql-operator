@@ -1,3 +1,4 @@
+cloudSecretManagerType: raw # set gcp if you use GCP SecretManager
 controllerManager:
   manager:
     image:

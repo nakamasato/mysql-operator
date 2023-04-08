@@ -44,6 +44,8 @@ With [helmify](https://github.com/arttor/helmify), you can create a helm chart
     ```yaml
     name: mysql-operator
     ```
+1. Update `chart/templates/deployment.yaml` for your purpose
+    What we do here is basically to enable to change `Deployment` from `Values`. (ref: )
 1. Package
     ```
     helm package chart --app-version v0.2.0
@@ -57,6 +59,8 @@ With [helmify](https://github.com/arttor/helmify), you can create a helm chart
     ```
     helm install mysql-operator-0.1.0.tgz --generate-name
     ```
+
+    Optionally, you can add `--set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID` to use GCP SecretManager to get AdminUser and/or AdminPassword.
 
     <details>
 
@@ -86,6 +90,10 @@ With [helmify](https://github.com/arttor/helmify), you can create a helm chart
     kubectl get po
     NAME                                                             READY   STATUS    RESTARTS   AGE
     mysql-operator-0-1680907162-controller-manager-f9d855dc9-d4psm   0/1     Running   0          13s
+    ```
+1. (Optional) upgrade an existing release
+    ```
+    helm upgrade mysql-operator-0-1680913123 $HELM_PATH --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
     ```
 1. Uninstall
     ```

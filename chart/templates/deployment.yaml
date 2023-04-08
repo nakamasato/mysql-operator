@@ -27,6 +27,9 @@ spec:
       containers:
       - args:
         - --leader-elect
+        {{- if eq .Values.cloudSecretManagerType "gcp" }}
+        - --cloud-secret-manager=gcp
+        {{- end }}
         command:
         - /manager
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
@@ -49,7 +52,23 @@ spec:
           }}
         securityContext:
           allowPrivilegeEscalation: false
+        {{- if eq .Values.cloudSecretManagerType "gcp" }}
+        volumeMounts:
+          - name: gcp-sa-private-key
+            mountPath: /var/secrets/google
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /var/secrets/google/sa-private-key.json
+          - name: PROJECT_ID
+            value: {{ .Values.gcpProjectId }}
+        {{- end }}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: {{ include "chart.fullname" . }}-controller-manager
       terminationGracePeriodSeconds: 10
+      {{- if eq .Values.cloudSecretManagerType "gcp" }}
+      volumes:
+        - name: gcp-sa-private-key
+          secret:
+            secretName: gcp-sa-private-key
+      {{- end }}

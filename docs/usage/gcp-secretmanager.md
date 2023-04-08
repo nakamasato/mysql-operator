@@ -24,8 +24,38 @@ mysql-operator can get the credentials of the MySQL user (which is used to acces
     ```
 1. Generate service account key json.
     ```
-    gcloud iam service-accounts keys create config/default/sa-private-key.json --iam-account=mysql-operator@${PROJECT_ID}.iam.gserviceaccount.com
+    gcloud iam service-accounts keys create sa-private-key.json --iam-account=mysql-operator@${PROJECT_ID}.iam.gserviceaccount.com
     ```
+
+
+
+## Create Secret for service account key
+
+```
+kubectl create secret generic gcp-sa-private-key --from-file=sa-private-key.json
+```
+
+## Prepara mysql-operator yaml
+
+1. `containers[].args`: Add `"--cloud-secret-manager=gcp"`
+1. `containers[]`: Add the following codes
+    ```yaml
+          volumeMounts:
+            - name: gcp-sa-private-key
+              mountPath: /var/secrets/google
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/sa-private-key.json
+    ```
+1. `volumes`:
+    ```yaml
+    volumes:
+      - name: gcp-sa-private-key
+        secret:
+          secretName: gcp-sa-private-key
+    ```
+1.
+
 
 ## Prepare mysql-operator yaml
 
