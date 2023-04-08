@@ -3,7 +3,8 @@
 ## 1. Preparation
 
 ```
-HELM_PATH=mysql-operator-0.1.0.tgz
+helm repo add nakamasato https://nakamasato.github.io/helm-charts
+helm repo update
 ```
 
 ## 2. Install
@@ -11,7 +12,7 @@ HELM_PATH=mysql-operator-0.1.0.tgz
 ### 2.1. Install without GCP SecretManager
 
 ```
-helm install $HELM_PATH --generate-name
+helm install mysql-operator nakamasato/mysql-operator
 ```
 
 ### 2.2. Install with GCP credentials json
@@ -19,7 +20,7 @@ helm install $HELM_PATH --generate-name
 1. Check the yaml to be applied with the `template` command
 
     ```
-    helm template $HELM_PATH --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
+    helm template mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
     ```
 
     Check point:
@@ -30,7 +31,7 @@ helm install $HELM_PATH --generate-name
 1. Install
 
     ```
-    helm install $HELM_PATH --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID --generate-name
+    helm install mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID --generate-name
     ```
 
 ### 2.3. Install without GCP credentials json (e.g. Run on GCP resource)
@@ -47,7 +48,7 @@ When you want to modify helm release (start operator with new settings or argume
     ```
 1. Upgrade
     ```
-    helm upgrade <target release to upgrade> $HELM_PATH --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
+    helm upgrade mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
     ```
 
 ## 4. Uninstall
@@ -55,10 +56,10 @@ When you want to modify helm release (start operator with new settings or argume
 1. Check helm release to uninstall
     ```
     helm list
-    NAME                            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
-    mysql-operator-0-1680913123     default         2               2023-04-08 09:28:31.937086 +0900 JST    deployed        mysql-operator-0.1.0    v0.2.0
+    NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                      APP VERSION
+    mysql-operator  default         2               2023-04-08 12:38:58.65552 +0900 JST     deployed        mysql-operator-0.1.0       v0.2.0
     ```
 1. Uninstall
     ```
-    helm uninstall mysql-operator-0-1680913123
+    helm uninstall mysql-operator
     ```

@@ -51,8 +51,14 @@ With [helmify](https://github.com/arttor/helmify), you can create a helm chart
     helm package chart --app-version v0.2.0
     ```
     The command will generate `mysql-operator-0.1.0.tgz`
+## Publish package to Helm chart repo.
 
-## Install mysql-operator with the Helm chart
+https://github.com/nakamasato/helm-charts is used for repo.
+All we need to do is to update the chart source file under [charts/mysql-operator](https://github.com/nakamasato/helm-charts/tree/main/charts/mysql-operator) in the repo.
+
+We use GitHub Actions to update the repo.
+
+## Install mysql-operator with the Helm chart (from local source file)
 
 1. Install mysql-operator with helm
 

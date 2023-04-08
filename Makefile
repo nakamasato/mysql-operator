@@ -281,7 +281,6 @@ e2e-with-ginkgo: ginkgo
 
 update-version-to-install: kustomize
 	cd config/install && $(KUSTOMIZE) edit set image controller=${IMG}
-	yq e -i ".appVersion = \"$(APP_VERSION)\"" chart/Chart.yaml
 
 HELMIFY ?= $(LOCALBIN)/helmify
 

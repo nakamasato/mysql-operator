@@ -3,65 +3,97 @@ name: release
 on:
   release:
     types: [published]
+  pull_request:
+
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push-image:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+  # build-and-push-image:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
 
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
+
+  #     - name: Log in to the Container registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ${{ env.REGISTRY }}
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Extract metadata (tags, labels) for Docker
+  #       id: meta
+  #       uses: docker/metadata-action@v4
+  #       with:
+  #         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@v4
+  #       with:
+  #         context: .
+  #         push: true
+  #         tags: ${{ steps.meta.outputs.tags }}
+  #         labels: ${{ steps.meta.outputs.labels }}
+
+  # create-pr-to-update-kustomization:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
+  #       with:
+  #         ref: 'main'
+
+  #     - name: Update kustomization
+  #       run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF:10} make update-version-to-install
+
+  #     - name: Set env
+  #       run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
+
+  #     - name: Create Pull Request
+  #       uses: peter-evans/create-pull-request@v5
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         title: "chore: update kustomization for install to ${{ env.RELEASE_VERSION }}"
+  #         body: |
+  #           # Why
+  #           - New version [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }}) was released.
+  #           # What
+  #           - Update kustomization for installation
+
+  create-pr-for-helm-charts:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+          repository: nakamasato/helm-charts
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  create-pr-to-update-kustomization:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          ref: 'main'
-
-      - name: Update kustomization
-        run: |
-          APP_VERSION=${GITHUB_REF:10} IMG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF:10} make update-version-to-install
+      # - name: Set env
+      #   run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
 
       - name: Set env
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=v0.3.0" >> $GITHUB_ENV
+
+      - name: Update app version
+        run: |
+          yq e -i ".version = \"${{ env.RELEASE_VERSION }}\"" charts/mysql-operator/Chart.yaml
+          yq e -i ".appVersion = \"${{ env.RELEASE_VERSION }}\"" charts/mysql-operator/Chart.yaml
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TO_UPDATE_HELM_CHARTS_REPO }}
           title: "chore: update kustomization for install to ${{ env.RELEASE_VERSION }}"
           body: |
             # Why
             - New version [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }}) was released.
             # What
-            - Update kustomization for installation
+            - Update helm chart mysql-operator
