@@ -108,12 +108,12 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		log.Error(err, "[referencedUserNum] Failed get referencedNum")
 		return ctrl.Result{}, err
 	}
-	log.Info(fmt.Sprintf("[referencedUserNum] Successfully got %d\n", referencedUserNum))
+	log.Info("[referencedUserNum] Successfully got", "referencedUserNum", referencedUserNum)
 	referencedDbNum, err := r.countReferencesByMySQLDB(ctx, mysql)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	log.Info(fmt.Sprintf("[referencedDbNum] Successfully got %d\n", referencedDbNum))
+	log.Info("[referencedDbNum] Successfully got", "referencedDbNum", referencedDbNum)
 
 	// Update Status
 	if mysql.Status.UserCount != int32(referencedUserNum) || mysql.Status.DBCount != int32(referencedDbNum) {
@@ -121,7 +121,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		mysql.Status.DBCount = int32(referencedDbNum)
 		err = r.Status().Update(ctx, mysql)
 		if err != nil {
-			log.Error(err, "[Status] Failed to update")
+			log.Error(err, "[Status] Failed to update", "UserCount", referencedUserNum, "DBCount", referencedDbNum)
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		log.Info("[Status] updated", "UserCount", referencedUserNum, "DBCount", referencedDbNum)
