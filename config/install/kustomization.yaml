@@ -1,7 +1,7 @@
 namespace: mysql-operator-system
 namePrefix: mysql-operator-
 
-bases:
+resources:
 - manager.yaml
 - ../crd
 - ../rbac
