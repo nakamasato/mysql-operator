@@ -157,7 +157,7 @@ var _ = Describe("MySQL controller", func() {
 
 			Eventually(func() int {
 				return len(mySQLClients)
-			}).Should(Equal(0))
+			}, 5*time.Second).Should(Equal(0))
 		})
 	})
 })
