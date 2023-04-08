@@ -16,7 +16,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -86,16 +85,6 @@ func newMySQLDB(apiVersion, namespace, objName, dbName, mysqlName string) *mysql
 		},
 		Spec: mysqlv1alpha1.MySQLDBSpec{MysqlName: mysqlName, DBName: dbName},
 	}
-}
-
-func addOwnerReferenceToMySQLUser(mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1alpha1.MySQL, scheme *runtime.Scheme) *mysqlv1alpha1.MySQLUser {
-	controllerutil.SetOwnerReference(mysql, mysqlUser, scheme)
-	return mysqlUser
-}
-
-func addOwnerReferenceToMySQLDB(mysqlDB *mysqlv1alpha1.MySQLDB, mysql *mysqlv1alpha1.MySQL, scheme *runtime.Scheme) *mysqlv1alpha1.MySQLDB {
-	controllerutil.SetOwnerReference(mysql, mysqlDB, scheme)
-	return mysqlDB
 }
 
 func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Scheme) {

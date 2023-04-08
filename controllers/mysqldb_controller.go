@@ -135,6 +135,7 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		db.Status.Reason = mysqlDBReasonCompleted
 		if serr := r.Status().Update(ctx, db); serr != nil {
 			log.Error(serr, "Failed to update MySQLDB status", "Name", db.Spec.DBName)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 	} else {
 		log.Info("database already exists", "database", db.Spec.DBName)
