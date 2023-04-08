@@ -108,7 +108,7 @@ var _ = Describe("MySQL controller", func() {
 			checkMySQLUserCount(ctx, int32(1))
 
 			By("By deleting the MySQLUser")
-			cleanUpMySQLUser(ctx, k8sClient, Namespace)
+			Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
 
 			checkMySQLUserCount(ctx, int32(0))
 		})

@@ -81,7 +81,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		mysql.Status.Connected = false
 		mysql.Status.Reason = err.Error()
 		if err := r.Status().Update(ctx, mysql); err != nil {
-			log.Error(err, "failed to update status")
+			log.Error(err, "failed to update status (Connected & Reason)")
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		return ctrl.Result{}, err
@@ -90,7 +90,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	mysql.Status.Connected = true
 	mysql.Status.Reason = "Ping succeded and updated MySQLClients"
 	if err := r.Status().Update(ctx, mysql); err != nil {
-		log.Error(err, "failed to update status")
+		log.Error(err, "failed to update status (Connected & Reason)")
 		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
@@ -121,7 +121,8 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		mysql.Status.DBCount = int32(referencedDbNum)
 		err = r.Status().Update(ctx, mysql)
 		if err != nil {
-			log.Error(err, "[Status] Failed to update", "UserCount", referencedUserNum, "DBCount", referencedDbNum)
+			log.Error(err, "[Status] Failed to update staus (UserCount and DBCount)",
+				"UserCount", referencedUserNum, "DBCount", referencedDbNum)
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		log.Info("[Status] updated", "UserCount", referencedUserNum, "DBCount", referencedDbNum)
