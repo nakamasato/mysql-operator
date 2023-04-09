@@ -173,7 +173,7 @@ var _ = Describe("MySQL controller", func() {
 
 			Eventually(func() int {
 				return len(mySQLClients)
-			}, 5*time.Second).Should(Equal(0))
+			}).Should(Equal(0))
 		})
 	})
 })
@@ -185,7 +185,7 @@ func checkMySQLUserCount(ctx context.Context, expectedUserCount int32) {
 			return -1
 		}
 		return mysql.Status.UserCount
-	}, 5*time.Second).Should(Equal(expectedUserCount))
+	}).Should(Equal(expectedUserCount))
 }
 
 func checkMySQLDBCount(ctx context.Context, expectedDBCount int32) {
@@ -195,5 +195,5 @@ func checkMySQLDBCount(ctx context.Context, expectedDBCount int32) {
 			return -1
 		}
 		return mysql.Status.DBCount
-	}, 5*time.Second).Should(Equal(expectedDBCount))
+	}).Should(Equal(expectedDBCount))
 }
