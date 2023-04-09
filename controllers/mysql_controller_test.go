@@ -103,18 +103,14 @@ var _ = Describe("MySQL controller", func() {
 		It("Should increase status.UserCount to two", func() {
 			By("By creating a new MySQLUser")
 			mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
-			Expect(controllerutil.SetOwnerReference(mysql, mysqlUser, scheme)).Should(Succeed())
+			addOwnerReferenceToMySQL(mysqlUser, mysql)
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 			checkMySQLUserCount(ctx, int32(1))
 
 			By("By creating another MySQLUser")
 			mysqlUser2 := newMySQLUser(APIVersion, Namespace, "mysql-test-user-2", MySQLName)
-			Expect(controllerutil.SetOwnerReference(mysql, mysqlUser2, scheme)).Should(Succeed())
+			addOwnerReferenceToMySQL(mysqlUser2, mysql)
 			Expect(k8sClient.Create(ctx, mysqlUser2)).Should(Succeed())
-
-			// TODO: check why Owns doesn't trigger reconciliation
-			mysql.Spec.Host = "localhost"
-			Expect(k8sClient.Update(ctx, mysql)).Should(Succeed())
 
 			checkMySQLUserCount(ctx, int32(2))
 		})
@@ -122,16 +118,13 @@ var _ = Describe("MySQL controller", func() {
 		It("Should decrease status.UserCount to zero", func() {
 			By("By creating a new MySQLUser")
 			mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
-			Expect(controllerutil.SetOwnerReference(mysql, mysqlUser, scheme)).Should(Succeed())
+			// TODO: Check if it's possible to use Expect(controllerutil.SetOwnerReference(mysql, mysqlUser, scheme)).Should(Succeed())
+			addOwnerReferenceToMySQL(mysqlUser, mysql)
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 			checkMySQLUserCount(ctx, int32(1))
 
 			By("By deleting the MySQLUser")
 			Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
-
-			// TODO: check why Owns doesn't trigger reconciliation
-			mysql.Spec.Host = "localhost"
-			Expect(k8sClient.Update(ctx, mysql)).Should(Succeed())
 
 			checkMySQLUserCount(ctx, int32(0))
 		})

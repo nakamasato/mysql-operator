@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -86,6 +87,20 @@ func newMySQLDB(apiVersion, namespace, objName, dbName, mysqlName string) *mysql
 		},
 		Spec: mysqlv1alpha1.MySQLDBSpec{MysqlName: mysqlName, DBName: dbName},
 	}
+}
+
+func addOwnerReferenceToMySQL(mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1alpha1.MySQL) *mysqlv1alpha1.MySQLUser {
+	mysqlUser.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         "mysql.nakamasato.com/v1alpha1",
+			Kind:               "MySQL",
+			Name:               mysql.Name,
+			UID:                mysql.UID,
+			BlockOwnerDeletion: pointer.Bool(true),
+			Controller:         pointer.Bool(true),
+		},
+	}
+	return mysqlUser
 }
 
 func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Scheme) {
