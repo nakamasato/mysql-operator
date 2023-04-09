@@ -8,7 +8,10 @@ This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.ope
 
 Reduce human operations:
 
-1. **User management**: When creating a MySQL user for an application running on Kubernetes, it's necessary to create a MySQL user and create a Secret manually or with a script, which can be replaced with a Kubernetes operator. The initial idea is from KafkaUser and KafkaTopic in [Strimzi Kafka Operator](https://github.com/strimzi/strimzi-kafka-operator). With a custom resource for MySQL user, we can manage MySQL users with Kubernetes manifest files as a part of dependent application. We can make a Helm chart for an application and its dependencies, with which we can easily duplicate whole environment. There's no chance to require someone to check the raw password as it's stored directly to Secret by the operator, and read by the dependent application from the Secret.
+1. **User management**: When creating a MySQL user for an application running on Kubernetes, it's necessary to create a MySQL user and create a Secret manually or with a script, which can be replaced with a Kubernetes operator. The initial idea is from KafkaUser and KafkaTopic in [Strimzi Kafka Operator](https://github.com/strimzi/strimzi-kafka-operator). With a custom resource for MySQL user, we can manage MySQL users with Kubernetes manifest files as a part of dependent application.
+    Benefits from such a custom resource and operator:
+    1. Kubernetes manifest files for an application and its dependent resources (including MySQL user) can be managed together with Kustomize or Helm chart, with which we can easily duplicate whole environment.
+    1. There's no chance to require someone to check the raw password as it's stored directly to Secret by the operator, and read by the dependent application from the Secret.
 1. **Database migration**: Reduce manual operations but keep changelog. When any schema migration or database operation is required, we needed a human operation, which has potential risk of human errors that should be avoided. With a Kubernetes operator, we can execute each database operation in the standard way with traceable changlog.
 
 ## Versions
