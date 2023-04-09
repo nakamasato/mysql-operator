@@ -316,14 +316,28 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 ## 4.2. Controller Test
 
+Run all
+
 ```
 make test
+```
+
+Set `KUBEBUILDER_ASSETS`
+
+```
+export KUBEBUILDER_ASSETS="$(bin/setup-envtest use 1.26.0 -p path)"
+```
+
+Fail fast
+
+```
+bin/ginkgo -skip-package=e2e --fail-fast ./...
 ```
 
 Run individual test
 
 ```
-KUBEBUILDER_ASSETS="/Users/m.naka/Library/Application Support/io.kubebuilder.envtest/k8s/1.24.2-darwin-arm64" bin/ginkgo -skip-package=e2e --focus "Should have finalizer" --failFast ./...
+bin/ginkgo -skip-package=e2e --focus "Should have finalizer" --fail-fast ./...
 ```
 
 ## 4.3. e2e

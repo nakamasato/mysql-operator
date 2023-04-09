@@ -23,11 +23,11 @@ import (
 // MySQLDBSpec defines the desired state of MySQLDB
 type MySQLDBSpec struct {
 
+	// MySQL (CRD) name to reference to, which decides the destination MySQL server
+	MysqlName string `json:"mysqlName"`
+
 	// MySQL Database name
 	DBName string `json:"dbName"`
-
-	// MySQL name
-	MysqlName string `json:"mysqlName"`
 }
 
 // MySQLDBStatus defines the observed state of MySQLDB

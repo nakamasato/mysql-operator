@@ -45,13 +45,15 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var mysql *mysqlv1alpha1.MySQL
 var mysqlUser *mysqlv1alpha1.MySQLUser
+var mysqlDB *mysqlv1alpha1.MySQLDB
 
 const (
 	APIVersion    = "mysql.nakamasato.com/v1alpha1"
 	MySQLName     = "test-mysql"
 	MySQLUserName = "test-mysql-user"
+	MySQLDBName   = "test-mysql-db" // Kubernetes object name
+	DatabaseName  = "test_db"       // MySQL database name
 	Namespace     = "default"
-	timeout       = time.Second * 40
 	interval      = time.Millisecond * 250
 )
 

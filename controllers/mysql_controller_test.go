@@ -71,6 +71,7 @@ var _ = Describe("MySQL controller", func() {
 	Context("With available MySQL", func() {
 		BeforeEach(func() {
 			cleanUpMySQLUser(ctx, k8sClient, Namespace)
+			cleanUpMySQLDB(ctx, k8sClient, Namespace)
 			cleanUpMySQL(ctx, k8sClient, Namespace)
 
 			// Create MySQL
@@ -83,6 +84,7 @@ var _ = Describe("MySQL controller", func() {
 		})
 		AfterEach(func() {
 			cleanUpMySQLUser(ctx, k8sClient, Namespace)
+			cleanUpMySQLDB(ctx, k8sClient, Namespace)
 			cleanUpMySQL(ctx, k8sClient, Namespace)
 		})
 		It("Should have status.UserCount=0", func() {
@@ -92,23 +94,48 @@ var _ = Describe("MySQL controller", func() {
 		It("Should increase status.UserCount by one", func() {
 			By("By creating a new MySQLUser")
 			mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
-			addOwnerReferenceToMySQL(mysqlUser, mysql)
+			Expect(controllerutil.SetOwnerReference(mysql, mysqlUser, scheme)).Should(Succeed())
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 
 			checkMySQLUserCount(ctx, int32(1))
 		})
 
-		It("Should decrease status.UserCount to zero", func() {
+		It("Should increase status.UserCount to two", func() {
 			By("By creating a new MySQLUser")
 			mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
 			addOwnerReferenceToMySQL(mysqlUser, mysql)
 			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
 			checkMySQLUserCount(ctx, int32(1))
 
+			By("By creating another MySQLUser")
+			mysqlUser2 := newMySQLUser(APIVersion, Namespace, "mysql-test-user-2", MySQLName)
+			addOwnerReferenceToMySQL(mysqlUser2, mysql)
+			Expect(k8sClient.Create(ctx, mysqlUser2)).Should(Succeed())
+
+			checkMySQLUserCount(ctx, int32(2))
+		})
+
+		It("Should decrease status.UserCount to zero", func() {
+			By("By creating a new MySQLUser")
+			mysqlUser = newMySQLUser(APIVersion, Namespace, MySQLUserName, MySQLName)
+			// TODO: Check if it's possible to use Expect(controllerutil.SetOwnerReference(mysql, mysqlUser, scheme)).Should(Succeed())
+			addOwnerReferenceToMySQL(mysqlUser, mysql)
+			Expect(k8sClient.Create(ctx, mysqlUser)).Should(Succeed())
+			checkMySQLUserCount(ctx, int32(1))
+
 			By("By deleting the MySQLUser")
-			cleanUpMySQLUser(ctx, k8sClient, Namespace)
+			Expect(k8sClient.Delete(ctx, mysqlUser)).Should(Succeed())
 
 			checkMySQLUserCount(ctx, int32(0))
+		})
+
+		It("Should increase status.DBCount by one", func() {
+			By("By creating a new MySQLDB")
+			mysqlDB = newMySQLDB(APIVersion, Namespace, MySQLDBName, DatabaseName, MySQLName)
+			Expect(controllerutil.SetOwnerReference(mysql, mysqlDB, scheme)).Should(Succeed())
+			Expect(k8sClient.Create(ctx, mysqlDB)).Should(Succeed())
+
+			checkMySQLDBCount(ctx, int32(1))
 		})
 
 		It("Should have finalizer", func() {
@@ -158,5 +185,15 @@ func checkMySQLUserCount(ctx context.Context, expectedUserCount int32) {
 			return -1
 		}
 		return mysql.Status.UserCount
-	}, timeout, interval).Should(Equal(expectedUserCount))
+	}).Should(Equal(expectedUserCount))
+}
+
+func checkMySQLDBCount(ctx context.Context, expectedDBCount int32) {
+	Eventually(func() int32 {
+		err := k8sClient.Get(ctx, types.NamespacedName{Name: MySQLName, Namespace: Namespace}, mysql)
+		if err != nil {
+			return -1
+		}
+		return mysql.Status.DBCount
+	}).Should(Equal(expectedDBCount))
 }

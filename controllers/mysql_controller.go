@@ -76,54 +76,60 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, err
 	}
 
+	// Add a finalizer if not exists
+	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {
+		if err := r.Update(ctx, mysql); err != nil {
+
+			log.Error(err, "Failed to update MySQL after adding finalizer")
+			return ctrl.Result{}, err
+		}
+	}
+
 	// Update MySQLClients
 	if err := r.UpdateMySQLClients(ctx, mysql); err != nil {
 		mysql.Status.Connected = false
 		mysql.Status.Reason = err.Error()
 		if err := r.Status().Update(ctx, mysql); err != nil {
-			log.Error(err, "failed to update status")
-			return ctrl.Result{RequeueAfter: 5 * time.Second}, err
+			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		return ctrl.Result{}, err
 	}
 
-	mysql.Status.Connected = true
-	mysql.Status.Reason = "Ping succeded and updated MySQLClients"
-	if err := r.Status().Update(ctx, mysql); err != nil {
-		log.Error(err, "failed to update status")
-		return ctrl.Result{RequeueAfter: time.Second}, nil
-	}
-
-	// Add a finalizer if not exists
-	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {
-		if err := r.Update(ctx, mysql); err != nil {
-			log.Error(err, "Failed to update MySQL after adding finalizer")
-			return ctrl.Result{}, err
+	connected, reason := true, "Ping succeded and updated MySQLClients"
+	if mysql.Status.Connected != connected || mysql.Status.Reason != reason {
+		mysql.Status.Connected = connected
+		mysql.Status.Reason = reason
+		if err := r.Status().Update(ctx, mysql); err != nil {
+			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 	}
 
 	// Get referenced number
 	referencedUserNum, err := r.countReferencesByMySQLUser(ctx, mysql)
 	if err != nil {
-		log.Error(err, "[referencedUserNum] Failed get referencedNum")
+		log.Error(err, "Failed get referencedUserNum")
 		return ctrl.Result{}, err
 	}
-	log.Info(fmt.Sprintf("[referencedUserNum] Successfully got %d\n", referencedUserNum))
 	referencedDbNum, err := r.countReferencesByMySQLDB(ctx, mysql)
 	if err != nil {
+		log.Error(err, "Failed get referencedDbNum")
 		return ctrl.Result{}, err
 	}
-	log.Info(fmt.Sprintf("[referencedDbNum] Successfully got %d\n", referencedDbNum))
+	log.Info("Successfully got referenced num", "referencedUserNum", referencedUserNum, "referencedDbNum", referencedDbNum)
 
 	// Update Status
-	if mysql.Status.UserCount != int32(referencedUserNum) {
+	if mysql.Status.UserCount != int32(referencedUserNum) || mysql.Status.DBCount != int32(referencedDbNum) {
 		mysql.Status.UserCount = int32(referencedUserNum)
+		mysql.Status.DBCount = int32(referencedDbNum)
 		err = r.Status().Update(ctx, mysql)
 		if err != nil {
-			log.Error(err, "[Status] Failed to update")
-			return ctrl.Result{}, err
+			log.Error(err, "[Status] Failed to update staus (UserCount and DBCount)",
+				"UserCount", referencedUserNum, "DBCount", referencedDbNum)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
-		log.Info(fmt.Sprintf("[Status] updated with userCount=%d\n", referencedUserNum))
+		log.Info("[Status] updated", "UserCount", referencedUserNum, "DBCount", referencedDbNum)
 	}
 
 	if !mysql.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
@@ -134,7 +140,7 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 				}
 			}
 		} else {
-			log.Info("Could not complete finalizer. waiting another 5 seconds")
+			log.Info("Could not complete finalizer. waiting another second")
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 	}
@@ -146,6 +152,7 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlv1alpha1.MySQL{}).
 		Owns(&mysqlv1alpha1.MySQLUser{}).
+		Owns(&mysqlv1alpha1.MySQLDB{}).
 		Complete(r)
 }
 

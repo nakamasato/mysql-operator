@@ -48,7 +48,8 @@ spec:
                 description: MySQL Database name
                 type: string
               mysqlName:
-                description: MySQL name
+                description: MySQL (CRD) name to reference to, which decides the destination
+                  MySQL server
                 type: string
             required:
             - dbName

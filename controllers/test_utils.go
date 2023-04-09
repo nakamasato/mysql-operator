@@ -3,7 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"log"
+	"time"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
 	. "github.com/onsi/gomega"
@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -32,7 +33,7 @@ func cleanUpMySQL(ctx context.Context, k8sClient client.Client, namespace string
 			return -1
 		}
 		return len(mysqlList.Items)
-	}).Should(Equal(0))
+	}, 5*time.Second).Should(Equal(0))
 }
 
 func cleanUpMySQLUser(ctx context.Context, k8sClient client.Client, namespace string) {
@@ -73,8 +74,18 @@ func newMySQLUser(apiVersion, namespace, name, mysqlName string) *mysqlv1alpha1.
 			Namespace: namespace,
 			Name:      name,
 		},
-		Spec:   mysqlv1alpha1.MySQLUserSpec{MysqlName: mysqlName},
-		Status: mysqlv1alpha1.MySQLUserStatus{},
+		Spec: mysqlv1alpha1.MySQLUserSpec{MysqlName: mysqlName},
+	}
+}
+
+func newMySQLDB(apiVersion, namespace, objName, dbName, mysqlName string) *mysqlv1alpha1.MySQLDB {
+	return &mysqlv1alpha1.MySQLDB{
+		TypeMeta: metav1.TypeMeta{APIVersion: apiVersion, Kind: "MySQLDB"},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      objName,
+		},
+		Spec: mysqlv1alpha1.MySQLDBSpec{MysqlName: mysqlName, DBName: dbName},
 	}
 }
 
@@ -93,33 +104,36 @@ func addOwnerReferenceToMySQL(mysqlUser *mysqlv1alpha1.MySQLUser, mysql *mysqlv1
 }
 
 func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Scheme) {
+	log := log.FromContext(ctx).WithName("DebugTool")
 	fmt.Println("startDebugTool")
 	// Set a mapper
 	mapper, err := func(c *rest.Config) (meta.RESTMapper, error) {
 		return apiutil.NewDynamicRESTMapper(c)
 	}(cfg)
 	if err != nil {
-		log.Fatal("failed to create mapper")
+		log.Error(err, "failed to create mapper")
 	}
 
 	// Create a cache
 	cache, err := cache.New(cfg, cache.Options{Scheme: scheme, Mapper: mapper})
 	if err != nil {
-		log.Fatal("failed to create cache")
+		log.Error(err, "failed to create cache")
 	}
 
 	secret := &v1.Secret{}
 	mysqluser := &mysqlv1alpha1.MySQLUser{}
+	mysql := &mysqlv1alpha1.MySQL{}
 
 	// Start Cache
 	go func() {
 		if err := cache.Start(ctx); err != nil { // func (m *InformersMap) Start(ctx context.Context) error {
-			log.Fatal("failed to start cache")
+			log.Error(err, "failed to start cache")
 		}
 	}()
 
 	// create source
 	kindWithCacheMysqlUser := source.NewKindWithCache(mysqluser, cache)
+	kindWithCacheMysql := source.NewKindWithCache(mysql, cache)
 	kindWithCachesecret := source.NewKindWithCache(secret, cache)
 
 	// create workqueue
@@ -128,43 +142,60 @@ func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 	// create eventhandler
 	mysqlUserEventHandler := handler.Funcs{
 		CreateFunc: func(e event.CreateEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("[MySQLUser][Created] %s\n", e.Object.GetName())
+			log.Info("[MySQLUser][Created]", "Name", e.Object.GetName())
 		},
 		UpdateFunc: func(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("[MySQLUser][Updated] %s\n", e.ObjectNew.GetName())
+			log.Info("[MySQLUser][Updated]", "Name", e.ObjectNew.GetName())
 		},
 		DeleteFunc: func(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("[MySQLUser][Deleted] %s\n", e.Object.GetName())
+			log.Info("[MySQLUser][Deleted]", "Name", e.Object.GetName())
+		},
+	}
+	mysqlEventHandler := handler.Funcs{
+		CreateFunc: func(e event.CreateEvent, q workqueue.RateLimitingInterface) {
+			log.Info("[MySQL][Created]", "Name", e.Object.GetName())
+		},
+		UpdateFunc: func(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+			log.Info("[MySQL][Updated]", "Name", e.ObjectNew.GetName())
+		},
+		DeleteFunc: func(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+			log.Info("[MySQL][Deleted]", "Name", e.Object.GetName())
 		},
 	}
 	secretEventHandler := handler.Funcs{
 		CreateFunc: func(e event.CreateEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("[Secret][Created] %s\n", e.Object.GetName())
+			log.Info("[Secret][Created]", "Name", e.Object.GetName())
 		},
 		UpdateFunc: func(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("[Secret][Updated] %s\n", e.ObjectNew.GetName())
+			log.Info("[Secret][Updated]", "Name", e.ObjectNew.GetName())
 		},
 		DeleteFunc: func(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
-			fmt.Printf("[Secret][Deleted] %s\n", e.Object.GetName())
+			log.Info("[Secret][Deleted]", "Name", e.Object.GetName())
 		},
 	}
 
 	// start kind
 	fmt.Println("cache starting")
 	if err := kindWithCacheMysqlUser.Start(ctx, mysqlUserEventHandler, queue); err != nil {
-		log.Fatal("failed to start kind")
+		log.Error(err, "failed to start kindWithCacheMysqlUser")
+	}
+	if err := kindWithCacheMysql.Start(ctx, mysqlEventHandler, queue); err != nil {
+		log.Error(err, "failed to start kindWithCacheMysql")
 	}
 	if err := kindWithCachesecret.Start(ctx, secretEventHandler, queue); err != nil {
-		log.Fatal("failed to start kind")
+		log.Error(err, "failed to start kindWithCachesecret")
 	}
 
 	// wait cache to be synced
 	fmt.Println("waiting for cache to be synced")
 	if err := kindWithCacheMysqlUser.WaitForSync(ctx); err != nil {
-		log.Fatal("failed to wait cache")
+		log.Error(err, "failed to wait cache for kindWithCacheMysqlUser")
+	}
+	if err := kindWithCacheMysql.WaitForSync(ctx); err != nil {
+		log.Error(err, "failed to wait cache for kindWithCacheMysql")
 	}
 	if err := kindWithCachesecret.WaitForSync(ctx); err != nil {
-		log.Fatal("failed to wait cache")
+		log.Error(err, "failed to wait cache for kindWithCachesecret")
 	}
 	fmt.Println("cache is synced")
 
