@@ -90,31 +90,34 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		mysql.Status.Connected = false
 		mysql.Status.Reason = err.Error()
 		if err := r.Status().Update(ctx, mysql); err != nil {
-			log.Error(err, "failed to update status (Connected & Reason)")
+			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		return ctrl.Result{}, err
 	}
 
-	mysql.Status.Connected = true
-	mysql.Status.Reason = "Ping succeded and updated MySQLClients"
-	if err := r.Status().Update(ctx, mysql); err != nil {
-		log.Error(err, "failed to update status (Connected & Reason)")
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+	connected, reason := true, "Ping succeded and updated MySQLClients"
+	if mysql.Status.Connected != connected || mysql.Status.Reason != reason {
+		mysql.Status.Connected = connected
+		mysql.Status.Reason = reason
+		if err := r.Status().Update(ctx, mysql); err != nil {
+			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
+		}
 	}
 
 	// Get referenced number
 	referencedUserNum, err := r.countReferencesByMySQLUser(ctx, mysql)
 	if err != nil {
-		log.Error(err, "[referencedUserNum] Failed get referencedNum")
+		log.Error(err, "Failed get referencedUserNum")
 		return ctrl.Result{}, err
 	}
-	log.Info("[referencedUserNum] Successfully got", "referencedUserNum", referencedUserNum)
 	referencedDbNum, err := r.countReferencesByMySQLDB(ctx, mysql)
 	if err != nil {
+		log.Error(err, "Failed get referencedDbNum")
 		return ctrl.Result{}, err
 	}
-	log.Info("[referencedDbNum] Successfully got", "referencedDbNum", referencedDbNum)
+	log.Info("Successfully got referenced num", "referencedUserNum", referencedUserNum, "referencedDbNum", referencedDbNum)
 
 	// Update Status
 	if mysql.Status.UserCount != int32(referencedUserNum) || mysql.Status.DBCount != int32(referencedDbNum) {
@@ -149,6 +152,7 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mysqlv1alpha1.MySQL{}).
 		Owns(&mysqlv1alpha1.MySQLUser{}).
+		Owns(&mysqlv1alpha1.MySQLDB{}).
 		Complete(r)
 }
 
