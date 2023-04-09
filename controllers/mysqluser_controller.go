@@ -99,6 +99,10 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log.Info("[FetchMySQL] Found")
+	if !mysql.GetDeletionTimestamp().IsZero() {
+		log.Info("MySQL is being deleted. MySQLUser cannot be created.", "mysql", mysql.Name, "mysqlUser", mysqlUser.Name)
+		return ctrl.Result{}, err
+	}
 
 	// SetOwnerReference if not exists
 	if !r.ifOwnerReferencesContains(mysqlUser.ObjectMeta.OwnerReferences, mysql) {

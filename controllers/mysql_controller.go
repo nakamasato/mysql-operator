@@ -76,6 +76,15 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, err
 	}
 
+	// Add a finalizer if not exists
+	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {
+		if err := r.Update(ctx, mysql); err != nil {
+
+			log.Error(err, "Failed to update MySQL after adding finalizer")
+			return ctrl.Result{}, err
+		}
+	}
+
 	// Update MySQLClients
 	if err := r.UpdateMySQLClients(ctx, mysql); err != nil {
 		mysql.Status.Connected = false
@@ -92,14 +101,6 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	if err := r.Status().Update(ctx, mysql); err != nil {
 		log.Error(err, "failed to update status (Connected & Reason)")
 		return ctrl.Result{RequeueAfter: time.Second}, nil
-	}
-
-	// Add a finalizer if not exists
-	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {
-		if err := r.Update(ctx, mysql); err != nil {
-			log.Error(err, "Failed to update MySQL after adding finalizer")
-			return ctrl.Result{}, err
-		}
 	}
 
 	// Get referenced number
