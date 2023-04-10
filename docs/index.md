@@ -34,10 +34,10 @@
       name: mysql-sample
     spec:
       host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
-      admin_user:
+      adminUser:
         name: root
         type: raw
-      admin_password:
+      adminPassword:
         name: password
         type: raw
     ```

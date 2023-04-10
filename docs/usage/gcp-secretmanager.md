@@ -105,7 +105,7 @@ kubectl create secret generic gcp-sa-private-key --from-file=sa-private-key.json
     ```
 1. Create custom resources
 
-    Update `admin_password` with `type: gcp` in `config/samples-with-k8s/mysql_v1alpha1_mysql.yaml`:
+    Update `adminPassword` with `type: gcp` in `config/samples-with-k8s/mysql_v1alpha1_mysql.yaml`:
 
     ```yaml
     apiVersion: mysql.nakamasato.com/v1alpha1
@@ -114,10 +114,10 @@ kubectl create secret generic gcp-sa-private-key --from-file=sa-private-key.json
       name: mysql-sample
     spec:
       host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
-      admin_user:
+      adminUser:
         name: root
         type: raw
-      admin_password:
+      adminPassword:
         name: mysql-password # echo -n "password" | gcloud secrets create mysql-password --data-file=-
         type: gcp
     ```

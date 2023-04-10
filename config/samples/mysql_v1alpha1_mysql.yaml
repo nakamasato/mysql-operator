@@ -4,9 +4,9 @@ metadata:
   name: mysql-sample
 spec:
   host: localhost
-  admin_user:
+  adminUser:
     name: root
     type: raw
-  admin_password:
+  adminPassword:
     name: password
     type: raw

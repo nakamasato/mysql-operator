@@ -60,10 +60,10 @@ Reduce human operations:
       name: mysql-sample
     spec:
       host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
-      admin_user:
+      adminUser:
         name: root
         type: raw
-      admin_password:
+      adminPassword:
         name: password
         type: raw
     ```
@@ -163,7 +163,7 @@ anager.secretAccessor` permission
     helm repo update
     helm install mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
     ```
-1. You can specify `type: gcp` for `admin_user` and `admin_password`.
+1. You can specify `type: gcp` for `adminUser` and `adminPassword`.
 
     ```yaml
     apiVersion: mysql.nakamasato.com/v1alpha1
@@ -172,10 +172,10 @@ anager.secretAccessor` permission
       name: mysql-sample
     spec:
       host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
-      admin_user:
+      adminUser:
         name: mysql-user # secret name in SecretManager
         type: gcp
-      admin_password:
+      adminPassword:
         name: mysql-password # secret name in SecretManager
         type: gcp
     ```
