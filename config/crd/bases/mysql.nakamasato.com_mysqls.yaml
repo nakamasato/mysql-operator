@@ -19,7 +19,7 @@ spec:
     - jsonPath: .spec.host
       name: Host
       type: string
-    - jsonPath: .spec.admin_user.name
+    - jsonPath: .spec.adminUser.name
       name: AdminUser
       type: string
     - jsonPath: .status.connected
@@ -57,7 +57,7 @@ spec:
             description: MySQLSpec holds the connection information for the target
               MySQL cluster.
             properties:
-              admin_password:
+              adminPassword:
                 description: AdminPassword is MySQL password to connect target MySQL
                   cluster.
                 properties:
@@ -74,7 +74,7 @@ spec:
                 - name
                 - type
                 type: object
-              admin_user:
+              adminUser:
                 description: AdminUser is MySQL user to connect target MySQL cluster.
                 properties:
                   name:
@@ -98,8 +98,8 @@ spec:
                 description: Port is MySQL port of target MySQL cluster.
                 type: integer
             required:
-            - admin_password
-            - admin_user
+            - adminPassword
+            - adminUser
             - host
             type: object
           status:

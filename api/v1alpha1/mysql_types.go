@@ -34,10 +34,10 @@ type MySQLSpec struct {
 	Port int16 `json:"port,omitempty"`
 
 	// AdminUser is MySQL user to connect target MySQL cluster.
-	AdminUser Secret `json:"admin_user"`
+	AdminUser Secret `json:"adminUser"`
 
 	// AdminPassword is MySQL password to connect target MySQL cluster.
-	AdminPassword Secret `json:"admin_password"`
+	AdminPassword Secret `json:"adminPassword"`
 }
 
 // MySQLStatus defines the observed state of MySQL
@@ -62,7 +62,7 @@ type MySQLStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Host",type=string,JSONPath=`.spec.host`
-//+kubebuilder:printcolumn:name="AdminUser",type=string,JSONPath=`.spec.admin_user.name`
+//+kubebuilder:printcolumn:name="AdminUser",type=string,JSONPath=`.spec.adminUser.name`
 //+kubebuilder:printcolumn:name="Connected",type=boolean,JSONPath=`.status.connected`
 //+kubebuilder:printcolumn:name="UserCount",type="integer",JSONPath=".status.userCount",description="The number of MySQLUsers that belongs to the MySQL"
 //+kubebuilder:printcolumn:name="DBCount",type="integer",JSONPath=".status.dbCount",description="The number of MySQLDBs that belongs to the MySQL"
