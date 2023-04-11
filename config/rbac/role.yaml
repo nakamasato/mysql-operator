@@ -28,6 +28,12 @@ rules:
 - apiGroups:
   - mysql.nakamasato.com
   resources:
+  - mysqldbs
+  verbs:
+  - list
+- apiGroups:
+  - mysql.nakamasato.com
+  resources:
   - mysqlmysqlDBs
   verbs:
   - create

@@ -50,6 +50,7 @@ type MySQLReconciler struct {
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls/finalizers,verbs=update
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers,verbs=list;
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqldbs,verbs=list;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

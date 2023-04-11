@@ -1,1 +1,1 @@
-DROP TABLE sample_db.test_table;
+DROP TABLE test_table;
