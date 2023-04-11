@@ -11,3 +11,9 @@ metadata:
 spec:
   dbName: sample_db # this is MySQL database name
   mysqlName: mysql-sample
+  schemaMigrationFromGitHub:
+    owner: nakamasato
+    repo: mysql-operator
+    path: config/sample-migrations
+    ref: enable-to-migrate-schema-with-migrate
+# "github://nakamasato/mysql-operator/config/sample-migrations#enable-to-migrate-schema-with-migrate", // Currently only support GitHub source

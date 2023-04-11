@@ -28,7 +28,7 @@ rules:
 - apiGroups:
   - mysql.nakamasato.com
   resources:
-  - mysqldbs
+  - mysqlmysqlDBs
   verbs:
   - create
   - delete
@@ -40,13 +40,13 @@ rules:
 - apiGroups:
   - mysql.nakamasato.com
   resources:
-  - mysqldbs/finalizers
+  - mysqlmysqlDBs/finalizers
   verbs:
   - update
 - apiGroups:
   - mysql.nakamasato.com
   resources:
-  - mysqldbs/status
+  - mysqlmysqlDBs/status
   verbs:
   - get
   - patch

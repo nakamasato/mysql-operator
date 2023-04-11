@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,6 +30,9 @@ type MySQLDBSpec struct {
 
 	// MySQL Database name
 	DBName string `json:"dbName"`
+
+	// MySQL Database Schema Migrations from GitHub
+	SchemaMigrationFromGitHub *GitHubConfig `json:"schemaMigrationFromGitHub,omitempty"`
 }
 
 // MySQLDBStatus defines the observed state of MySQLDB
@@ -53,6 +58,10 @@ type MySQLDB struct {
 	Status MySQLDBStatus `json:"status,omitempty"`
 }
 
+func (m MySQLDB) GetKey() string {
+	return fmt.Sprintf("%s-%s-%s", m.Namespace, m.Spec.MysqlName, m.Spec.DBName)
+}
+
 //+kubebuilder:object:root=true
 
 // MySQLDBList contains a list of MySQLDB
@@ -60,6 +69,24 @@ type MySQLDBList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []MySQLDB `json:"items"`
+}
+
+// GitHubConfig holds GitHub repo, path, and ref for Data Migration
+// https://github.com/golang-migrate/migrate/tree/master/source/github
+type GitHubConfig struct {
+	Owner string `json:"owner"`
+	Repo  string `json:"repo"`
+	Path  string `json:"path"`
+	Ref   string `json:"ref,omitempty"`
+}
+
+func (c GitHubConfig) GetSourceUrl() string {
+	baseUrl := fmt.Sprintf("github://%s/%s/%s", c.Owner, c.Repo, c.Path)
+	if c.Ref == "" {
+		return baseUrl
+
+	}
+	return fmt.Sprintf("%s#%s", baseUrl, c.Ref)
 }
 
 func init() {

@@ -158,30 +158,55 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) error {
 	log := log.FromContext(ctx).WithName("MySQLReconciler")
-	if db, _ := r.MySQLClients.GetClient(mysql.GetKey()); db != nil {
-		log.Info("MySQLClient already exists", "key", mysql.GetKey())
-		return nil
-	}
-
 	// Get MySQL config from raw username and password or GCP secret manager
 	cfg, err := r.getMySQLConfig(ctx, mysql)
 	if err != nil {
 		return err
 	}
-	db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
-	if err != nil {
-		log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
-		return err
-	}
-	err = db.PingContext(ctx)
-	if err != nil {
-		log.Error(err, "Ping failed", "mysql.Name", mysql.Name)
-		return err
+	if db, _ := r.MySQLClients.GetClient(mysql.GetKey()); db == nil {
+		log.Info("MySQLClients doesn't have client", "key", mysql.GetKey())
+
+		db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
+		if err != nil {
+			log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
+			return err
+		}
+		err = db.PingContext(ctx)
+		if err != nil {
+			log.Error(err, "Ping failed", "mysql.Name", mysql.Name)
+			return err
+		}
+
+		// key: mysql.Namespace-mysql.Name
+		r.MySQLClients[mysql.GetKey()] = db
+		log.Info("Successfully added MySQL client", "mysql.Name", mysql.Name)
 	}
 
-	// key: mysql.Namespace-mysql.Name
-	r.MySQLClients[mysql.GetKey()] = db
-	log.Info("Successfully added MySQL client", "mysql.Name", mysql.Name)
+	// open connection for each MySQLDB
+	mysqlDBList := &mysqlv1alpha1.MySQLDBList{}
+	err = r.List(ctx, mysqlDBList, client.MatchingFields{"spec.mysqlName": mysql.Name})
+	if err != nil {
+		return err
+	}
+	for _, mysqlDB := range mysqlDBList.Items {
+		if mysqlDB.Status.Phase != "Ready" {
+			log.Info("mysqlDB is not ready", "mysqlDB", mysqlDB.Name)
+			continue
+		}
+		if _, err := r.MySQLClients.GetClient(mysqlDB.GetKey()); err != nil {
+			cfg.DBName = mysqlDB.Spec.DBName
+			db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
+			if err != nil {
+				return err
+			}
+			err = db.PingContext(ctx)
+			if err != nil {
+				return err
+			}
+			r.MySQLClients[mysqlDB.GetKey()] = db
+			log.Info("Successfully added MySQL client", "mysqlDB.Name", mysqlDB.Name)
+		}
+	}
 	return nil
 }
 

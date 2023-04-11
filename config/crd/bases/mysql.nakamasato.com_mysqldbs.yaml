@@ -51,6 +51,22 @@ spec:
                 description: MySQL (CRD) name to reference to, which decides the destination
                   MySQL server
                 type: string
+              schemaMigrationFromGitHub:
+                description: MySQL Database Schema Migrations from GitHub
+                properties:
+                  owner:
+                    type: string
+                  path:
+                    type: string
+                  ref:
+                    type: string
+                  repo:
+                    type: string
+                required:
+                - owner
+                - path
+                - repo
+                type: object
             required:
             - dbName
             - mysqlName
