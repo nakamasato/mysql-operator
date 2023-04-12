@@ -138,18 +138,6 @@ var _ = Describe("MySQL controller", func() {
 			checkMySQLDBCount(ctx, int32(1))
 		})
 
-		// It("Should have MySQL client for database", func() {
-		// 	By("By creating a new MySQLDB")
-		// 	mysqlDB = newMySQLDB(APIVersion, Namespace, MySQLDBName, DatabaseName, MySQLName)
-		// 	Expect(controllerutil.SetOwnerReference(mysql, mysqlDB, scheme)).Should(Succeed())
-		// 	Expect(k8sClient.Create(ctx, mysqlDB)).Should(Succeed())
-		// 	By("Wait until MySQLDB gets ready")
-		// 	mysqlDB.Status.Phase = "Ready"
-		// 	Expect(k8sClient.Status().Update(ctx, mysqlDB)).Should(Succeed())
-
-		// 	Eventually(len(mySQLClients)).Should(Equal(2))
-		// })
-
 		It("Should have finalizer", func() {
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)
@@ -160,32 +148,39 @@ var _ = Describe("MySQL controller", func() {
 			}).Should(BeTrue())
 		})
 
+		It("Should have MySQL client for database", func() {
+			By("By creating a new MySQLDB")
+			mysqlDB = newMySQLDB(APIVersion, Namespace, MySQLDBName, DatabaseName, MySQLName)
+			Expect(controllerutil.SetOwnerReference(mysql, mysqlDB, scheme)).Should(Succeed())
+			Expect(k8sClient.Create(ctx, mysqlDB)).Should(Succeed())
+
+			By("Wait until MySQLDB gets ready")
+			mysqlDB.Status.Phase = "Ready"
+			Expect(k8sClient.Status().Update(ctx, mysqlDB)).Should(Succeed())
+
+			Eventually(func() int { return len(mySQLClients) }).Should(Equal(2))
+		})
+
 		It("Should update MySQLClient", func() {
 			Eventually(func() error {
 				_, err := mySQLClients.GetClient(mysql.GetKey())
 				return err
 			}).Should(BeNil())
-			Eventually(func() int {
-				return len(mySQLClients)
-			}).Should(Equal(1))
+			Eventually(func() int { return len(mySQLClients) }).Should(Equal(1))
 		})
 
 		It("Should clean up MySQLClient", func() {
-			// Wait until MySQLClients is updated
+			By("Wait until MySQLClients is updated")
 			Eventually(func() error {
 				_, err := mySQLClients.GetClient(mysql.GetKey())
 				return err
 			}).Should(BeNil())
-			Eventually(func() int {
-				return len(mySQLClients)
-			}).Should(Equal(1))
+			Eventually(func() int { return len(mySQLClients) }).Should(Equal(1))
 
 			By("By deleting MySQL")
 			Expect(k8sClient.Delete(ctx, mysql)).Should(Succeed())
 
-			Eventually(func() int {
-				return len(mySQLClients)
-			}).Should(Equal(0))
+			Eventually(func() int { return len(mySQLClients) }).Should(Equal(0))
 		})
 	})
 })
