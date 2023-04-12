@@ -51,9 +51,9 @@ type MySQLDBReconciler struct {
 	MySQLClients mysqlinternal.MySQLClients
 }
 
-//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlmysqlDBs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlmysqlDBs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlmysqlDBs/finalizers,verbs=update
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqldbs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqldbs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqldbs/finalizers,verbs=update
 
 // Reconcile function is responsible for managing MySQL database.
 // Create database if not exists in the target MySQL and drop it if

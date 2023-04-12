@@ -30,12 +30,6 @@ rules:
   resources:
   - mysqldbs
   verbs:
-  - list
-- apiGroups:
-  - mysql.nakamasato.com
-  resources:
-  - mysqlmysqlDBs
-  verbs:
   - create
   - delete
   - get
@@ -46,13 +40,13 @@ rules:
 - apiGroups:
   - mysql.nakamasato.com
   resources:
-  - mysqlmysqlDBs/finalizers
+  - mysqldbs/finalizers
   verbs:
   - update
 - apiGroups:
   - mysql.nakamasato.com
   resources:
-  - mysqlmysqlDBs/status
+  - mysqldbs/status
   verbs:
   - get
   - patch
