@@ -138,6 +138,18 @@ var _ = Describe("MySQL controller", func() {
 			checkMySQLDBCount(ctx, int32(1))
 		})
 
+		// It("Should have MySQL client for database", func() {
+		// 	By("By creating a new MySQLDB")
+		// 	mysqlDB = newMySQLDB(APIVersion, Namespace, MySQLDBName, DatabaseName, MySQLName)
+		// 	Expect(controllerutil.SetOwnerReference(mysql, mysqlDB, scheme)).Should(Succeed())
+		// 	Expect(k8sClient.Create(ctx, mysqlDB)).Should(Succeed())
+		// 	By("Wait until MySQLDB gets ready")
+		// 	mysqlDB.Status.Phase = "Ready"
+		// 	Expect(k8sClient.Status().Update(ctx, mysqlDB)).Should(Succeed())
+
+		// 	Eventually(len(mySQLClients)).Should(Equal(2))
+		// })
+
 		It("Should have finalizer", func() {
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: MySQLName}, mysql)

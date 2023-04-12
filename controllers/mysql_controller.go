@@ -86,30 +86,6 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		}
 	}
 
-	// Update MySQLClients
-	retry, err := r.UpdateMySQLClients(ctx, mysql)
-	if err != nil {
-		mysql.Status.Connected = false
-		mysql.Status.Reason = err.Error()
-		if err := r.Status().Update(ctx, mysql); err != nil {
-			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
-			return ctrl.Result{RequeueAfter: time.Second}, nil
-		}
-		return ctrl.Result{}, err
-	} else if retry {
-		return ctrl.Result{RequeueAfter: time.Second}, nil
-	}
-
-	connected, reason := true, "Ping succeded and updated MySQLClients"
-	if mysql.Status.Connected != connected || mysql.Status.Reason != reason {
-		mysql.Status.Connected = connected
-		mysql.Status.Reason = reason
-		if err := r.Status().Update(ctx, mysql); err != nil {
-			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
-			return ctrl.Result{RequeueAfter: time.Second}, nil
-		}
-	}
-
 	// Get referenced number
 	referencedUserNum, err := r.countReferencesByMySQLUser(ctx, mysql)
 	if err != nil {
@@ -134,6 +110,30 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		log.Info("[Status] updated", "UserCount", referencedUserNum, "DBCount", referencedDbNum)
+	}
+
+	// Update MySQLClients
+	retry, err := r.UpdateMySQLClients(ctx, mysql)
+	if err != nil {
+		mysql.Status.Connected = false
+		mysql.Status.Reason = err.Error()
+		if err := r.Status().Update(ctx, mysql); err != nil {
+			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
+		}
+		return ctrl.Result{}, err
+	} else if retry {
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	}
+
+	connected, reason := true, "Ping succeded and updated MySQLClients"
+	if mysql.Status.Connected != connected || mysql.Status.Reason != reason {
+		mysql.Status.Connected = connected
+		mysql.Status.Reason = reason
+		if err := r.Status().Update(ctx, mysql); err != nil {
+			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
+		}
 	}
 
 	if !mysql.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
@@ -194,7 +194,7 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 	}
 	for _, mysqlDB := range mysqlDBList.Items {
 		if mysqlDB.Status.Phase != "Ready" {
-			log.Info("mysqlDB is not ready", "mysqlDB", mysqlDB.Name)
+			log.Info("mysqlDB is not ready", "mysqlDB", mysqlDB.Name, "mysqlDB.Status", mysqlDB.Status)
 			return true, nil
 		}
 		if _, err := r.MySQLClients.GetClient(mysqlDB.GetKey()); err != nil {
