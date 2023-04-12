@@ -161,7 +161,6 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (retry bool, err error) {
-	err = nil
 	log := log.FromContext(ctx).WithName("MySQLReconciler")
 	// Get MySQL config from raw username and password or GCP secret manager
 	cfg, err := r.getMySQLConfig(ctx, mysql)
