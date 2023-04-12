@@ -103,6 +103,22 @@ var _ = Describe("MySQLDB controller", func() {
 			}).Should(Equal(mysqlDBPhaseReady))
 		})
 
+		It("Should be NotReady without MySQL", func() {
+			mysqlDB := &mysqlv1alpha1.MySQLDB{
+				TypeMeta:   metav1.TypeMeta{APIVersion: APIVersion, Kind: "MySQLDB"},
+				ObjectMeta: metav1.ObjectMeta{Name: "sample-db", Namespace: Namespace},
+				Spec:       mysqlv1alpha1.MySQLDBSpec{DBName: "sample_db", MysqlName: MySQLName},
+			}
+			Expect(k8sClient.Create(ctx, mysqlDB)).Should(Succeed())
+			Eventually(func() string {
+				err := k8sClient.Get(ctx, client.ObjectKey{Namespace: Namespace, Name: "sample-db"}, mysqlDB)
+				if err != nil {
+					return ""
+				}
+				return mysqlDB.Status.Phase
+			}).Should(Equal(mysqlDBPhaseNotReady))
+		})
+
 		AfterEach(func() {
 			cleanUpMySQLDB(ctx, k8sClient, Namespace)
 			cleanUpMySQL(ctx, k8sClient, Namespace)
