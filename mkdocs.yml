@@ -29,4 +29,6 @@ nav:
     - 'Debug': 'developer-guide/debug.md'
     - 'Versions': 'developer-guide/versions.md'
   - Usage:
+    - 'Install with Helm': usage/install-with-helm.md
     - 'GCP SecretManager': usage/gcp-secretmanager.md
+    - 'Schema Migration': usage/schema-migration.md

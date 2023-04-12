@@ -86,22 +86,14 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	// 3. Add finalizer
-	if controllerutil.AddFinalizer(mysqlDB, mysqlDBFinalizer) {
-		err = r.Update(ctx, mysqlDB)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
-	// 4. Get mysqlClient without specifying database
+	// 3. Get mysqlClient without specifying database
 	mysqlClient, err := r.MySQLClients.GetClient(mysql.GetKey())
 	if err != nil {
 		log.Error(err, "Failed to get MySQL client", "key", mysqlDB.GetKey())
 		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
-	// 5. finalize if marked as deleted
+	// 4. finalize if marked as deleted
 	if !mysqlDB.GetDeletionTimestamp().IsZero() {
 		if controllerutil.ContainsFinalizer(mysqlDB, mysqlDBFinalizer) {
 			if err := r.finalizeMySQLDB(ctx, mysqlClient, mysqlDB); err != nil {
@@ -115,6 +107,14 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, nil
+	}
+
+	// 5. Add finalizer
+	if controllerutil.AddFinalizer(mysqlDB, mysqlDBFinalizer) {
+		err = r.Update(ctx, mysqlDB)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	// 6. Create database if not exists
@@ -149,7 +149,7 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	mysqlClient, err = r.MySQLClients.GetClient(mysqlDB.GetKey())
 	if err != nil {
 		log.Error(err, "Failed to get MySQL Client", "key", mysqlDB.GetKey())
-		return ctrl.Result{RequeueAfter: time.Second}, nil
+		return ctrl.Result{}, err
 	}
 
 	// 6. Migrate database
@@ -175,8 +175,7 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		log.Error(err, "failed to initialize NewWithDatabaseInstance")
 		return ctrl.Result{}, err
 	}
-	err = m.Up()
-
+	err = m.Up() // TODO: enable to specify what to do.
 	if err != nil {
 		if err.Error() == "no change" {
 			log.Info("migrate no change")
@@ -185,7 +184,19 @@ func (r *MySQLDBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, err
 		}
 	}
-	log.Info("migrate completed")
+
+	version, dirty, err := m.Version()
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	log.Info("migrate completed", "version", version, "dirty", dirty)
+
+	mysqlDB.Status.SchemaMigration.Version = version
+	mysqlDB.Status.SchemaMigration.Dirty = dirty
+	err = r.Status().Update(ctx, mysqlDB)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

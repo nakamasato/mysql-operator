@@ -24,6 +24,10 @@ spec:
       jsonPath: .status.reason
       name: Reason
       type: string
+    - description: schema_migration table if schema migration is enabled.
+      jsonPath: .status.schemaMigration
+      name: SchemaMigration
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -80,6 +84,17 @@ spec:
               reason:
                 description: The reason for the current phase
                 type: string
+              schemaMigration:
+                description: Schema Migration status
+                properties:
+                  dirty:
+                    type: boolean
+                  version:
+                    type: integer
+                required:
+                - dirty
+                - version
+                type: object
             type: object
         type: object
     served: true

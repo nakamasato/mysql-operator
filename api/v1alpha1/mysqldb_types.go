@@ -42,12 +42,16 @@ type MySQLDBStatus struct {
 
 	// The reason for the current phase
 	Reason string `json:"reason,omitempty"`
+
+	// Schema Migration status
+	SchemaMigration SchemaMigration `json:"schemaMigration,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="The phase of MySQLDB"
 //+kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.reason",description="The reason for the current phase of this MySQLDB"
+//+kubebuilder:printcolumn:name="SchemaMigration",type="string",JSONPath=".status.schemaMigration",description="schema_migration table if schema migration is enabled."
 
 // MySQLDB is the Schema for the mysqldbs API
 type MySQLDB struct {
@@ -87,6 +91,12 @@ func (c GitHubConfig) GetSourceUrl() string {
 
 	}
 	return fmt.Sprintf("%s#%s", baseUrl, c.Ref)
+}
+
+// This reflect the schema_migration table
+type SchemaMigration struct {
+	Version uint `json:"version"`
+	Dirty   bool `json:"dirty"`
 }
 
 func init() {

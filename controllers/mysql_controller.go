@@ -87,7 +87,8 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	// Update MySQLClients
-	if err := r.UpdateMySQLClients(ctx, mysql); err != nil {
+	retry, err := r.UpdateMySQLClients(ctx, mysql)
+	if err != nil {
 		mysql.Status.Connected = false
 		mysql.Status.Reason = err.Error()
 		if err := r.Status().Update(ctx, mysql); err != nil {
@@ -95,6 +96,8 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		return ctrl.Result{}, err
+	} else if retry {
+		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
 
 	connected, reason := true, "Ping succeded and updated MySQLClients"
@@ -157,12 +160,13 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) error {
+func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (retry bool, err error) {
+	err = nil
 	log := log.FromContext(ctx).WithName("MySQLReconciler")
 	// Get MySQL config from raw username and password or GCP secret manager
 	cfg, err := r.getMySQLConfig(ctx, mysql)
 	if err != nil {
-		return err
+		return true, err
 	}
 	if db, _ := r.MySQLClients.GetClient(mysql.GetKey()); db == nil {
 		log.Info("MySQLClients doesn't have client", "key", mysql.GetKey())
@@ -170,12 +174,12 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 		db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
 		if err != nil {
 			log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
-			return err
+			return true, err
 		}
 		err = db.PingContext(ctx)
 		if err != nil {
 			log.Error(err, "Ping failed", "mysql.Name", mysql.Name)
-			return err
+			return true, err
 		}
 
 		// key: mysql.Namespace-mysql.Name
@@ -187,28 +191,28 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 	mysqlDBList := &mysqlv1alpha1.MySQLDBList{}
 	err = r.List(ctx, mysqlDBList, client.MatchingFields{"spec.mysqlName": mysql.Name})
 	if err != nil {
-		return err
+		return true, err
 	}
 	for _, mysqlDB := range mysqlDBList.Items {
 		if mysqlDB.Status.Phase != "Ready" {
 			log.Info("mysqlDB is not ready", "mysqlDB", mysqlDB.Name)
-			continue
+			return true, nil
 		}
 		if _, err := r.MySQLClients.GetClient(mysqlDB.GetKey()); err != nil {
 			cfg.DBName = mysqlDB.Spec.DBName
 			db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
 			if err != nil {
-				return err
+				return true, err
 			}
 			err = db.PingContext(ctx)
 			if err != nil {
-				return err
+				return true, err
 			}
 			r.MySQLClients[mysqlDB.GetKey()] = db
 			log.Info("Successfully added MySQL client", "mysqlDB.Name", mysqlDB.Name)
 		}
 	}
-	return nil
+	return false, nil
 }
 
 // If GcpSecretName is set, get password from GCP secret manager
