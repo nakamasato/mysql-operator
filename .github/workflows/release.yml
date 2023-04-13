@@ -81,8 +81,9 @@ jobs:
 
       - name: Update app version
         run: |
-          yq e -i ".version = \"${{ env.RELEASE_VERSION }}\"" charts/mysql-operator/Chart.yaml
-          yq e -i ".appVersion = \"${{ env.RELEASE_VERSION }}\"" charts/mysql-operator/Chart.yaml
+          yq e -i ".version = \"${RELEASE_VERSION}\"" charts/mysql-operator/Chart.yaml
+          yq e -i ".appVersion = \"${RELEASE_VERSION}\"" charts/mysql-operator/Chart.yaml
+          yq e -i ".controllerManager.manager.image.tag = \"${RELEASE_VERSION}\"" charts/mysql-operator/values.yaml
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
