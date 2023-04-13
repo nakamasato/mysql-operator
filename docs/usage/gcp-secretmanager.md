@@ -27,8 +27,6 @@ mysql-operator can get the credentials of the MySQL user (which is used to acces
     gcloud iam service-accounts keys create sa-private-key.json --iam-account=mysql-operator@${PROJECT_ID}.iam.gserviceaccount.com
     ```
 
-
-
 ## Create Secret for service account key
 
 ```

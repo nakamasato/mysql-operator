@@ -24,6 +24,10 @@ spec:
       jsonPath: .status.reason
       name: Reason
       type: string
+    - description: schema_migration table if schema migration is enabled.
+      jsonPath: .status.schemaMigration
+      name: SchemaMigration
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -51,6 +55,22 @@ spec:
                 description: MySQL (CRD) name to reference to, which decides the destination
                   MySQL server
                 type: string
+              schemaMigrationFromGitHub:
+                description: MySQL Database Schema Migrations from GitHub
+                properties:
+                  owner:
+                    type: string
+                  path:
+                    type: string
+                  ref:
+                    type: string
+                  repo:
+                    type: string
+                required:
+                - owner
+                - path
+                - repo
+                type: object
             required:
             - dbName
             - mysqlName
@@ -64,6 +84,17 @@ spec:
               reason:
                 description: The reason for the current phase
                 type: string
+              schemaMigration:
+                description: Schema Migration status
+                properties:
+                  dirty:
+                    type: boolean
+                  version:
+                    type: integer
+                required:
+                - dirty
+                - version
+                type: object
             type: object
         type: object
     served: true

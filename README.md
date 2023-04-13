@@ -23,13 +23,13 @@ Reduce human operations:
 ![](docs/diagram.drawio.svg)
 
 1. Custom Resource
-    1. `MySQL`: MySQL cluster (holds credentials to connect to MySQL)
+    1. `MySQL`: MySQL cluster (`host`, `port`, `adminUser`, `adminPassword` hoding the credentials to connect to MySQL)
     1. `MySQLUser`: MySQL user (`mysqlName` and `host`)
-    1. `MySQLDB`: MySQL database (`mysqlName` and `dbName`)
+    1. `MySQLDB`: MySQL database (`mysqlName`, `dbName`, `schemaMigrationFromGitHub`)
 1. Reconciler
-    1. `MySQLReconciler` is responsible for updating `MySQLClients` based on `MySQL` resource
-    1. `MySQLUserReconciler` is responsible for managing `MySQLUser` using `MySQLClients`
-    1. `MySQLDBReconciler` is responsible for managing `MySQLDB` using `MySQLClients`
+    1. `MySQLReconciler` is responsible for managing `MySQLClients` based on `MySQL` and `MySQLDB` resources
+    1. `MySQLUserReconciler` is responsible for creating/deleting MySQL users defined in `MySQLUser` using `MySQLClients`, and creating Secret to store MySQL user's password
+    1. `MySQLDBReconciler` is responsible for creating/deleting database and schema migration defined in `MySQLDB` using `MySQLClients`
 
 ## Getting Started
 

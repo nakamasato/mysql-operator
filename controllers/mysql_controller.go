@@ -50,6 +50,7 @@ type MySQLReconciler struct {
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqls/finalizers,verbs=update
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers,verbs=list;
+//+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqldbs,verbs=list;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -85,27 +86,6 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		}
 	}
 
-	// Update MySQLClients
-	if err := r.UpdateMySQLClients(ctx, mysql); err != nil {
-		mysql.Status.Connected = false
-		mysql.Status.Reason = err.Error()
-		if err := r.Status().Update(ctx, mysql); err != nil {
-			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
-			return ctrl.Result{RequeueAfter: time.Second}, nil
-		}
-		return ctrl.Result{}, err
-	}
-
-	connected, reason := true, "Ping succeded and updated MySQLClients"
-	if mysql.Status.Connected != connected || mysql.Status.Reason != reason {
-		mysql.Status.Connected = connected
-		mysql.Status.Reason = reason
-		if err := r.Status().Update(ctx, mysql); err != nil {
-			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
-			return ctrl.Result{RequeueAfter: time.Second}, nil
-		}
-	}
-
 	// Get referenced number
 	referencedUserNum, err := r.countReferencesByMySQLUser(ctx, mysql)
 	if err != nil {
@@ -132,6 +112,30 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		log.Info("[Status] updated", "UserCount", referencedUserNum, "DBCount", referencedDbNum)
 	}
 
+	// Update MySQLClients
+	retry, err := r.UpdateMySQLClients(ctx, mysql)
+	if err != nil {
+		mysql.Status.Connected = false
+		mysql.Status.Reason = err.Error()
+		if err := r.Status().Update(ctx, mysql); err != nil {
+			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
+		}
+		return ctrl.Result{}, err
+	} else if retry {
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	}
+
+	connected, reason := true, "Ping succeded and updated MySQLClients"
+	if mysql.Status.Connected != connected || mysql.Status.Reason != reason {
+		mysql.Status.Connected = connected
+		mysql.Status.Reason = reason
+		if err := r.Status().Update(ctx, mysql); err != nil {
+			log.Error(err, "failed to update status (Connected & Reason)", "status", mysql.Status)
+			return ctrl.Result{RequeueAfter: time.Second}, nil
+		}
+	}
+
 	if !mysql.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
 		if r.finalizeMySQL(ctx, mysql) {
 			if controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) {
@@ -156,33 +160,58 @@ func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) error {
+func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (retry bool, err error) {
 	log := log.FromContext(ctx).WithName("MySQLReconciler")
-	if db, _ := r.MySQLClients.GetClient(mysql.GetKey()); db != nil {
-		log.Info("MySQLClient already exists", "key", mysql.GetKey())
-		return nil
-	}
-
 	// Get MySQL config from raw username and password or GCP secret manager
 	cfg, err := r.getMySQLConfig(ctx, mysql)
 	if err != nil {
-		return err
+		return true, err
 	}
-	db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
-	if err != nil {
-		log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
-		return err
-	}
-	err = db.PingContext(ctx)
-	if err != nil {
-		log.Error(err, "Ping failed", "mysql.Name", mysql.Name)
-		return err
+	if db, _ := r.MySQLClients.GetClient(mysql.GetKey()); db == nil {
+		log.Info("MySQLClients doesn't have client", "key", mysql.GetKey())
+
+		db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
+		if err != nil {
+			log.Error(err, "Failed to open MySQL database", "mysql.Name", mysql.Name)
+			return true, err
+		}
+		err = db.PingContext(ctx)
+		if err != nil {
+			log.Error(err, "Ping failed", "mysql.Name", mysql.Name)
+			return true, err
+		}
+
+		// key: mysql.Namespace-mysql.Name
+		r.MySQLClients[mysql.GetKey()] = db
+		log.Info("Successfully added MySQL client", "mysql.Name", mysql.Name)
 	}
 
-	// key: mysql.Namespace-mysql.Name
-	r.MySQLClients[mysql.GetKey()] = db
-	log.Info("Successfully added MySQL client", "mysql.Name", mysql.Name)
-	return nil
+	// open connection for each MySQLDB
+	mysqlDBList := &mysqlv1alpha1.MySQLDBList{}
+	err = r.List(ctx, mysqlDBList, client.MatchingFields{"spec.mysqlName": mysql.Name})
+	if err != nil {
+		return true, err
+	}
+	for _, mysqlDB := range mysqlDBList.Items {
+		if mysqlDB.Status.Phase != "Ready" {
+			log.Info("mysqlDB is not ready", "mysqlDB", mysqlDB.Name, "mysqlDB.Status", mysqlDB.Status)
+			return true, nil
+		}
+		if _, err := r.MySQLClients.GetClient(mysqlDB.GetKey()); err != nil {
+			cfg.DBName = mysqlDB.Spec.DBName
+			db, err := sql.Open(r.MySQLDriverName, cfg.FormatDSN())
+			if err != nil {
+				return true, err
+			}
+			err = db.PingContext(ctx)
+			if err != nil {
+				return true, err
+			}
+			r.MySQLClients[mysqlDB.GetKey()] = db
+			log.Info("Successfully added MySQL client", "mysqlDB.Name", mysqlDB.Name)
+		}
+	}
+	return false, nil
 }
 
 // If GcpSecretName is set, get password from GCP secret manager

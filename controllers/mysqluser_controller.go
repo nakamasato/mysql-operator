@@ -99,10 +99,6 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log.Info("[FetchMySQL] Found")
-	if !mysql.GetDeletionTimestamp().IsZero() {
-		log.Info("MySQL is being deleted. MySQLUser cannot be created.", "mysql", mysql.Name, "mysqlUser", mysqlUser.Name)
-		return ctrl.Result{}, err
-	}
 
 	// SetOwnerReference if not exists
 	if !r.ifOwnerReferencesContains(mysqlUser.ObjectMeta.OwnerReferences, mysql) {
@@ -166,8 +162,8 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil // should return success when not having the finalizer
 	}
 
-	log.Info("Add Finalizer for this CR")
 	// Add finalizer for this CR
+	log.Info("Add Finalizer for this CR")
 	if controllerutil.AddFinalizer(mysqlUser, mysqlUserFinalizer) {
 		log.Info("Added Finalizer")
 		err = r.Update(ctx, mysqlUser)
@@ -178,6 +174,12 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Info("Updated successfully after adding finalizer")
 	} else {
 		log.Info("already has finalizer")
+	}
+
+	// Skip all the following steps if MySQL is being Deleted
+	if !mysql.GetDeletionTimestamp().IsZero() {
+		log.Info("MySQL is being deleted. MySQLUser cannot be created.", "mysql", mysql.Name, "mysqlUser", mysqlUser.Name)
+		return ctrl.Result{}, err
 	}
 
 	// Get password from Secret if exists. Otherwise, generate new one.
