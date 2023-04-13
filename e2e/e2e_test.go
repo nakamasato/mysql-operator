@@ -26,6 +26,7 @@ const (
 	mysqlNamespace     = "default"
 	mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
 	mysqlFinalizer     = "mysql.nakamasato.com/finalizer"
+	apiVersion         = "mysql.nakamasato.com/v1alphav1"
 	timeout            = 2 * time.Minute
 	interval           = 1 * time.Second
 	secretName         = "mysql-" + mysqlName + "-" + mysqlUserName
@@ -44,7 +45,7 @@ var _ = Describe("E2e", func() {
 		deleteMySQLIfExist(ctx)
 	})
 
-	Describe("Creating and deleting MySQL/MySQLUser object", func() {
+	Describe("Creating and deleting MySQL/MySQLUser/MySQLDB object", func() {
 		Context("With the MySQL cluster", func() {
 			BeforeEach(func() {
 				// create mysql deployment & service
@@ -117,6 +118,17 @@ var _ = Describe("E2e", func() {
 					return res
 				}, timeout, interval).Should(Equal(0))
 			})
+
+			It("Successfully Create MySQL database", func() {
+
+				mysqlDB := newMySQLDB("sample-db", "sample_db", mysqlName, mysqlNamespace)
+				Expect(k8sClient.Create(ctx, mysqlDB)).Should(Succeed())
+
+				Eventually(func() int {
+					res, _ := checkMySQLHasDatabase("sample_db")
+					return res
+				}, timeout, interval).Should(BeNumerically(">", 0))
+			})
 		})
 
 		Context("Without the MySQL cluster", func() {
@@ -172,12 +184,28 @@ func checkMySQLHasUser(mysqluser string) (int, error) {
 		return 0, err
 	}
 	defer db.Close()
-	row := db.QueryRow("SELECT COUNT(*) FROM mysql.user where User = '" + mysqluser + "'")
+	row := db.QueryRow("SELECT COUNT(*) FROM mysql.user where User = ?", mysqluser)
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, err
 	} else {
 		log.Info("mysql.user count: %s, %d\n", mysqluser, count)
+		return count, nil
+	}
+}
+
+func checkMySQLHasDatabase(dbName string) (int, error) {
+	db, err := sql.Open("mysql", "root:password@tcp(localhost:30306)/") // TODO: Make MySQL root user credentials configurable
+	if err != nil {
+		return 0, err
+	}
+	defer db.Close()
+	row := db.QueryRow("SELECT * FROM information_schema.tables WHERE table_schema = ?", dbName)
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	} else {
+		log.Info("mysql.user count: %s, %d\n", dbName, count)
 		return count, nil
 	}
 }
@@ -277,7 +305,7 @@ func getMySQLUser(name, namespace string) (*mysqlv1alpha1.MySQLUser, error) {
 
 func newMySQL(name, namespace string) *mysqlv1alpha1.MySQL {
 	return &mysqlv1alpha1.MySQL{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
+		TypeMeta:   metav1.TypeMeta{APIVersion: apiVersion, Kind: "MySQL"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 		Spec: mysqlv1alpha1.MySQLSpec{
 			Host:          "mysql.default",
@@ -289,11 +317,19 @@ func newMySQL(name, namespace string) *mysqlv1alpha1.MySQL {
 
 func newMySQLUser(name, mysqlName, namespace string) *mysqlv1alpha1.MySQLUser {
 	return &mysqlv1alpha1.MySQLUser{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "mysql.nakamasato.com/v1alphav1", Kind: "MySQL"},
+		TypeMeta:   metav1.TypeMeta{APIVersion: apiVersion, Kind: "MySQL"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 		Spec: mysqlv1alpha1.MySQLUserSpec{
 			MysqlName: mysqlName,
 		},
+	}
+}
+
+func newMySQLDB(name, dbName, mysqlName, namespace string) *mysqlv1alpha1.MySQLDB {
+	return &mysqlv1alpha1.MySQLDB{
+		TypeMeta:   metav1.TypeMeta{APIVersion: apiVersion, Kind: "MySQLDB"},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+		Spec:       mysqlv1alpha1.MySQLDBSpec{DBName: dbName, MysqlName: mysqlName},
 	}
 }
 
