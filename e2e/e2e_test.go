@@ -23,9 +23,12 @@ import (
 const (
 	mysqlName          = "mysql-sample"
 	mysqlUserName      = "john"
+	mysqlDBName        = "sample-db"
+	databaseName       = "sample_db"
 	mysqlNamespace     = "default"
 	mysqlUserFinalizer = "mysqluser.nakamasato.com/finalizer"
 	mysqlFinalizer     = "mysql.nakamasato.com/finalizer"
+	mysqlDBFinalizer   = "mysqldb.nakamasato.com/finalizer"
 	apiVersion         = "mysql.nakamasato.com/v1alphav1"
 	timeout            = 2 * time.Minute
 	interval           = 1 * time.Second
@@ -38,11 +41,13 @@ var _ = Describe("E2e", func() {
 	BeforeEach(func() {
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
+		deleteMySQLDBIfExist(ctx, mysqlDBName)
 	})
 
 	AfterEach(func() {
 		deleteMySQLUserIfExist(ctx)
 		deleteMySQLIfExist(ctx)
+		deleteMySQLDBIfExist(ctx, mysqlDBName)
 	})
 
 	Describe("Creating and deleting MySQL/MySQLUser/MySQLDB object", func() {
@@ -120,14 +125,14 @@ var _ = Describe("E2e", func() {
 			})
 
 			It("Successfully Create MySQL database", func() {
-
-				mysqlDB := newMySQLDB("sample-db", "sample_db", mysqlName, mysqlNamespace)
+				By("Create MySQLDB")
+				mysqlDB := newMySQLDB(mysqlDBName, databaseName, mysqlName, mysqlNamespace)
 				Expect(k8sClient.Create(ctx, mysqlDB)).Should(Succeed())
 
 				Eventually(func() int {
-					res, _ := checkMySQLHasDatabase("sample_db")
+					res, _ := checkMySQLHasDatabase(databaseName)
 					return res
-				}, timeout, interval).Should(BeNumerically(">", 0))
+				}, timeout, interval).Should(Equal(1))
 			})
 		})
 
@@ -184,7 +189,7 @@ func checkMySQLHasUser(mysqluser string) (int, error) {
 		return 0, err
 	}
 	defer db.Close()
-	row := db.QueryRow("SELECT COUNT(*) FROM mysql.user where User = ?", mysqluser)
+	row := db.QueryRow("SELECT COUNT(*) FROM mysql.user WHERE User = ?", mysqluser)
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, err
@@ -200,12 +205,12 @@ func checkMySQLHasDatabase(dbName string) (int, error) {
 		return 0, err
 	}
 	defer db.Close()
-	row := db.QueryRow("SELECT * FROM information_schema.tables WHERE table_schema = ?", dbName)
+	row := db.QueryRow("SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", dbName)
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, err
 	} else {
-		log.Info("mysql.user count: %s, %d\n", dbName, count)
+		log.Info("mysql.db count: %s, %d\n", dbName, count)
 		return count, nil
 	}
 }
@@ -267,6 +272,29 @@ func deleteMySQLUserIfExist(ctx context.Context) {
 	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
 }
 
+func deleteMySQLDBIfExist(ctx context.Context, name string) {
+	object, err := getMySQLDB(name, mysqlNamespace) // TODO: enable to pass mysqlDB and mysqlNamespace
+	if err != nil {
+		return
+	}
+
+	// remove finalizers
+	if controllerutil.ContainsFinalizer(object, mysqlDBFinalizer) {
+		controllerutil.RemoveFinalizer(object, mysqlDBFinalizer)
+		err := k8sClient.Update(ctx, object)
+		if err != nil {
+			return
+		}
+	}
+
+	// delete object if exist
+	object, err = getMySQLDB(name, mysqlNamespace) // TODO: enable to pass mysqlName and mysqlNamespace
+	if err != nil {
+		return
+	}
+	Expect(k8sClient.Delete(ctx, object)).Should(Succeed())
+}
+
 func getDeployment(name, namespace string) (*appsv1.Deployment, error) {
 	deploy := &appsv1.Deployment{}
 	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, deploy)
@@ -296,6 +324,15 @@ func getMySQL(name, namespace string) (*mysqlv1alpha1.MySQL, error) {
 
 func getMySQLUser(name, namespace string) (*mysqlv1alpha1.MySQLUser, error) {
 	object := &mysqlv1alpha1.MySQLUser{}
+	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, object)
+	if err != nil {
+		return nil, err
+	}
+	return object, nil
+}
+
+func getMySQLDB(name, namespace string) (*mysqlv1alpha1.MySQLDB, error) {
+	object := &mysqlv1alpha1.MySQLDB{}
 	err := k8sClient.Get(context.TODO(), client.ObjectKey{Namespace: namespace, Name: name}, object)
 	if err != nil {
 		return nil, err
