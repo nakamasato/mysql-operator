@@ -443,6 +443,12 @@ Run:
 make e2e-with-kuttl
 ```
 
+Run individual test:
+
+```
+bin/ginkgo --focus "Successfully Create MySQL database" ./e2e
+```
+
 <details>
 
 ```
