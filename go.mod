@@ -7,7 +7,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/nakamasato/test-db-driver v0.0.0-20230330121357-46698833afb6
-	github.com/onsi/ginkgo/v2 v2.9.7
+	github.com/onsi/ginkgo/v2 v2.10.0
 	github.com/onsi/gomega v1.27.8
 	github.com/prometheus/client_golang v1.15.1
 	go.uber.org/zap v1.24.0
@@ -73,7 +73,7 @@ require (
 	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/tools v0.9.3 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/api v0.125.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
