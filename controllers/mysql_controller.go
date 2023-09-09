@@ -237,10 +237,11 @@ func (r *MySQLReconciler) getMySQLConfig(ctx context.Context, mysql *mysqlv1alph
 	}
 
 	return Config{
-		User:   user,
-		Passwd: password,
-		Addr:   fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
-		Net:    "tcp",
+		User:                 user,
+		Passwd:               password,
+		Addr:                 fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),
+		Net:                  "tcp",
+		AllowNativePasswords: true,
 	}, nil
 }
 

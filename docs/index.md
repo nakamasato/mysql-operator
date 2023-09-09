@@ -23,9 +23,10 @@
     ```
     kubectl apply -k https://github.com/nakamasato/mysql-operator/config/mysql
     ```
-1. Apply custom resources (`MySQL`, `MySQLUser`, `MySQLDB`).
 
-    `mysql.yaml` credentials to connect to the MySQL:
+1. Configure MySQL credentials for the operator using the custom resources `MySQL`.
+
+    `mysql.yaml` credentials to connect to the MySQL: **This user is used to manage MySQL users and databases, which is ususally an admin user.**
 
     ```yaml
     apiVersion: mysql.nakamasato.com/v1alpha1
@@ -42,6 +43,22 @@
         type: raw
     ```
 
+    If you installed mysql sample with the command above, the password for the root user is `password`. You can apply `MySQL` with the following command.
+
+    ```
+    kubectl apply -f https://raw.githubusercontent.com/nakamasato/mysql-operator/main/config/samples-on-k8s/mysql_v1alpha1_mysql.yaml
+    ```
+
+    You can check the `MySQL` object and status:
+
+    ```
+    kubectl get mysql
+    NAME           HOST            ADMINUSER   CONNECTED   USERCOUNT   DBCOUNT   REASON
+    mysql-sample   mysql.default   root        true        0           0         Ping succeded and updated MySQLClients
+    ```
+
+1. Create a new MySQL user with custom resource `MySQLUser`.
+
     `mysqluser.yaml`: MySQL user
 
     ```yaml
@@ -53,6 +70,36 @@
       mysqlName: mysql-sample
       host: '%'
     ```
+
+    1. Create a new MySQL user `nakamasato`
+
+        ```
+        kubectl apply -f https://raw.githubusercontent.com/nakamasato/mysql-operator/main/config/samples-on-k8s/mysql_v1alpha1_mysqluser.yaml
+        ```
+
+    1. You can check the status of `MySQLUser` object
+
+        ```
+        kubectl get mysqluser
+        NAME         MYSQLUSER   SECRET   PHASE   REASON
+        nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
+        ```
+
+    1. You can also confirm the Secret for the new MySQL user is created.
+
+        ```
+        kubectl get secret
+        NAME                            TYPE     DATA   AGE
+        mysql-mysql-sample-nakamasato   Opaque   1      4m3s
+        ```
+
+    1. Connect to MySQL with the newly created user
+
+        ```
+        kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+        ```
+
+1. Create a new MySQL database with custom resource `MySQLDB`.
 
     `mysqldb.yaml`: MySQL database
 
@@ -67,25 +114,43 @@
     ```
 
     ```
-    kubectl apply -k https://github.com/nakamasato/mysql-operator/config/samples-on-k8s
-    ```
-1. Check `MySQLUser` and `Secret` for the MySQL user
-
-    ```
-    kubectl get mysqluser
-    NAME         PHASE   REASON
-    nakamasato   Ready   Both secret and mysql user are successfully created.
+    kubectl apply -f https://raw.githubusercontent.com/nakamasato/mysql-operator/main/config/samples-on-k8s/mysql_v1alpha1_mysqldb.yaml
     ```
 
     ```
-    kubectl get secret
-    NAME                            TYPE     DATA   AGE
-    mysql-mysql-sample-nakamasato   Opaque   1      10s
+    kubectl get mysqldb
+    NAME        PHASE   REASON                          SCHEMAMIGRATION
+    sample-db   Ready   Database successfully created   {"dirty":false,"version":0}
     ```
-1. Connect to MySQL with the secret
+
+1. Grant all priviledges of the created db (`sample_db`) to the create user (`nakamasato`) (TODO: Currently there's no way to manage user permissions with operator.)
+
     ```
-    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword
     ```
+
+    ```sql
+    GRANT ALL PRIVILEGES ON sample_db.* TO 'nakamasato'@'%';
+    ```
+
+    Now the created user got the permission to use `sample_db`.
+
+    ```
+    ubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+    ```
+
+    ```
+    mysql> show databases;
+    +--------------------+
+    | Database           |
+    +--------------------+
+    | information_schema |
+    | performance_schema |
+    | sample_db          |
+    +--------------------+
+    3 rows in set (0.00 sec)
+    ```
+
 1. Delete custom resources (`MySQL`, `MySQLUser`, `MySQLDB`).
     Example:
     ```

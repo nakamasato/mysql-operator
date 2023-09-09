@@ -1,0 +1,7 @@
+apiVersion: mysql.nakamasato.com/v1alpha1
+kind: MySQLDB
+metadata:
+  name: sample-db # this is not a name for MySQL database but just a Kubernetes object name
+spec:
+  dbName: sample_db # this is MySQL database name
+  mysqlName: mysql-sample
