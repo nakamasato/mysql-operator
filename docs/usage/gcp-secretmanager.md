@@ -1,138 +1,152 @@
 # Read credentials from GCP SecretManager
 
-mysql-operator can get the credentials of the MySQL user (which is used to access to the target MySQL cluster) from [GCP SecretManager](https://cloud.google.com/secret-manager)
+mysql-operator can get the credentials of the `MySQL` user (which is used to access to the target MySQL cluster) from [GCP SecretManager](https://cloud.google.com/secret-manager)
+
+In this example, we'll use Cloud SQL for MySQL, and run mysql-operator on GKE.
 
 ## Prepare GCP resources
 
-1. Set var PROJECT_ID
+1. Set environment variables
     ```
-    PROJECT_ID=<your_project_id>
-    gcloud config set project $PROJECT_ID
+    INSTANCE_NAME=mysql-test
+    ZONE=asia-northeast1-b
+    REGION=asia-northeast1
+    SECRET_NAME=mysql-password
+    SA_NAME=mysql-operator
+    GKE_CLUSTER_NAME=hello-cluster
+    NAMESPACE=mysql-operator
+    KSA_NAME=mysql-operator-controller-manager
     ```
-1. Create Secret `mysql-password` with value `password`
+
+1. Configure gcloud project
+
     ```
-    echo -n "password" | gcloud secrets create mysql-password --data-file=-
+    PROJECT=<your_project_id>
+    gcloud config set project $PROJECT
     ```
+
+1. Create GKE cluster
+
+    ```
+    gcloud container clusters create-auto $GKE_CLUSTER_NAME --location=$REGION
+    ```
+
+    ```
+    gcloud container clusters get-credentials $GKE_CLUSTER_NAME --location=$REGION
+    ```
+
+1. Create Cloud SQL instance.
+
+    ```
+    ROOT_PASSWORD=$(openssl rand -base64 32)
+    ```
+
+    ```
+    gcloud sql instances create $INSTANCE_NAME \
+    --cpu=1 \
+    --memory=3840MiB \
+    --zone=${ZONE} \
+    --root-password=$ROOT_PASSWORD \
+    --project ${PROJECT}
+    ```
+
+    For existing instance, you can reset the root password with the following command:
+
+    ```
+    gcloud sql users set-password root \
+        --host=% \
+        --instance=$INSTANCE_NAME \
+        --password=$ROOT_PASSWORD
+    ```
+
+1. Create Secret `mysql-password` with value `password`, which will be used for the credentials of custom resource `MySQL`.
+    ```
+    gcloud secrets create $SECRET_NAME --replication-policy="automatic" --project ${PROJECT}
+    ```
+
+    ```
+    echo -n "${ROOT_PASSWORD}" | gcloud secrets versions add $SECRET_NAME --data-file=- --project ${PROJECT}
+    ```
+
 1. Create service account `mysql-operator`
     ```
-    gcloud iam service-accounts create mysql-operator --display-name=mysql-operator
-    ```
-1. Grant permission to the service account
-    ```
-    sa_email=$(gcloud iam service-accounts describe mysql-operator@${PROJECT_ID}.iam.gserviceaccount.com --format='value(email)')
-    gcloud secrets add-iam-policy-binding mysql-password --role=roles/secretmanager.secretAccessor --member=serviceAccount:${sa_email}
-    ```
-1. Generate service account key json.
-    ```
-    gcloud iam service-accounts keys create sa-private-key.json --iam-account=mysql-operator@${PROJECT_ID}.iam.gserviceaccount.com
+    gcloud iam service-accounts create $SA_NAME --display-name=$SA_NAME
     ```
 
-## Create Secret for service account key
+1. Grant necessary permission for the created `Secret` to the service account
 
-```
-kubectl create secret generic gcp-sa-private-key --from-file=sa-private-key.json
-```
-
-## Prepara mysql-operator yaml
-
-1. `containers[].args`: Add `"--cloud-secret-manager=gcp"`
-1. `containers[]`: Add the following codes
-    ```yaml
-          volumeMounts:
-            - name: gcp-sa-private-key
-              mountPath: /var/secrets/google
-          env:
-            - name: GOOGLE_APPLICATION_CREDENTIALS
-              value: /var/secrets/google/sa-private-key.json
+    `roles/secretmanager.secretAccessor`:
     ```
-1. `volumes`:
-    ```yaml
-    volumes:
-      - name: gcp-sa-private-key
-        secret:
-          secretName: gcp-sa-private-key
-    ```
-1.
-
-
-## Prepare mysql-operator yaml
-
-1. Uncomment the following piece of codes in `config/default/kustomization.yaml`
-    ```yaml
-    # [GCP SecretManager] Mount GCP service account key as secret
-    secretGenerator:
-    - name: gcp-sa-private-key
-      files:
-      - sa-private-key.json
+    gcloud secrets add-iam-policy-binding $SECRET_NAME \
+        --member="serviceAccount:${SA_NAME}@${PROJECT}.iam.gserviceaccount.com" \
+        --role="roles/secretmanager.secretAccessor" --project ${PROJECT}
     ```
 
-    ```yaml
-    # [GCP SecretManager] Mount GCP service account key as secret
-    - manager_gcp_sa_secret_patch.yaml
+    ```
+    gcloud projects add-iam-policy-binding $PROJECT \
+        --member="serviceAccount:${SA_NAME}@${PROJECT}.iam.gserviceaccount.com" \
+        --role="roles/cloudsql.client"
     ```
 
-    <details><summary>config/default/kustomization.yaml</summary>
+1. Allow to Kubernete Pod to impersonate the Service Account
 
-    ```yaml
-    namespace: mysql-operator-system
-    namePrefix: mysql-operator-
-
-    bases:
-    - ../crd
-    - ../rbac
-    - ../manager
-
-    # [GCP SecretManager] Mount GCP service account key as secret
-    secretGenerator:
-    - name: gcp-sa-private-key
-      files:
-      - sa-private-key.json
-
-    patchesStrategicMerge:
-    # [GCP SecretManager] Mount GCP service account key as secret
-    - manager_gcp_sa_secret_patch.yaml
+    ```
+    gcloud iam service-accounts add-iam-policy-binding ${SA_NAME}@${PROJECT}.iam.gserviceaccount.com \
+    --role roles/iam.workloadIdentityUser \
+    --member "serviceAccount:${PROJECT}.svc.id.goog[${NAMESPACE}/${KSA_NAME}]"
     ```
 
-    </details>
+1. Deploy with helm
 
-## Run
-
-1. Run
     ```
-    skaffold dev
+    kubectl create ns $NAMESPACE
     ```
-1. Create custom resources
 
-    Update `adminPassword` with `type: gcp` in `config/samples-with-k8s/mysql_v1alpha1_mysql.yaml`:
+    ```
+    helm install mysql-operator ./charts/mysql-operator \
+        --set cloudSecretManagerType=gcp,gcpServiceAccount=${SA_NAME}@${PROJECT}.iam.gserviceaccount.com,gcpProjectId=$PROJECT,cloudSQL.instanceConnectionName=$PROJECT:$REGION:$INSTANCE_NAME \
+        -n $NAMESPACE
+    ```
 
-    ```yaml
+    ```
+    helm list -n $NAMESPACE
+    NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+    mysql-operator  mysql-operator  1               2023-09-09 12:03:54.220046 +0900 JST    deployed        mysql-operator-v0.3.0   v0.3.0
+    ```
+
+    ```
+    kubectl get pod -n $NAMESPACE
+    NAME                                                 READY   STATUS    RESTARTS   AGE
+    mysql-operator-controller-manager-5d9bb58bcc-ngjrc   1/1     Running   0          4m3s
+    ```
+
+1. Create MySQL
+
+    ```
+    kubectl apply -f - <<EOF
     apiVersion: mysql.nakamasato.com/v1alpha1
     kind: MySQL
     metadata:
       name: mysql-sample
     spec:
-      host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
+      host: "127.0.0.1" # auth SQL
       adminUser:
         name: root
         type: raw
       adminPassword:
-        name: mysql-password # echo -n "password" | gcloud secrets create mysql-password --data-file=-
+        name: $SECRET_NAME
         type: gcp
-    ```
-
-    ```
-    kubectl apply -k config/samples-wtih-k8s
-    ```
-
-1. Check
-
-    ```
-    kubectl get -k config/samples-on-k8s
-    NAME                                      HOST            ADMINUSER   USERCOUNT
-    mysql.mysql.nakamasato.com/mysql-sample   mysql.default   root        1
-
-    NAME                                        MYSQLUSER   SECRET   PHASE   REASON
-    mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
+    EOF
     ```
 
 For more details, read [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/concepts/workload-identity)
+
+
+## Clean up
+
+```
+gcloud container clusters delete $GKE_CLUSTER_NAME --location $REGION
+gcloud sql instances delete ${INSTANCE_NAME} --project ${PROJECT}
+gcloud iam service-accounts delete ${SA_NAME}@${PROJECT}.iam.gserviceaccount.com --project ${PROJECT}
+gcloud secrets delete $SECRET_NAME --project ${PROJECT}
+```
