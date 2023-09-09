@@ -3,10 +3,10 @@ kind: MySQL
 metadata:
   name: mysql-sample
 spec:
-  host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
+  host: "127.0.0.1" # auth SQL proxy
   adminUser:
     name: root
     type: raw
-  adminPassword: # echo -n "password" | gcloud secrets create mysql-password --data-file=-
+  adminPassword: # stored in GCP SecretMamanger
     name: mysql-password
     type: gcp
