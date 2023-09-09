@@ -108,7 +108,7 @@ func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 	fmt.Println("startDebugTool")
 	// Set a mapper
 	mapper, err := func(c *rest.Config) (meta.RESTMapper, error) {
-		return apiutil.NewDynamicRESTMapper(c)
+		return apiutil.NewDynamicRESTMapper(c, nil)
 	}(cfg)
 	if err != nil {
 		log.Error(err, "failed to create mapper")
@@ -132,44 +132,44 @@ func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 	}()
 
 	// create source
-	kindWithCacheMysqlUser := source.NewKindWithCache(mysqluser, cache)
-	kindWithCacheMysql := source.NewKindWithCache(mysql, cache)
-	kindWithCachesecret := source.NewKindWithCache(secret, cache)
+	kindWithCacheMysqlUser := source.Kind(cache, mysqluser)
+	kindWithCacheMysql := source.Kind(cache, mysql)
+	kindWithCachesecret := source.Kind(cache, secret)
 
 	// create workqueue
 	queue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "test")
 
 	// create eventhandler
 	mysqlUserEventHandler := handler.Funcs{
-		CreateFunc: func(e event.CreateEvent, q workqueue.RateLimitingInterface) {
+		CreateFunc: func(ctx context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[MySQLUser][Created]", "Name", e.Object.GetName())
 		},
-		UpdateFunc: func(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[MySQLUser][Updated]", "Name", e.ObjectNew.GetName())
 		},
-		DeleteFunc: func(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[MySQLUser][Deleted]", "Name", e.Object.GetName())
 		},
 	}
 	mysqlEventHandler := handler.Funcs{
-		CreateFunc: func(e event.CreateEvent, q workqueue.RateLimitingInterface) {
+		CreateFunc: func(ctx context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[MySQL][Created]", "Name", e.Object.GetName())
 		},
-		UpdateFunc: func(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[MySQL][Updated]", "Name", e.ObjectNew.GetName())
 		},
-		DeleteFunc: func(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[MySQL][Deleted]", "Name", e.Object.GetName())
 		},
 	}
 	secretEventHandler := handler.Funcs{
-		CreateFunc: func(e event.CreateEvent, q workqueue.RateLimitingInterface) {
+		CreateFunc: func(ctx context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[Secret][Created]", "Name", e.Object.GetName())
 		},
-		UpdateFunc: func(e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[Secret][Updated]", "Name", e.ObjectNew.GetName())
 		},
-		DeleteFunc: func(e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
 			log.Info("[Secret][Deleted]", "Name", e.Object.GetName())
 		},
 	}
