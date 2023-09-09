@@ -119,8 +119,14 @@ In this example, we'll use Cloud SQL for MySQL, and run mysql-operator on GKE.
     ```
 
 1. Deploy with Helm.
+
     ```
-    helm install mysql-operator ./charts/mysql-operator \
+    helm repo add nakamasato https://nakamasato.github.io/helm-charts
+    helm repo update
+    ```
+
+    ```
+    helm install mysql-operator nakamasato/mysql-operator \
         --set cloudSecretManagerType=gcp \
         --set gcpServiceAccount=${SA_NAME}@${PROJECT}.iam.gserviceaccount.com \
         --set gcpProjectId=$PROJECT \
@@ -250,9 +256,24 @@ In this example, we'll use Cloud SQL for MySQL, and run mysql-operator on GKE.
     1 row in set (0.01 sec)
     ```
 
-
-
 ## 4. Clean up
+
+### 4.1. Kubernetes resources
+
+Custom resources
+```
+kubectl delete mysqldb sample-db
+kubectl delete mysqluser sample-user
+kubectl delete mysql $INSTANCE_NAME
+```
+
+Uninstall `mysql-operator`
+
+```
+helm uninstall mysql-operator -n $NAMESPACE
+```
+
+### 4.2. GCP resources
 
 ```
 gcloud container clusters delete $GKE_CLUSTER_NAME --location $REGION
