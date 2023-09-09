@@ -6,7 +6,7 @@ metadata:
 apiVersion: mysql.nakamasato.com/v1alpha1
 kind: MySQLUser
 metadata:
-  name: nakamasato
+  name: sample-user
 ---
 apiVersion: mysql.nakamasato.com/v1alpha1
 kind: MySQL
