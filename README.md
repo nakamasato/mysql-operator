@@ -16,7 +16,7 @@ Reduce human operations:
 
 ## Versions
 
-- Go: 1.20
+- Go: 1.21
 
 ## Components
 
