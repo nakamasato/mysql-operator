@@ -183,7 +183,7 @@ In this example, we'll use Cloud SQL for MySQL, and run mysql-operator on GKE.
     mysql-test   127.0.0.1   root        true        0           0         Ping succeded and updated MySQLClients
     ```
 
-1. Create MySQL user `sample_user`.
+1. Create MySQL user `sample-user`.
 
     ```
     kubectl apply -f - <<EOF
