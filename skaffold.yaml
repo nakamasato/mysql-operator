@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta25
+apiVersion: skaffold/v3
 kind: Config
 metadata:
   name: mysql-operator
@@ -8,7 +8,7 @@ build:
       context: .
       docker:
         dockerfile: Dockerfile
-deploy:
+manifests:
   kustomize:
     paths:
       - config/crd
