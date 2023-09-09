@@ -1,9 +1,9 @@
 name: release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types:
+      - published
 
 env:
   REGISTRY: ghcr.io
@@ -36,9 +36,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: k8s-ci
           push: true
-          tags: ${{ github.event.release.tag_name }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
   create-pr-to-update-kustomization:
