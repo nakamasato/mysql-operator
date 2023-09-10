@@ -17,6 +17,11 @@ golangci-lint run ./...
 
 ![](docs/run-local.drawio.svg)
 
+1. Start kind cluster
+    ```
+    kind create cluster
+    ```
+
 1. Run MySQL with Docker.
     ```
     docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password --rm mysql:8
@@ -34,28 +39,28 @@ golangci-lint run ./...
     ```
     kubectl get -k config/samples
     NAME                                      HOST        ADMINUSER   CONNECTED   USERCOUNT   DBCOUNT   REASON
-    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        true        1           0         Ping succeded and updated MySQLClients
+    mysql.mysql.nakamasato.com/mysql-sample   localhost   root        true        1           1         Ping succeded and updated MySQLClients
 
-    NAME                                     PHASE   REASON
-    mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created
+    NAME                                     PHASE   REASON                          SCHEMAMIGRATION
+    mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created   {"dirty":false,"version":1}
 
-    NAME                                        MYSQLUSER   SECRET   PHASE   REASON
-    mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
+    NAME                                         MYSQLUSER   SECRET   PHASE   REASON
+    mysqluser.mysql.nakamasato.com/sample-user   true        true     Ready   Both secret and mysql user are successfully created.
     ```
 
 1. Confirm MySQL user is created in MySQL container.
 
     ```
-    docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -uroot -ppassword -e "select User, Host, password_last_changed, password_expired, password_lifetime from mysql.user where User = 'nakamasato';"
+    docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -uroot -ppassword -e "select User, Host, password_last_changed, password_expired, password_lifetime from mysql.user where User = 'sample-user';"
     ```
 
-1. `Secret` `mysql-mysql-sample-nakamasato` is created for the MySQL user.
+1. `Secret` `mysql-mysql-sample-sample-user` is created for the MySQL user.
     ```
-    kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}'
+    kubectl get secret mysql-mysql-sample-sample-user -o jsonpath='{.data.password}'
     ```
 1. Confirm you can connect to MySQL with the generated user.
     ```
-    docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+    docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -usample-user -p$(kubectl get secret mysql-mysql-sample-sample-user -o jsonpath='{.data.password}' | base64 --decode)
     ```
 
 1. Delete all the resources.
