@@ -1,7 +1,7 @@
 apiVersion: mysql.nakamasato.com/v1alpha1
 kind: MySQLUser
 metadata:
-  name: nakamasato
+  name: sample-user
 spec:
   mysqlName: mysql-sample
   host: '%'

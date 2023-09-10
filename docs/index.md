@@ -65,13 +65,13 @@
     apiVersion: mysql.nakamasato.com/v1alpha1
     kind: MySQLUser
     metadata:
-      name: nakamasato
+      name: sample-user
     spec:
       mysqlName: mysql-sample
       host: '%'
     ```
 
-    1. Create a new MySQL user `nakamasato`
+    1. Create a new MySQL user `sample-user`
 
         ```
         kubectl apply -f https://raw.githubusercontent.com/nakamasato/mysql-operator/main/config/samples-on-k8s/mysql_v1alpha1_mysqluser.yaml
@@ -82,7 +82,7 @@
         ```
         kubectl get mysqluser
         NAME         MYSQLUSER   SECRET   PHASE   REASON
-        nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
+        sample-user  true        true     Ready   Both secret and mysql user are successfully created.
         ```
 
     1. You can also confirm the Secret for the new MySQL user is created.
@@ -90,13 +90,13 @@
         ```
         kubectl get secret
         NAME                            TYPE     DATA   AGE
-        mysql-mysql-sample-nakamasato   Opaque   1      4m3s
+        mysql-mysql-sample-sample-user  Opaque   1      4m3s
         ```
 
     1. Connect to MySQL with the newly created user
 
         ```
-        kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+        kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -usample-user -p$(kubectl get secret mysql-mysql-sample-sample-user -o jsonpath='{.data.password}' | base64 --decode)
         ```
 
 1. Create a new MySQL database with custom resource `MySQLDB`.
@@ -123,20 +123,20 @@
     sample-db   Ready   Database successfully created   {"dirty":false,"version":0}
     ```
 
-1. Grant all priviledges of the created db (`sample_db`) to the create user (`nakamasato`) (TODO: Currently there's no way to manage user permissions with operator.)
+1. Grant all priviledges of the created db (`sample_db`) to the create user (`sample-user`) (TODO: Currently there's no way to manage user permissions with operator.)
 
     ```
     kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword
     ```
 
     ```sql
-    GRANT ALL PRIVILEGES ON sample_db.* TO 'nakamasato'@'%';
+    GRANT ALL PRIVILEGES ON sample_db.* TO 'sample-user'@'%';
     ```
 
     Now the created user got the permission to use `sample_db`.
 
     ```
-    ubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+    ubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -usample-user -p$(kubectl get secret mysql-mysql-sample-sample-user -o jsonpath='{.data.password}' | base64 --decode)
     ```
 
     ```

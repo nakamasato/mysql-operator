@@ -74,7 +74,7 @@ Reduce human operations:
     apiVersion: mysql.nakamasato.com/v1alpha1
     kind: MySQLUser
     metadata:
-      name: nakamasato
+      name: sample-user
     spec:
       mysqlName: mysql-sample
       host: '%'
@@ -100,17 +100,17 @@ Reduce human operations:
     ```
     kubectl get mysqluser
     NAME         PHASE   REASON
-    nakamasato   Ready   Both secret and mysql user are successfully created.
+    sample-user   Ready   Both secret and mysql user are successfully created.
     ```
 
     ```
     kubectl get secret
     NAME                            TYPE     DATA   AGE
-    mysql-mysql-sample-nakamasato   Opaque   1      10s
+    mysql-mysql-sample-sample-user   Opaque   1      10s
     ```
 1. Connect to MySQL with the secret
     ```
-    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -unakamasato -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -usample-user -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
     ```
 1. Delete custom resources (`MySQL`, `MySQLUser`, `MySQLDB`).
     Example:
