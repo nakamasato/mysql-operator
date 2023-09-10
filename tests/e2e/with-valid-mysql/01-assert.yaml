@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: mysql-mysql-sample-nakamasato
+  name: mysql-mysql-sample-sample-user
 ---
 apiVersion: mysql.nakamasato.com/v1alpha1
 kind: MySQLUser
