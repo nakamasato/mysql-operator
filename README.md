@@ -110,7 +110,7 @@ Reduce human operations:
     ```
 1. Connect to MySQL with the secret
     ```
-    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -usample-user -p$(kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}' | base64 --decode)
+    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -usample-user -p$(kubectl get secret mysql-mysql-sample-sample-user -o jsonpath='{.data.password}' | base64 --decode)
     ```
 1. Delete custom resources (`MySQL`, `MySQLUser`, `MySQLDB`).
     Example:
