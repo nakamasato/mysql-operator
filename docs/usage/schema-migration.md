@@ -52,11 +52,13 @@ Currently, only [GitHub source](https://github.com/golang-migrate/migrate/tree/m
     ```bash
     make install run # to be updated with helm command
     ```
+
 1. Create resources
 
     ```
     kubectl apply -k config/samples
     ```
+
 1. Check `test_table` is created.
 
     ```
@@ -78,6 +80,7 @@ Currently, only [GitHub source](https://github.com/golang-migrate/migrate/tree/m
     +---------------------+
     2 rows in set (0.00 sec)
     ```
+
 1. Clean up
 
     ```

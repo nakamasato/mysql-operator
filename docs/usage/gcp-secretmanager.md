@@ -1,4 +1,4 @@
-# Read credentials from GCP SecretManager
+# Run on GKE and manage Cloud SQL (MySQL) with GCP SecretManager
 
 mysql-operator can get the credentials of the `MySQL` user (which is used to access to the target MySQL cluster) from [GCP SecretManager](https://cloud.google.com/secret-manager)
 

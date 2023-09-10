@@ -36,7 +36,16 @@ helm install mysql-operator nakamasato/mysql-operator
 
 ### 2.3. Install without GCP credentials json (e.g. Run on GCP resource)
 
-TODO
+```
+helm install mysql-operator ./charts/mysql-operator \
+    --dry-run \
+    --set cloudSecretManagerType=gcp \
+    --set gcpServiceAccount=${SA_NAME}@${PROJECT}.iam.gserviceaccount.com \
+    --set gcpProjectId=$PROJECT \
+    --namespace mysql-operator
+```
+
+For more details, [GCP SecretManager](gcp-secretmanager.md)
 
 ## 3. Upgrade
 
