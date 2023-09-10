@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
-	"github.com/nakamasato/mysql-operator/controllers"
+	"github.com/nakamasato/mysql-operator/internal/controller"
 	appsv1 "k8s.io/api/apps/v1"
 )
 

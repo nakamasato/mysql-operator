@@ -53,3 +53,9 @@ Steps:
         helm: manifests kustomize helmify
         	$(KUSTOMIZE) build config/default | $(HELMIFY)
         ```
+
+## kubebuilder
+
+### [Migration from go/v3 to go/v4 (manually)](https://book.kubebuilder.io/migration/manually_migration_guide_gov3_to_gov4)
+
+- https://github.com/kubernetes-sigs/kubebuilder/blob/master/testdata/project-v4/Makefile
