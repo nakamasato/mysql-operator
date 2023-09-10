@@ -2,6 +2,15 @@
 
 ## Errors
 
+### Build Failed. Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Check if docker is running.
+
+```
+sudo ln -s "$HOME/.docker/run/docker.sock" /var/run/docker.sock
+```
+
+Ref: https://github.com/GoogleContainerTools/skaffold/issues/7985
+
+
 ### Server rejected event
 
 Fails:
