@@ -160,27 +160,27 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     mysql.mysql.nakamasato.com/mysql-sample   mysql.default   root        true        1           0         Ping succeded and updated MySQLClients
 
     NAME                                        MYSQLUSER   SECRET   PHASE   REASON
-    mysqluser.mysql.nakamasato.com/nakamasato   true        true     Ready   Both secret and mysql user are successfully created.
+    mysqluser.mysql.nakamasato.com/sample-user   true        true     Ready   Both secret and mysql user are successfully created.
     ```
 
 1. Confirm MySQL user is created in MySQL container.
 
     ```bash
-    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'select User, Host from mysql.user where User = "nakamasato";'
+    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'select User, Host from mysql.user where User = "sample-user";'
     ```
     ```
     mysql: [Warning] Using a password on the command line interface can be insecure.
-    +------------+------+
-    | User       | Host |
-    +------------+------+
-    | nakamasato | %    |
-    +------------+------+
+    +-------------+------+
+    | User        | Host |
+    +-------------+------+
+    | sample-user | %    |
+    +-------------+------+
     ```
 
-1. `Secret` `mysql-mysql-sample-nakamasato` is created for the MySQL user.
+1. `Secret` `mysql-mysql-sample-sample-user` is created for the MySQL user.
 
     ```
-    kubectl get secret mysql-mysql-sample-nakamasato -o jsonpath='{.data.password}'
+    kubectl get secret mysql-mysql-sample-sample-user -o jsonpath='{.data.password}'
     ```
 
 1. Clean up the Custom Resources (`MySQL` and `MySQLUser` resources).
@@ -192,8 +192,8 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
     <details><summary>If getting stuck in deletion</summary>
 
     ```
-    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'delete from mysql.user where User = "nakamasato";'
-    kubectl patch mysqluser nakamasato -p '{"metadata":{"finalizers": []}}' --type=merge
+    kubectl exec -it $(kubectl get po | grep mysql | head -1 | awk '{print $1}') -- mysql -uroot -ppassword -e 'delete from mysql.user where User = "sample-user";'
+    kubectl patch mysqluser sample-user -p '{"metadata":{"finalizers": []}}' --type=merge
     ```
 
     </details>
