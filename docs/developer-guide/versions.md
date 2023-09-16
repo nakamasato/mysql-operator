@@ -56,6 +56,38 @@ Steps:
 
 ## kubebuilder
 
-### [Migration from go/v3 to go/v4 (manually)](https://book.kubebuilder.io/migration/manually_migration_guide_gov3_to_gov4)
+### Migration from go/v3 to go/v4
 
+- https://book.kubebuilder.io/migration/manually_migration_guide_gov3_to_gov4
 - https://github.com/kubernetes-sigs/kubebuilder/blob/master/testdata/project-v4/Makefile
+- https://book.kubebuilder.io/migration/migration_guide_gov3_to_gov4
+
+
+```
+kubebuilder version
+Version: main.version{KubeBuilderVersion:"3.11.0", KubernetesVendor:"1.27.1", GitCommit:"3a3d1d9573f5b8fe7252bf49cec6e67ba87c88e7", BuildDate:"2023-06-20T19:20:03Z", GoOs:"darwin", GoArch:"arm64"}
+```
+
+```
+go mod init github.com/nakamasato/mysql-operator
+```
+
+```
+kubebuilder init --domain nakamasato.com --plugins=go/v4
+```
+
+```
+kubebuilder create api --group mysql --version v1alpha1 --kind MySQL --controller --api
+kubebuilder create api --group mysql --version v1alpha1 --kind MySQLDB --controller --api
+kubebuilder create api --group mysql --version v1alpha1 --kind MySQLUser --controller --api
+```
+
+Copy apis
+
+Copy internal packages
+```
+cp -r ../mysql-operator/internal/metrics internal
+cp -r ../mysql-operator/internal/mysql internal/mysql
+cp -r ../mysql-operator/internal/secret internal/
+cp -r ../mysql-operator/internal/utils internal/
+```

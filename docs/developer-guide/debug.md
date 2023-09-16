@@ -8,7 +8,23 @@
 sudo ln -s "$HOME/.docker/run/docker.sock" /var/run/docker.sock
 ```
 
-Ref: https://github.com/GoogleContainerTools/skaffold/issues/7985
+or Check your docker context and use the default one (this didn't work)
+
+```
+docker context ls
+NAME                TYPE                DESCRIPTION                               DOCKER ENDPOINT                                KUBERNETES ENDPOINT   ORCHESTRATOR
+default             moby                Current DOCKER_HOST based configuration   unix:///var/run/docker.sock
+desktop-linux *     moby                Docker Desktop                            unix:///Users/yourname/.docker/run/docker.sock
+```
+
+```
+docker context use default
+```
+
+Ref:
+1. https://github.com/GoogleContainerTools/skaffold/issues/7985
+1. https://github.com/docker/for-mac/issues/6529
+1. https://stackoverflow.com/questions/74170319/skaffold-cannot-connect-to-the-docker-daemon-on-docker-desktop-for-macos
 
 
 ### Server rejected event

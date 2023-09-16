@@ -5,9 +5,6 @@
 domain: nakamasato.com
 layout:
 - go.kubebuilder.io/v4
-plugins:
-  manifests.sdk.operatorframework.io/v2: {}
-  scorecard.sdk.operatorframework.io/v2: {}
 projectName: mysql-operator
 repo: github.com/nakamasato/mysql-operator
 resources:

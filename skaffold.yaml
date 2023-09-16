@@ -8,6 +8,8 @@ build:
       context: .
       docker:
         dockerfile: Dockerfile
+  local:
+    useDockerCLI: true
 manifests:
   kustomize:
     paths:
