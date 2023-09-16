@@ -98,13 +98,12 @@ golangci-lint run ./...
         ```
     1. MySQL user is deleted.
         ```
-        docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -uroot -ppassword
+        docker exec -it $(docker ps | grep mysql | head -1 |awk '{print $1}') mysql -uroot -ppassword -e 'select User, Host from mysql.user;'
         ```
 
         <details><summary>details</summary>
 
         ```sql
-        mysql> select User, Host from mysql.user;
         +---------------+-----------+
         | User          | Host      |
         +---------------+-----------+
@@ -157,9 +156,12 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
     ```
     NAME                                      HOST            ADMINUSER   CONNECTED   USERCOUNT   DBCOUNT   REASON
-    mysql.mysql.nakamasato.com/mysql-sample   mysql.default   root        true        1           0         Ping succeded and updated MySQLClients
+    mysql.mysql.nakamasato.com/mysql-sample   mysql.default   root        true        1           1         Ping succeded and updated MySQLClients
 
-    NAME                                        MYSQLUSER   SECRET   PHASE   REASON
+    NAME                                     PHASE   REASON                          SCHEMAMIGRATION
+    mysqldb.mysql.nakamasato.com/sample-db   Ready   Database successfully created   {"dirty":false,"version":0}
+
+    NAME                                         MYSQLUSER   SECRET   PHASE   REASON
     mysqluser.mysql.nakamasato.com/sample-user   true        true     Ready   Both secret and mysql user are successfully created.
     ```
 
@@ -314,10 +316,10 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 
 # 4. Test
 
-## 4.1. Versions
+## 4.1. Tools
 
-- Ginkgo: v1.16.4
-- Gomega: v1.13.0
+- Ginkgo
+- Gomega
 
 ## 4.2. Controller Test
 
@@ -568,7 +570,6 @@ PASS
 
 </details>
 
-# 5. OLM (ToDo)
 
 # 6. Tips
 ## 6.1. Error: `Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \"john\": StorageError: invalid object, Code: 4, Key: /registry/mysql.nakamasato.com/mysqlusers/default/john, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: cd9c94d1-992a-457d-8fab-489b21ed02e9, UID in object meta:`
