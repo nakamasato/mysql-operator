@@ -37,7 +37,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
-	"github.com/nakamasato/mysql-operator/internal/controller"
+	controllers "github.com/nakamasato/mysql-operator/internal/controller"
 	"github.com/nakamasato/mysql-operator/internal/mysql"
 	"github.com/nakamasato/mysql-operator/internal/secret"
 	//+kubebuilder:scaffold:imports
@@ -157,6 +157,10 @@ func main() {
 		panic(err)
 	}
 
+	if err = (&mysqlv1alpha1.MySQLDB{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "MySQLDB")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
