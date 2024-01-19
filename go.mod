@@ -8,7 +8,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/nakamasato/test-db-driver v0.0.0-20230330121357-46698833afb6
 	github.com/onsi/ginkgo/v2 v2.15.0
-	github.com/onsi/gomega v1.31.0
+	github.com/onsi/gomega v1.31.1
 	github.com/prometheus/client_golang v1.18.0
 	go.uber.org/zap v1.26.0
 	k8s.io/api v0.28.4
