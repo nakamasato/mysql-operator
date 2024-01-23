@@ -54,6 +54,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
       - name: kuttl test
         run: make kuttl
 
