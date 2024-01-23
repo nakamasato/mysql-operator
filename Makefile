@@ -141,7 +141,7 @@ GINKGO ?= $(LOCALBIN)/ginkgo
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
-CONTROLLER_TOOLS_VERSION ?= v0.14.0 # v0.14.0 bumped in https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.17.0
+CONTROLLER_TOOLS_VERSION ?= v0.12.0
 GINKGO_VERSION ?= v2.15.0
 
 .PHONY: kustomize
