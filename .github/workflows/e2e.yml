@@ -18,6 +18,12 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
       # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
       - name: krew - install
         run: |
