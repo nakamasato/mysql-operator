@@ -26,4 +26,4 @@ jobs:
           cat cover.out >> coverage.txt
 
       - name: codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
