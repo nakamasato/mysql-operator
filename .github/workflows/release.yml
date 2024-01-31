@@ -57,7 +57,7 @@ jobs:
         run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "chore: bump version to ${{ env.RELEASE_VERSION }} in install/kustomization.yaml"
@@ -87,7 +87,7 @@ jobs:
           yq e -i ".controllerManager.manager.image.tag = \"${RELEASE_VERSION}\"" charts/mysql-operator/values.yaml
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PAT_TO_UPDATE_HELM_CHARTS_REPO }} # when expired, need to update in https://github.com/settings/tokens
           title: "chore: bump mysql-operator version to ${{ env.RELEASE_VERSION }}"
