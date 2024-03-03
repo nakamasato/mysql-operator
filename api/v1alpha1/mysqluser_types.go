@@ -20,6 +20,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Grant defines the privileges and the resource for a MySQL user
+type Grant struct {
+	// Privileges for the MySQL user
+	Privileges string `json:"privileges"`
+
+	// Resource on which the privileges are applied
+	On string `json:"on"`
+}
+
 // MySQLUserSpec defines the desired state of MySQLUser
 type MySQLUserSpec struct {
 
@@ -31,6 +40,9 @@ type MySQLUserSpec struct {
 
 	// MySQL hostname for MySQL account
 	Host string `json:"host"`
+
+	// Grants for the MySQL user
+	Grants []Grant `json:"grants,omitempty"`
 }
 
 // MySQLUserStatus defines the observed state of MySQLUser
