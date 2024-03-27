@@ -85,6 +85,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("[FetchMySQLUser] Found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
 	mysqlUserName := mysqlUser.ObjectMeta.Name
 	mysqlName := mysqlUser.Spec.MysqlName
+	mysqlUserGrants := mysqlUser.Spec.Grants
 
 	// Fetch MySQL
 	mysql := &mysqlv1alpha1.MySQL{}
@@ -198,6 +199,11 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else { // exists -> get password from Secret
 		// password = string(secret.Data["password"])
 		// TODO: check if the password is valid
+		if err := r.updateGrants(ctx, mysqlClient, mysqlUserName, mysqlUser.Spec.Host, mysqlUserGrants); err != nil {
+			log.Error(err, "Failed to update grants")
+			return ctrl.Result{}, err
+		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -214,6 +220,11 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return ctrl.Result{RequeueAfter: time.Second}, nil
 		}
 		return ctrl.Result{RequeueAfter: time.Second}, nil // requeue after 1 second
+	}
+
+	if err := r.updateGrants(ctx, mysqlClient, mysqlUserName, mysqlUser.Spec.Host, mysqlUserGrants); err != nil {
+		log.Error(err, "Failed to update grants")
+		return ctrl.Result{}, err
 	}
 
 	log.Info("[MySQL] Created or updated", "name", mysqlUserName, "mysqlUser.Namespace", mysqlUser.Namespace)
@@ -302,4 +313,21 @@ func (r *MySQLUserReconciler) ifOwnerReferencesContains(ownerReferences []metav1
 		}
 	}
 	return false
+}
+
+func (r *MySQLUserReconciler) updateGrants(ctx context.Context, mysqlClient *sql.DB, mysqlUserName string, mysqlUserHost string, grants []mysqlv1alpha1.Grant) error {
+	log := log.FromContext(ctx)
+	_, err := mysqlClient.ExecContext(ctx, fmt.Sprintf("REVOKE ALL PRIVILEGES, GRANT OPTION FROM '%s'@'%s';", mysqlUserName, mysqlUserHost))
+	if err != nil {
+		log.Error(err, "[MySQLUserGrant] Revoke failed")
+	}
+
+	for _, grant := range grants {
+		_, err := mysqlClient.ExecContext(ctx, fmt.Sprintf("GRANT %s ON %s TO '%s'@'%s'", grant.Privileges, grant.On, mysqlUserName, mysqlUserHost))
+		if err != nil {
+			return err
+		}
+		log.Info("[MySQLUserGrant] Grant", "name", mysqlUserName, "grant.Privileges", grant.Privileges, "on", grant.On)
+	}
+	return nil
 }
