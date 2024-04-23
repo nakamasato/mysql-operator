@@ -2,10 +2,6 @@ name: test
 
 on:
   pull_request:
-    paths:
-      - '**.go'
-      - 'go.*'
-      - .github/workflows/test.yml
   push:
     branches:
       - main
@@ -16,24 +12,26 @@ jobs:
       e2e: ${{steps.changes.outputs.e2e}}
     runs-on: ubuntu-latest
     steps:
-    - uses: dorny/paths-filter@v3
-      id: changes
-      with:
-        filters: |
-          test:
-            - '**.go'
-            - 'go.*'
-            - .github/workflows/test.yml
-          e2e:
-            - Dockerfile
-            - .github/workflows/test.yml
-            - config/crd/**
-            - tests/e2e/**
-            - internal/**
-            - '**.go'
-            - 'go.*'
-            - kuttl-test.yaml
-            - skaffold.yaml
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            test:
+              - '**.go'
+              - 'go.*'
+              - .github/workflows/test.yml
+            e2e:
+              - Dockerfile
+              - .github/workflows/test.yml
+              - config/crd/**
+              - tests/e2e/**
+              - internal/**
+              - '**.go'
+              - 'go.*'
+              - kuttl-test.yaml
+              - skaffold.yaml
 
   status-check:
     runs-on: ubuntu-latest
