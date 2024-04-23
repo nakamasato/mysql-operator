@@ -10,7 +10,44 @@ on:
     branches:
       - main
 jobs:
+  path-filter:
+    outputs:
+      test: ${{steps.changes.outputs.test}}
+      e2e: ${{steps.changes.outputs.e2e}}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: dorny/paths-filter@v3
+      id: changes
+      with:
+        filters: |
+          test:
+            - '**.go'
+            - 'go.*'
+            - .github/workflows/test.yml
+          e2e:
+            - Dockerfile
+            - .github/workflows/test.yml
+            - config/crd/**
+            - tests/e2e/**
+            - internal/**
+            - '**.go'
+            - 'go.*'
+            - kuttl-test.yaml
+            - skaffold.yaml
+
+  status-check:
+    runs-on: ubuntu-latest
+    needs:
+      - test
+      - e2e-kuttl
+      - e2e-ginkgo
+    permissions: {}
+    if: failure()
+    steps:
+      - run: exit 1
+
   test:
+    if: steps.changes.outputs.test == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
@@ -27,3 +64,82 @@ jobs:
 
       - name: codecov
         uses: codecov/codecov-action@v4
+
+  e2e-kuttl:
+    if: steps.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
+
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
+      # https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+      - name: krew - install
+        run: |
+          (
+            set -x; cd "$(mktemp -d)" &&
+            OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+            ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+            KREW="krew-${OS}_${ARCH}" &&
+            curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+            tar zxvf "${KREW}.tar.gz" &&
+            ./"${KREW}" install krew
+          )
+
+      # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#adding-a-system-path
+      - name: krew - set PATH
+        run: echo "${KREW_ROOT:-$HOME/.krew}/bin:$PATH" >> $GITHUB_PATH
+
+      # https://kuttl.dev/docs/cli.html#setup-the-kuttl-kubectl-plugin
+      - name: kuttl - install
+        run: |
+          kubectl krew install kuttl
+          kubectl kuttl -v
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build with gha
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false # a shorthand for --output=type=registry if set to true
+          load: true # a shorthand for --output=type=docker if set to true
+          tags: mysql-operator:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: kuttl test
+        run: make kuttl
+
+  e2e-ginkgo:
+    if: steps.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
+
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
+      - name: install skaffold # TODO: #69 Enable to install skaffold in e2e
+        run: |
+          curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+          sudo install skaffold /usr/local/bin/
+
+      - name: create kind cluster
+        working-directory: e2e
+        run: kind create cluster --name mysql-operator-e2e --kubeconfig kubeconfig --config kind-config.yml --wait 30s
+
+      - name: skaffold run
+        working-directory: e2e
+        run: skaffold run --kubeconfig kubeconfig
+
+      - name: e2e-with-ginkgo
+        run: make e2e-with-ginkgo
