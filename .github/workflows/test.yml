@@ -5,10 +5,11 @@ on:
   push:
     branches:
       - main
+
 jobs:
   path-filter:
     outputs:
-      test: ${{steps.changes.outputs.test}}
+      go: ${{steps.changes.outputs.go}}
       e2e: ${{steps.changes.outputs.e2e}}
     runs-on: ubuntu-latest
     steps:
@@ -18,7 +19,7 @@ jobs:
         id: changes
         with:
           filters: |
-            test:
+            go:
               - '**.go'
               - 'go.*'
               - .github/workflows/test.yml
@@ -36,6 +37,7 @@ jobs:
   status-check:
     runs-on: ubuntu-latest
     needs:
+      - lint
       - test
       - e2e-kuttl
       - e2e-ginkgo
@@ -44,9 +46,30 @@ jobs:
     steps:
       - run: exit 1
 
+  lint:
+    needs: path-filter
+    if: needs.path-filter.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
+
+      - name: setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+          version: latest
+
+          # Optional: golangci-lint command line arguments.
+          args: --timeout=3m # --issues-exit-code=0
+
   test:
     needs: path-filter
-    if: needs.path-filter.outputs.test == 'true'
+    if: needs.path-filter.outputs.go == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
@@ -55,7 +78,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
-          cache: true
 
       - run: |
           make test
