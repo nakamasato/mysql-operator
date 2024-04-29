@@ -59,7 +59,7 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	var cloudSecretManagerType string
+	var adminUserSecretType string
 	var projectId string
 	var secretNamespace string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -67,16 +67,16 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&cloudSecretManagerType, "cloud-secret-manager", "",
+	flag.StringVar(&adminUserSecretType, "cloud-secret-manager", "",
 		"The cloud secret manager to get credentials from. "+
 			"Currently, only support gcp")
 	flag.StringVar(&projectId, "gcp-project-id", "",
-		"GCP project id. Set this value to use cloudSecretManagerType=gcp. "+
+		"GCP project id. Set this value to use adminUserSecretType=gcp. "+
 			"Also can be set by environment variable PROJECT_ID."+
 			"If both are set, the flag is used.")
 	flag.StringVar(&secretNamespace, "k8s-secret-namespace", "",
-		"GCP project id. Set this value to use cloudSecretManagerType=gcp. "+
-			"Also can be set by environment variable PROJECT_ID."+
+		"Kubernetes namespace where MYSQL credentials secrets is located. Set this value to use adminUserSecretType=k8s. "+
+			"Also can be set by environment variable SECRET_NAMESPACE."+
 			"If both are set, the flag is used.")
 	opts := zap.Options{
 		Development: true,
@@ -114,7 +114,7 @@ func main() {
 	secretManagers := map[string]secret.SecretManager{
 		"raw": secret.RawSecretManager{},
 	}
-	switch cloudSecretManagerType {
+	switch adminUserSecretType {
 	case "gcp":
 		if projectId == "" {
 			projectId = os.Getenv("PROJECT_ID")
