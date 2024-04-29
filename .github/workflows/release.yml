@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -46,24 +46,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         with:
           ref: 'main'
 
       - name: Update kustomization
         run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF:10} make update-version-to-install
 
-      - name: Set env
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
+      - name: Set output
+        id: set-output
+        run: echo "RELEASE_VERSION=${GITHUB_REF:10}" >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: "chore: bump version to ${{ env.RELEASE_VERSION }} in install/kustomization.yaml"
+          title: "chore: bump version to ${{ steps.set-output.outputs.RELEASE_VERSION }} in install/kustomization.yaml"
           body: |
             # Why
-            - New version [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }}) was released.
+            - New version [${{ steps.set-output.outputs.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.set-output.outputs.RELEASE_VERSION }}) was released.
             # What
             - Update kustomization for installation
 
@@ -72,28 +73,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         with:
           ref: main
           repository: nakamasato/helm-charts
 
-      - name: Set env
-        run: echo "RELEASE_VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
+      - name: Set output
+        id: set-output
+        run: echo "RELEASE_VERSION=${GITHUB_REF:10}" >> "$GITHUB_OUTPUT"
 
       - name: Update app version
         run: |
-          yq e -i ".version = \"${RELEASE_VERSION}\"" charts/mysql-operator/Chart.yaml
-          yq e -i ".appVersion = \"${RELEASE_VERSION}\"" charts/mysql-operator/Chart.yaml
-          yq e -i ".controllerManager.manager.image.tag = \"${RELEASE_VERSION}\"" charts/mysql-operator/values.yaml
+          yq e -i ".version = \"${{ steps.set-output.outputs.RELEASE_VERSION }}\"" charts/mysql-operator/Chart.yaml
+          yq e -i ".appVersion = \"${{ steps.set-output.outputs.RELEASE_VERSION }}\"" charts/mysql-operator/Chart.yaml
+          yq e -i ".controllerManager.manager.image.tag = \"${{ steps.set-output.outputs.RELEASE_VERSION }}\"" charts/mysql-operator/values.yaml
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PAT_TO_UPDATE_HELM_CHARTS_REPO }} # when expired, need to update in https://github.com/settings/tokens
-          title: "chore: bump mysql-operator version to ${{ env.RELEASE_VERSION }}"
+          title: "chore: bump mysql-operator version to ${{ steps.set-output.outputs.RELEASE_VERSION }}"
           branch: bump-mysql-operator-chart
           body: |
             # Why
-            - New version [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }}) was released.
+            - New version [${{ steps.set-output.outputs.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.set-output.outputs.RELEASE_VERSION }}) was released.
             # What
-            - bump mysql-operator chart version to [${{ env.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.RELEASE_VERSION }})
+            - bump mysql-operator chart version to [${{ steps.set-output.outputs.RELEASE_VERSION }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.set-output.outputs.RELEASE_VERSION }})
