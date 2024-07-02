@@ -127,7 +127,7 @@ In this example, we'll use Cloud SQL for MySQL, and run mysql-operator on GKE.
 
     ```
     helm install mysql-operator nakamasato/mysql-operator \
-        --set cloudSecretManagerType=gcp \
+        --set adminUserSecretType=gcp \
         --set gcpServiceAccount=${SA_NAME}@${PROJECT}.iam.gserviceaccount.com \
         --set gcpProjectId=$PROJECT \
         --set cloudSQL.instanceConnectionName=$PROJECT:$REGION:$INSTANCE_NAME \

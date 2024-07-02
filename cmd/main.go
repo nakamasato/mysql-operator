@@ -37,7 +37,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	mysqlv1alpha1 "github.com/nakamasato/mysql-operator/api/v1alpha1"
-	"github.com/nakamasato/mysql-operator/internal/controller"
+	controllers "github.com/nakamasato/mysql-operator/internal/controller"
 	"github.com/nakamasato/mysql-operator/internal/mysql"
 	"github.com/nakamasato/mysql-operator/internal/secret"
 	//+kubebuilder:scaffold:imports
@@ -59,19 +59,24 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	var cloudSecretManagerType string
+	var adminUserSecretType string
 	var projectId string
+	var secretNamespace string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&cloudSecretManagerType, "cloud-secret-manager", "",
+	flag.StringVar(&adminUserSecretType, "cloud-secret-manager", "",
 		"The cloud secret manager to get credentials from. "+
 			"Currently, only support gcp")
 	flag.StringVar(&projectId, "gcp-project-id", "",
-		"GCP project id. Set this value to use cloudSecretManagerType=gcp. "+
+		"GCP project id. Set this value to use adminUserSecretType=gcp. "+
 			"Also can be set by environment variable PROJECT_ID."+
+			"If both are set, the flag is used.")
+	flag.StringVar(&secretNamespace, "k8s-secret-namespace", "",
+		"Kubernetes namespace where MYSQL credentials secrets is located. Set this value to use adminUserSecretType=k8s. "+
+			"Also can be set by environment variable SECRET_NAMESPACE."+
 			"If both are set, the flag is used.")
 	opts := zap.Options{
 		Development: true,
@@ -109,7 +114,8 @@ func main() {
 	secretManagers := map[string]secret.SecretManager{
 		"raw": secret.RawSecretManager{},
 	}
-	if cloudSecretManagerType == "gcp" {
+	switch adminUserSecretType {
+	case "gcp":
 		if projectId == "" {
 			projectId = os.Getenv("PROJECT_ID")
 		}
@@ -121,6 +127,17 @@ func main() {
 		defer gcpSecretManager.Close()
 		setupLog.Info("Initialized gcpSecretManager", "projectId", projectId)
 		secretManagers["gcp"] = gcpSecretManager
+	case "k8s":
+		if secretNamespace == "" {
+			secretNamespace = os.Getenv("SECRET_NAMESPACE")
+		}
+		k8sSecretManager, err := secret.Newk8sSecretManager(ctx, secretNamespace, mgr.GetClient())
+		if err != nil {
+			setupLog.Error(err, "failed to initialize k8sSecretManager")
+			os.Exit(1)
+		}
+		setupLog.Info("Initialized k8sSecretManager", "namespace", secretNamespace)
+		secretManagers["k8s"] = k8sSecretManager
 	}
 	if err = (&controllers.MySQLReconciler{
 		Client:          mgr.GetClient(),
