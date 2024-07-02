@@ -61,7 +61,7 @@ type MySQLUserReconciler struct {
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=mysql.nakamasato.com,resources=mysqlusers/finalizers,verbs=update
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;update;patch
 
 // Reconcile function is responsible for managing MySQLUser.
