@@ -9,7 +9,7 @@ rules:
   resources:
   - secrets
   verbs:
-    - create
+  - create
   - get
   - list
   - watch
