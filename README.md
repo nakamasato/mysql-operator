@@ -157,11 +157,11 @@ anager.secretAccessor` permission
     ```
     kubectl create secret generic gcp-sa-private-key --from-file=sa-private-key.json
     ```
-1. Install mysql-operator with `--set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID`
+1. Install mysql-operator with `--set adminUserSecretType=gcp --set gcpProjectId=$PROJECT_ID`
     ```
     helm repo add nakamasato https://nakamasato.github.io/helm-charts
     helm repo update
-    helm install mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
+    helm install mysql-operator nakamasato/mysql-operator --set adminUserSecretType=gcp --set gcpProjectId=$PROJECT_ID
     ```
 1. You can specify `type: gcp` for `adminUser` and `adminPassword`.
 

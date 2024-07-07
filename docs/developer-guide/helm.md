@@ -66,7 +66,7 @@ We use GitHub Actions to update the repo.
     helm install mysql-operator-0.1.0.tgz --generate-name
     ```
 
-    Optionally, you can add `--set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID` to use GCP SecretManager to get AdminUser and/or AdminPassword.
+    Optionally, you can add `--set adminUserSecretType=gcp --set gcpProjectId=$PROJECT_ID` to use GCP SecretManager to get AdminUser and/or AdminPassword.
 
     <details>
 
@@ -99,7 +99,7 @@ We use GitHub Actions to update the repo.
     ```
 1. (Optional) upgrade an existing release
     ```
-    helm upgrade mysql-operator-0-1680913123 $HELM_PATH --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
+    helm upgrade mysql-operator-0-1680913123 $HELM_PATH --set adminUserSecretType=gcp --set gcpProjectId=$PROJECT_ID
     ```
 1. Uninstall
     ```

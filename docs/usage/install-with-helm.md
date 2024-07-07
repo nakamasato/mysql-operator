@@ -20,7 +20,7 @@ helm install mysql-operator nakamasato/mysql-operator
 1. Check the yaml to be applied with the `template` command
 
     ```
-    helm template mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
+    helm template mysql-operator nakamasato/mysql-operator --set adminUserSecretType=gcp --set gcpProjectId=$PROJECT_ID
     ```
 
     Check point:
@@ -31,7 +31,7 @@ helm install mysql-operator nakamasato/mysql-operator
 1. Install
 
     ```
-    helm install mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID --generate-name
+    helm install mysql-operator nakamasato/mysql-operator --set adminUserSecretType=gcp --set gcpProjectId=$PROJECT_ID --generate-name
     ```
 
 ### 2.3. Install without GCP credentials json (e.g. Run on GCP resource)
@@ -39,7 +39,7 @@ helm install mysql-operator nakamasato/mysql-operator
 ```
 helm install mysql-operator ./charts/mysql-operator \
     --dry-run \
-    --set cloudSecretManagerType=gcp \
+    --set adminUserSecretType=gcp \
     --set gcpServiceAccount=${SA_NAME}@${PROJECT}.iam.gserviceaccount.com \
     --set gcpProjectId=$PROJECT \
     --namespace mysql-operator
@@ -57,7 +57,7 @@ When you want to modify helm release (start operator with new settings or argume
     ```
 1. Upgrade
     ```
-    helm upgrade mysql-operator nakamasato/mysql-operator --set cloudSecretManagerType=gcp --set gcpProjectId=$PROJECT_ID
+    helm upgrade mysql-operator nakamasato/mysql-operator --set adminUserSecretType=gcp --set gcpProjectId=$PROJECT_ID
     ```
 
 ## 4. Uninstall
