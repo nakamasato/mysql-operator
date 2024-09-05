@@ -2,7 +2,7 @@ module github.com/nakamasato/mysql-operator
 
 go 1.22
 
-toolchain go1.23.0
+toolchain go1.23.1
 
 require (
 	cloud.google.com/go/secretmanager v1.14.0
