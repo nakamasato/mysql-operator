@@ -67,9 +67,9 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&adminUserSecretType, "cloud-secret-manager", "",
-		"The cloud secret manager to get credentials from. "+
-			"Currently, only support gcp")
+	flag.StringVar(&adminUserSecretType, "admin-user-secret-type", "",
+		"The secret manager to get credentials from. "+
+			"Currently, support raw, gcp, and k8s. ")
 	flag.StringVar(&projectId, "gcp-project-id", "",
 		"GCP project id. Set this value to use adminUserSecretType=gcp. "+
 			"Also can be set by environment variable PROJECT_ID."+

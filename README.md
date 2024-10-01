@@ -187,6 +187,46 @@ anager.secretAccessor` permission
 
 [Read credentials from GCP SecretManager](docs/usage/gcp-secretmanager.md)
 
+
+## With k8s Secret Manager
+
+Instead of writing raw password in `MySQL.Spec.AdminPassword`, you can get the password for root user from an external secret manager (e.g. K8s)
+
+1. Create Kubernetes Secret.
+    ```
+    kubectl create secret generic mysql-user --from-literal=key=root
+    kubectl create secret generic mysql-password --from-literal=key=password
+    ```
+
+1. Install mysql-operator with `--set adminUserSecretType=k8s --set adminUserSecretNamespace=default`
+    ```
+    helm repo add nakamasato https://nakamasato.github.io/helm-charts
+    helm repo update
+    helm install mysql-operator nakamasato/mysql-operator --set adminUserSecretType=k8s --set adminUserSecretNamespace=default
+    ```
+1. You can specify `type: k8s` for `adminUser` and `adminPassword`.
+
+    ```yaml
+    apiVersion: mysql.nakamasato.com/v1alpha1
+    kind: MySQL
+    metadata:
+      name: mysql-sample
+    spec:
+      host: mysql.default # need to include namespace if you use Kubernetes Service as an endpoint.
+      adminUser:
+        name: mysql-user # secret name in SecretManager
+        type: k8s
+      adminPassword:
+        name: mysql-password # secret name in SecretManager
+        type: k8s
+    ```
+
+    Example: (you need to run `kubectl apply -k config/mysql`)
+    ```
+    kubectl apply -k config/samples-on-k8s-with-k8s-secret
+    ```
+
+
 ## Exposed Metrics
 
 - `mysql_user_created_total`

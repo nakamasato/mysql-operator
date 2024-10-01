@@ -1,0 +1,12 @@
+apiVersion: mysql.nakamasato.com/v1alpha1
+kind: MySQL
+metadata:
+  name: mysql-sample
+spec:
+  host: "mysql.default"
+  adminUser:
+    name: mysql-user
+    type: k8s
+  adminPassword: # stored in GCP SecretMamanger
+    name: mysql-password
+    type: k8s

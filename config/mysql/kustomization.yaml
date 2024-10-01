@@ -3,3 +3,4 @@ resources:
   - mysql-deployment.yaml
   - mysql-service.yaml
   - mysql-service-nodeport.yaml
+  # - mysql-secret.yaml
