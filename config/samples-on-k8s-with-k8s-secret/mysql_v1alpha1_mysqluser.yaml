@@ -1,0 +1,6 @@
+apiVersion: mysql.nakamasato.com/v1alpha1
+kind: MySQLUser
+metadata:
+  name: sample-user
+spec:
+  mysqlName: mysql-sample

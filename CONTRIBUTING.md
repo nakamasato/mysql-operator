@@ -30,6 +30,9 @@ golangci-lint run ./...
     ```
     make install run
     ```
+
+    if you need to specify args you can run `go run ./cmd/main.go --admin-user-secret-type=k8s --k8s-secret-namespace=default` after `make install`
+
 1. Apply sample resources.
     ```
     kubectl apply -k config/samples
@@ -233,7 +236,7 @@ docker rm -f $(docker ps | grep mysql | head -1 |awk '{print $1}')
 1. Install and run operator
     ```
     make install
-    PRJECT_ID=$PROJECT_ID go run main.go --cloud-secret-manager gcp
+    PRJECT_ID=$PROJECT_ID go run main.go --admin-user-secret-type gcp
     ```
 1. Create custom resources
     ```
