@@ -11,7 +11,7 @@ require (
 	github.com/nakamasato/test-db-driver v0.0.0-20230330121357-46698833afb6
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
-	github.com/prometheus/client_golang v1.20.4
+	github.com/prometheus/client_golang v1.20.5
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.29.4
 	k8s.io/apimachinery v0.29.4
