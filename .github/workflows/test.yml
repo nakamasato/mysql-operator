@@ -84,7 +84,7 @@ jobs:
           cat cover.out >> coverage.txt
 
       - name: codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
 
   e2e-kuttl:
     needs: path-filter
