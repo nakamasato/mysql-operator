@@ -78,13 +78,33 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, err
 	}
 
-	// Add a finalizer if not exists
-	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {
-		if err := r.Update(ctx, mysql); err != nil {
+	// Handle deletion first
+	if !mysql.GetDeletionTimestamp().IsZero() {
+		if !controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
+			// If being deleted and no finalizer, nothing to do
+			return ctrl.Result{}, nil
+		}
+		if r.finalizeMySQL(ctx, mysql) {
+			if controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) {
+				if err := r.Update(ctx, mysql); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+			return ctrl.Result{}, nil
+		}
+		log.Info("Could not complete finalizer. waiting another second")
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	}
 
+	// Add finalizer first if it doesn't exist
+	if !controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
+		controllerutil.AddFinalizer(mysql, mysqlFinalizer)
+		if err := r.Update(ctx, mysql); err != nil {
 			log.Error(err, "Failed to update MySQL after adding finalizer")
 			return ctrl.Result{}, err
 		}
+		// Requeue to continue with other operations after finalizer is added
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	// Get referenced number
