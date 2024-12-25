@@ -5,3 +5,6 @@ metadata:
 spec:
   mysqlName: mysql-sample
   host: '%'
+  grants:
+    - privileges: "ALL"
+      on: "mysql-sample-db.*"
