@@ -23,7 +23,7 @@ Reduce human operations:
 ![](docs/diagram.drawio.svg)
 
 1. Custom Resource
-    1. `MySQL`: MySQL cluster (`host`, `port`, `adminUser`, `adminPassword` hoding the credentials to connect to MySQL)
+    1. `MySQL`: MySQL connection (`host`, `port`, `adminUser`, `adminPassword` holding the credentials to connect to MySQL. `adminUser` and `adminPassword` can be given by GSM or k8s Secret other than plaintext.)
     1. `MySQLUser`: MySQL user (`mysqlName` and `host`)
     1. `MySQLDB`: MySQL database (`mysqlName`, `dbName`, `schemaMigrationFromGitHub`)
 1. Reconciler
