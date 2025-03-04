@@ -78,13 +78,33 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, err
 	}
 
-	// Add a finalizer if not exists
-	if controllerutil.AddFinalizer(mysql, mysqlFinalizer) {
-		if err := r.Update(ctx, mysql); err != nil {
+	// Handle deletion first
+	if !mysql.GetDeletionTimestamp().IsZero() {
+		if !controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
+			// If being deleted and no finalizer, nothing to do
+			return ctrl.Result{}, nil
+		}
+		if r.finalizeMySQL(ctx, mysql) {
+			if controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) {
+				if err := r.Update(ctx, mysql); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+			return ctrl.Result{}, nil
+		}
+		log.Info("Could not complete finalizer. waiting another second")
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	}
 
+	// Add finalizer first if it doesn't exist
+	if !controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
+		controllerutil.AddFinalizer(mysql, mysqlFinalizer)
+		if err := r.Update(ctx, mysql); err != nil {
 			log.Error(err, "Failed to update MySQL after adding finalizer")
 			return ctrl.Result{}, err
 		}
+		// Requeue to continue with other operations after finalizer is added
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	// Get referenced number
@@ -137,18 +157,6 @@ func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		}
 	}
 
-	if !mysql.GetDeletionTimestamp().IsZero() && controllerutil.ContainsFinalizer(mysql, mysqlFinalizer) {
-		if r.finalizeMySQL(ctx, mysql) {
-			if controllerutil.RemoveFinalizer(mysql, mysqlFinalizer) {
-				if err := r.Update(ctx, mysql); err != nil {
-					return ctrl.Result{}, err
-				}
-			}
-		} else {
-			log.Info("Could not complete finalizer. waiting another second")
-			return ctrl.Result{RequeueAfter: time.Second}, nil
-		}
-	}
 	return ctrl.Result{}, nil
 }
 
@@ -271,10 +279,24 @@ func (r *MySQLReconciler) countReferencesByMySQLDB(ctx context.Context, mysql *m
 // finalizeMySQL return true if no user and no db is referencing the given MySQL
 func (r *MySQLReconciler) finalizeMySQL(ctx context.Context, mysql *mysqlv1alpha1.MySQL) bool {
 	log := log.FromContext(ctx).WithName("MySQLReconciler")
-	if mysql.Status.UserCount > 0 || mysql.Status.DBCount > 0 {
-		log.Info("there's referencing user or database", "UserCount", mysql.Status.UserCount, "DBCount", mysql.Status.DBCount)
+	
+	// Check actual references instead of status
+	userCount, err := r.countReferencesByMySQLUser(ctx, mysql)
+	if err != nil {
+		log.Error(err, "Failed to count user references")
 		return false
 	}
+	dbCount, err := r.countReferencesByMySQLDB(ctx, mysql)
+	if err != nil {
+		log.Error(err, "Failed to count db references")
+		return false
+	}
+
+	if userCount > 0 || dbCount > 0 {
+		log.Info("there's referencing user or database", "UserCount", userCount, "DBCount", dbCount)
+		return false
+	}
+
 	if db, ok := r.MySQLClients[mysql.GetKey()]; ok {
 		if err := db.Close(); err != nil {
 			return false
