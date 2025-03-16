@@ -3,7 +3,7 @@
 IMG ?= ghcr.io/nakamasato/mysql-operator
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.28.0 # 1.28.0 bumped in https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.17.0
-
+ENVTEST_VERSION = release-0.20
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -142,7 +142,7 @@ GINKGO ?= $(LOCALBIN)/ginkgo
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
 CONTROLLER_TOOLS_VERSION ?= v0.14.0
-GINKGO_VERSION ?= v2.15.0
+GINKGO_VERSION ?= v2.23.0 # keep it consistent with go.mod
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
@@ -162,7 +162,7 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
-	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION)
 
 .PHONY: ginkgo
 ginkgo:

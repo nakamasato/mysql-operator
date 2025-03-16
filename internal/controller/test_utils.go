@@ -120,10 +120,6 @@ func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 		log.Error(err, "failed to create cache")
 	}
 
-	secret := &v1.Secret{}
-	mysqluser := &mysqlv1alpha1.MySQLUser{}
-	mysql := &mysqlv1alpha1.MySQL{}
-
 	// Start Cache
 	go func() {
 		if err := cache.Start(ctx); err != nil { // func (m *InformersMap) Start(ctx context.Context) error {
@@ -131,58 +127,58 @@ func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 		}
 	}()
 
-	// create source
-	kindWithCacheMysqlUser := source.Kind(cache, mysqluser)
-	kindWithCacheMysql := source.Kind(cache, mysql)
-	kindWithCachesecret := source.Kind(cache, secret)
-
 	// create workqueue
 	queue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "test")
 
 	// create eventhandler
-	mysqlUserEventHandler := handler.Funcs{
-		CreateFunc: func(ctx context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
+	mysqlUserEventHandler := handler.TypedFuncs[*mysqlv1alpha1.MySQLUser]{
+		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*mysqlv1alpha1.MySQLUser], q workqueue.RateLimitingInterface) {
 			log.Info("[MySQLUser][Created]", "Name", e.Object.GetName())
 		},
-		UpdateFunc: func(ctx context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*mysqlv1alpha1.MySQLUser], q workqueue.RateLimitingInterface) {
 			log.Info("[MySQLUser][Updated]", "Name", e.ObjectNew.GetName())
 		},
-		DeleteFunc: func(ctx context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*mysqlv1alpha1.MySQLUser], q workqueue.RateLimitingInterface) {
 			log.Info("[MySQLUser][Deleted]", "Name", e.Object.GetName())
 		},
 	}
-	mysqlEventHandler := handler.Funcs{
-		CreateFunc: func(ctx context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
+	mysqlEventHandler := handler.TypedFuncs[*mysqlv1alpha1.MySQL]{
+		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*mysqlv1alpha1.MySQL], q workqueue.RateLimitingInterface) {
 			log.Info("[MySQL][Created]", "Name", e.Object.GetName())
 		},
-		UpdateFunc: func(ctx context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*mysqlv1alpha1.MySQL], q workqueue.RateLimitingInterface) {
 			log.Info("[MySQL][Updated]", "Name", e.ObjectNew.GetName())
 		},
-		DeleteFunc: func(ctx context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*mysqlv1alpha1.MySQL], q workqueue.RateLimitingInterface) {
 			log.Info("[MySQL][Deleted]", "Name", e.Object.GetName())
 		},
 	}
-	secretEventHandler := handler.Funcs{
-		CreateFunc: func(ctx context.Context, e event.CreateEvent, q workqueue.RateLimitingInterface) {
+	secretEventHandler := handler.TypedFuncs[*v1.Secret]{
+		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*v1.Secret], q workqueue.RateLimitingInterface) {
 			log.Info("[Secret][Created]", "Name", e.Object.GetName())
 		},
-		UpdateFunc: func(ctx context.Context, e event.UpdateEvent, q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*v1.Secret], q workqueue.RateLimitingInterface) {
 			log.Info("[Secret][Updated]", "Name", e.ObjectNew.GetName())
 		},
-		DeleteFunc: func(ctx context.Context, e event.DeleteEvent, q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*v1.Secret], q workqueue.RateLimitingInterface) {
 			log.Info("[Secret][Deleted]", "Name", e.Object.GetName())
 		},
 	}
 
+	// create source with event handlers
+	kindWithCacheMysqlUser := source.Kind(cache, &mysqlv1alpha1.MySQLUser{}, mysqlUserEventHandler)
+	kindWithCacheMysql := source.Kind(cache, &mysqlv1alpha1.MySQL{}, mysqlEventHandler)
+	kindWithCachesecret := source.Kind(cache, &v1.Secret{}, secretEventHandler)
+
 	// start kind
 	fmt.Println("cache starting")
-	if err := kindWithCacheMysqlUser.Start(ctx, mysqlUserEventHandler, queue); err != nil {
+	if err := kindWithCacheMysqlUser.Start(ctx, queue); err != nil {
 		log.Error(err, "failed to start kindWithCacheMysqlUser")
 	}
-	if err := kindWithCacheMysql.Start(ctx, mysqlEventHandler, queue); err != nil {
+	if err := kindWithCacheMysql.Start(ctx, queue); err != nil {
 		log.Error(err, "failed to start kindWithCacheMysql")
 	}
-	if err := kindWithCachesecret.Start(ctx, secretEventHandler, queue); err != nil {
+	if err := kindWithCachesecret.Start(ctx, queue); err != nil {
 		log.Error(err, "failed to start kindWithCachesecret")
 	}
 
