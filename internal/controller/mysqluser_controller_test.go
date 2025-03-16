@@ -35,11 +35,15 @@ var _ = Describe("MySQLUser controller", func() {
 			db, err := sql.Open("testdbdriver", "test")
 			close = db.Close
 			Expect(err).ToNot(HaveOccurred())
-			err = (&MySQLUserReconciler{
+			reconciler := &MySQLUserReconciler{
 				Client:       k8sManager.GetClient(),
 				Scheme:       k8sManager.GetScheme(),
 				MySQLClients: MySQLClients{fmt.Sprintf("%s-%s", Namespace, MySQLName): db},
-			}).SetupWithManager(k8sManager)
+			}
+			err = ctrl.NewControllerManagedBy(k8sManager).
+				For(&mysqlv1alpha1.MySQLUser{}).
+				Named(fmt.Sprintf("mysqluser-test-%d", time.Now().UnixNano())).
+				Complete(reconciler)
 			Expect(err).ToNot(HaveOccurred())
 
 			ctx, cancel := context.WithCancel(ctx)
@@ -218,11 +222,15 @@ var _ = Describe("MySQLUser controller", func() {
 			db, err := sql.Open("mysql", "test_user:password@tcp(nonexistinghost:3306)/")
 			Expect(err).NotTo(HaveOccurred())
 			close = db.Close
-			err = (&MySQLUserReconciler{
+			reconciler := &MySQLUserReconciler{
 				Client:       k8sManager.GetClient(),
 				Scheme:       k8sManager.GetScheme(),
 				MySQLClients: MySQLClients{fmt.Sprintf("%s-%s", Namespace, MySQLName): db},
-			}).SetupWithManager(k8sManager)
+			}
+			err = ctrl.NewControllerManagedBy(k8sManager).
+				For(&mysqlv1alpha1.MySQLUser{}).
+				Named(fmt.Sprintf("mysqluser-test-%d", time.Now().UnixNano())).
+				Complete(reconciler)
 			Expect(err).ToNot(HaveOccurred())
 
 			ctx, cancel := context.WithCancel(ctx)

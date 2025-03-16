@@ -35,11 +35,15 @@ var _ = Describe("MySQLDB controller", func() {
 			db, err := sql.Open("testdbdriver", "test")
 			close = db.Close
 			Expect(err).ToNot(HaveOccurred())
-			err = (&MySQLDBReconciler{
+			reconciler := &MySQLDBReconciler{
 				Client:       k8sManager.GetClient(),
 				Scheme:       k8sManager.GetScheme(),
 				MySQLClients: MySQLClients{fmt.Sprintf("%s-%s", Namespace, MySQLName): db},
-			}).SetupWithManager(k8sManager)
+			}
+			err = ctrl.NewControllerManagedBy(k8sManager).
+				For(&mysqlv1alpha1.MySQLDB{}).
+				Named(fmt.Sprintf("mysqldb-test-%d", time.Now().UnixNano())).
+				Complete(reconciler)
 			Expect(err).ToNot(HaveOccurred())
 			ctx, cancel := context.WithCancel(ctx)
 			stopFunc = cancel
