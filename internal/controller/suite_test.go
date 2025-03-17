@@ -73,8 +73,7 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	ctx := context.Background()
-	ctx, cancel = context.WithCancel(ctx)
+	_, cancel = context.WithCancel(context.Background())
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
@@ -94,8 +93,6 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
-
-	StartDebugTool(ctx, cfg, scheme)
 })
 
 var _ = AfterSuite(func() {

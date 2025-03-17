@@ -20,8 +20,46 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+// typedRateLimitingQueue wraps a workqueue.RateLimitingInterface to implement workqueue.TypedRateLimitingInterface
+type typedRateLimitingQueue struct {
+	workqueue.RateLimitingInterface
+}
+
+func (q *typedRateLimitingQueue) AddRateLimited(item reconcile.Request) {
+	q.RateLimitingInterface.AddRateLimited(item)
+}
+
+func (q *typedRateLimitingQueue) Get() (reconcile.Request, bool) {
+	item, shutdown := q.RateLimitingInterface.Get()
+	if item == nil {
+		return reconcile.Request{}, shutdown
+	}
+	return item.(reconcile.Request), shutdown
+}
+
+func (q *typedRateLimitingQueue) Done(item reconcile.Request) {
+	q.RateLimitingInterface.Done(item)
+}
+
+func (q *typedRateLimitingQueue) Forget(item reconcile.Request) {
+	q.RateLimitingInterface.Forget(item)
+}
+
+func (q *typedRateLimitingQueue) Add(item reconcile.Request) {
+	q.RateLimitingInterface.Add(item)
+}
+
+func (q *typedRateLimitingQueue) AddAfter(item reconcile.Request, duration time.Duration) {
+	q.RateLimitingInterface.AddAfter(item, duration)
+}
+
+func (q *typedRateLimitingQueue) NumRequeues(item reconcile.Request) int {
+	return q.RateLimitingInterface.NumRequeues(item)
+}
 
 func cleanUpMySQL(ctx context.Context, k8sClient client.Client, namespace string) {
 	err := k8sClient.DeleteAllOf(ctx, &mysqlv1alpha1.MySQL{}, client.InNamespace(namespace))
@@ -128,40 +166,51 @@ func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 	}()
 
 	// create workqueue
-	queue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "test")
+	rateLimiter := workqueue.DefaultTypedControllerRateLimiter[interface{}]()
+	baseQueue := workqueue.NewNamedRateLimitingQueue(rateLimiter, "test")
+	queue := &typedRateLimitingQueue{baseQueue}
 
 	// create eventhandler
-	mysqlUserEventHandler := handler.TypedFuncs[*mysqlv1alpha1.MySQLUser]{
-		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*mysqlv1alpha1.MySQLUser], q workqueue.RateLimitingInterface) {
+	mysqlUserEventHandler := handler.TypedFuncs[*mysqlv1alpha1.MySQLUser, reconcile.Request]{
+		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*mysqlv1alpha1.MySQLUser], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[MySQLUser][Created]", "Name", e.Object.GetName())
+			q.Add(reconcile.Request{})
 		},
-		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*mysqlv1alpha1.MySQLUser], q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*mysqlv1alpha1.MySQLUser], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[MySQLUser][Updated]", "Name", e.ObjectNew.GetName())
+			q.Add(reconcile.Request{})
 		},
-		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*mysqlv1alpha1.MySQLUser], q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*mysqlv1alpha1.MySQLUser], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[MySQLUser][Deleted]", "Name", e.Object.GetName())
+			q.Add(reconcile.Request{})
 		},
 	}
-	mysqlEventHandler := handler.TypedFuncs[*mysqlv1alpha1.MySQL]{
-		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*mysqlv1alpha1.MySQL], q workqueue.RateLimitingInterface) {
+	mysqlEventHandler := handler.TypedFuncs[*mysqlv1alpha1.MySQL, reconcile.Request]{
+		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*mysqlv1alpha1.MySQL], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[MySQL][Created]", "Name", e.Object.GetName())
+			q.Add(reconcile.Request{})
 		},
-		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*mysqlv1alpha1.MySQL], q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*mysqlv1alpha1.MySQL], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[MySQL][Updated]", "Name", e.ObjectNew.GetName())
+			q.Add(reconcile.Request{})
 		},
-		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*mysqlv1alpha1.MySQL], q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*mysqlv1alpha1.MySQL], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[MySQL][Deleted]", "Name", e.Object.GetName())
+			q.Add(reconcile.Request{})
 		},
 	}
-	secretEventHandler := handler.TypedFuncs[*v1.Secret]{
-		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*v1.Secret], q workqueue.RateLimitingInterface) {
+	secretEventHandler := handler.TypedFuncs[*v1.Secret, reconcile.Request]{
+		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*v1.Secret], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[Secret][Created]", "Name", e.Object.GetName())
+			q.Add(reconcile.Request{})
 		},
-		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*v1.Secret], q workqueue.RateLimitingInterface) {
+		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*v1.Secret], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[Secret][Updated]", "Name", e.ObjectNew.GetName())
+			q.Add(reconcile.Request{})
 		},
-		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*v1.Secret], q workqueue.RateLimitingInterface) {
+		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*v1.Secret], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			log.Info("[Secret][Deleted]", "Name", e.Object.GetName())
+			q.Add(reconcile.Request{})
 		},
 	}
 

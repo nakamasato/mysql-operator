@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -45,13 +46,19 @@ var _ = Describe("MySQL controller", func() {
 		}
 
 		mySQLClients = internalmysql.MySQLClients{}
-		err = (&MySQLReconciler{
+		reconciler := &MySQLReconciler{
 			Client:          k8sManager.GetClient(),
 			Scheme:          k8sManager.GetScheme(),
 			MySQLClients:    mySQLClients,
 			MySQLDriverName: "testdbdriver",
 			SecretManagers:  map[string]secret.SecretManager{"raw": secret.RawSecretManager{}},
-		}).SetupWithManager(k8sManager)
+		}
+		err = ctrl.NewControllerManagedBy(k8sManager).
+			For(&mysqlv1alpha1.MySQL{}).
+			Owns(&mysqlv1alpha1.MySQLUser{}).
+			Owns(&mysqlv1alpha1.MySQLDB{}).
+			Named(fmt.Sprintf("mysql-test-%d", time.Now().UnixNano())).
+			Complete(reconciler)
 		Expect(err).ToNot(HaveOccurred())
 
 		ctx, cancel := context.WithCancel(ctx)
