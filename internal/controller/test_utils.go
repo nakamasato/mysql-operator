@@ -166,7 +166,8 @@ func StartDebugTool(ctx context.Context, cfg *rest.Config, scheme *runtime.Schem
 	}()
 
 	// create workqueue
-	baseQueue := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "test")
+	rateLimiter := workqueue.DefaultTypedControllerRateLimiter[interface{}]()
+	baseQueue := workqueue.NewNamedRateLimitingQueue(rateLimiter, "test")
 	queue := &typedRateLimitingQueue{baseQueue}
 
 	// create eventhandler
