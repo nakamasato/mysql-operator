@@ -73,8 +73,7 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	ctx := context.Background()
-	ctx, cancel = context.WithCancel(ctx)
+	_, cancel = context.WithCancel(context.Background())
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
