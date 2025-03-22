@@ -9,7 +9,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.1
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/nakamasato/test-db-driver v0.0.0-20230330121357-46698833afb6
-	github.com/onsi/ginkgo/v2 v2.23.2
+	github.com/onsi/ginkgo/v2 v2.23.3
 	github.com/onsi/gomega v1.36.2
 	github.com/prometheus/client_golang v1.21.1
 	go.uber.org/zap v1.27.0
