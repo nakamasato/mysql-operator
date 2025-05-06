@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/go-sql-driver/mysql"
+	mysqldriver "github.com/go-sql-driver/mysql"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -217,27 +217,27 @@ func (r *MySQLReconciler) UpdateMySQLClients(ctx context.Context, mysql *mysqlv1
 
 // If GcpSecretName is set, get password from GCP secret manager
 // Otherwise user MySQL.Spec.AdminPassword
-func (r *MySQLReconciler) getMySQLConfig(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (Config, error) {
+func (r *MySQLReconciler) getMySQLConfig(ctx context.Context, mysql *mysqlv1alpha1.MySQL) (mysqldriver.Config, error) {
 	log := log.FromContext(ctx)
 	secretManager, ok := r.SecretManagers[mysql.Spec.AdminPassword.Type]
 	if !ok {
-		return Config{}, fmt.Errorf("the specified SecretManager type (%s) doesn't exist", mysql.Spec.AdminPassword.Type)
+		return mysqldriver.Config{}, fmt.Errorf("the specified SecretManager type (%s) doesn't exist", mysql.Spec.AdminPassword.Type)
 	}
 	password, err := secretManager.GetSecret(ctx, mysql.Spec.AdminPassword.Name)
 	if err != nil {
 		log.Error(err, "failed to get secret from secret manager", "secret", mysql.Spec.AdminPassword.Name)
-		return Config{}, err
+		return mysqldriver.Config{}, err
 	}
 	secretManager, ok = r.SecretManagers[mysql.Spec.AdminUser.Type]
 	if !ok {
-		return Config{}, fmt.Errorf("the specified SecretManager type (%s) doesn't exist", mysql.Spec.AdminUser.Type)
+		return mysqldriver.Config{}, fmt.Errorf("the specified SecretManager type (%s) doesn't exist", mysql.Spec.AdminUser.Type)
 	}
 	user, err := secretManager.GetSecret(ctx, mysql.Spec.AdminUser.Name)
 	if err != nil {
-		return Config{}, err
+		return mysqldriver.Config{}, err
 	}
 
-	return Config{
+	return mysqldriver.Config{
 		User:                 user,
 		Passwd:               password,
 		Addr:                 fmt.Sprintf("%s:%d", mysql.Spec.Host, mysql.Spec.Port),

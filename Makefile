@@ -193,3 +193,8 @@ $(HELMIFY): $(LOCALBIN)
 
 helm: manifests kustomize helmify
 	$(KUSTOMIZE) build config/install | $(HELMIFY)
+
+.PHONY: lint
+lint:
+	golangci-lint run ./...
+

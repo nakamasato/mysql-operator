@@ -82,8 +82,8 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "[FetchMySQLUser] Failed")
 		return ctrl.Result{}, err
 	}
-	log.Info("[FetchMySQLUser] Found.", "name", mysqlUser.ObjectMeta.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
-	mysqlUserName := mysqlUser.ObjectMeta.Name
+	log.Info("[FetchMySQLUser] Found.", "name", mysqlUser.Name, "mysqlUser.Namespace", mysqlUser.Namespace)
+	mysqlUserName := mysqlUser.Name
 	mysqlName := mysqlUser.Spec.MysqlName
 
 	// Fetch MySQL
@@ -101,7 +101,7 @@ func (r *MySQLUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("[FetchMySQL] Found")
 
 	// SetOwnerReference if not exists
-	if !r.ifOwnerReferencesContains(mysqlUser.ObjectMeta.OwnerReferences, mysql) {
+	if !r.ifOwnerReferencesContains(mysqlUser.OwnerReferences, mysql) {
 		err := controllerutil.SetControllerReference(mysql, mysqlUser, r.Scheme)
 		if err != nil {
 			return ctrl.Result{}, err //requeue

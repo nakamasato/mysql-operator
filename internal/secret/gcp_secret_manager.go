@@ -46,5 +46,7 @@ func (s gcpSecretManager) GetSecret(ctx context.Context, name string) (string, e
 
 // Close secretmanager's client
 func (s gcpSecretManager) Close() {
-	s.client.Close()
+	if err := s.client.Close(); err != nil {
+		fmt.Printf("Failed to close GCP Secret Manager client: %v\n", err)
+	}
 }

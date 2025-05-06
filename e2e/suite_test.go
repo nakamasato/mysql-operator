@@ -81,7 +81,9 @@ var _ = BeforeSuite(func() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	os.Setenv("KUBECONFIG", path.Join(mydir, kubeconfigPath))
+	if err := os.Setenv("KUBECONFIG", path.Join(mydir, kubeconfigPath)); err != nil {
+		log.Error(err, "Failed to set KUBECONFIG environment variable")
+	}
 	cfg, err := config.GetConfigWithContext("kind-" + kindName)
 	if err != nil {
 		log.Error(err, "failed to get rest.Config")
