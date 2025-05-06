@@ -142,7 +142,8 @@ GINKGO ?= $(LOCALBIN)/ginkgo
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
 CONTROLLER_TOOLS_VERSION ?= v0.14.0
-GINKGO_VERSION ?= v2.23.0 # keep it consistent with go.mod
+# Extract Ginkgo version from go.mod to keep it consistent
+GINKGO_VERSION ?= $(shell grep -m 1 'github.com/onsi/ginkgo/v2' go.mod | sed -E 's/.*github.com\/onsi\/ginkgo\/v2 (v[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
