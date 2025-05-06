@@ -62,11 +62,11 @@ jobs:
         id: get-golangci-lint-version
         run: |
           GOLANGCI_LINT_VERSION=$(grep "golangci/golangci-lint" aqua.yaml | sed -E 's/.*golangci\/golangci-lint@(v[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-          echo "Found golangci-lint version: $GOLANGCI_LINT_VERSION"
-          echo "version=$GOLANGCI_LINT_VERSION" >> $GITHUB_OUTPUT
+          echo "Found golangci-lint version: ${GOLANGCI_LINT_VERSION}"
+          echo "version=${GOLANGCI_LINT_VERSION}" >> "${GITHUB_OUTPUT}"
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           # Use version from aqua.yaml
           version: ${{ steps.get-golangci-lint-version.outputs.version }}
