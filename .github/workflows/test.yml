@@ -58,11 +58,18 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Get golangci-lint version from aqua.yaml
+        id: get-golangci-lint-version
+        run: |
+          GOLANGCI_LINT_VERSION=$(grep "golangci/golangci-lint" aqua.yaml | sed -E 's/.*golangci\/golangci-lint@(v[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "Found golangci-lint version: $GOLANGCI_LINT_VERSION"
+          echo "version=$GOLANGCI_LINT_VERSION" >> $GITHUB_OUTPUT
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: v1.64.7
+          # Use version from aqua.yaml
+          version: ${{ steps.get-golangci-lint-version.outputs.version }}
 
           # Optional: golangci-lint command line arguments.
           args: --timeout=3m # --issues-exit-code=0
