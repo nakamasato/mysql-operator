@@ -20,7 +20,11 @@ var _ = Describe("MySQLDB controller", func() {
 	It("Should create database", func() {
 		db, err := sql.Open("testdbdriver", "test")
 		Expect(err).ToNot(HaveOccurred())
-		defer db.Close()
+		defer func() {
+			if err := db.Close(); err != nil {
+				GinkgoT().Logf("Failed to close database connection: %v", err)
+			}
+		}()
 		ctx := context.Background()
 		_, err = db.ExecContext(ctx, "CREATE DATABASE IF NOT EXISTS test_database")
 		Expect(err).ToNot(HaveOccurred())

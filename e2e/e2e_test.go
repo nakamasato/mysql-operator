@@ -188,7 +188,11 @@ func checkMySQLHasUser(mysqluser string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Error(err, "Failed to close database connection")
+		}
+	}()
 	row := db.QueryRow("SELECT COUNT(*) FROM mysql.user WHERE User = ?", mysqluser)
 	var count int
 	if err := row.Scan(&count); err != nil {
@@ -204,7 +208,11 @@ func checkMySQLHasDatabase(dbName string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Error(err, "Failed to close database connection")
+		}
+	}()
 	row := db.QueryRow("SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", dbName)
 	var count int
 	if err := row.Scan(&count); err != nil {
