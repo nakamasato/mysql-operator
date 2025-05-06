@@ -198,4 +198,3 @@ helm: manifests kustomize helmify
 .PHONY: lint
 lint:
 	golangci-lint run ./...
-
