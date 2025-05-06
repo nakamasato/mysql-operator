@@ -1,6 +1,6 @@
 # MySQL Operator
 
-[![codecov](https://codecov.io/gh/nakamasato/mysql-operator/branch/master/graph/badge.svg?token=AWM1SBTI19)](https://codecov.io/gh/nakamasato/mysql-operator)
+[![codecov](https://codecov.io/gh/nakamasato/mysql-operator/branch/main/graph/badge.svg?token=AWM1SBTI19)](https://codecov.io/gh/nakamasato/mysql-operator)
 
 This is a go-based Kubernetes operator built with [operator-sdk](https://sdk.operatorframework.io/docs/building-operators/golang/), which manages MySQL databases, schema, users, permissions in existing MySQL servers. This operator DOES NOT manage MySQL cluster like other MySQL operators such as [vitess](https://github.com/vitessio/vitess), [mysql/mysql-operator](https://github.com/mysql/mysql-operator).
 
@@ -16,7 +16,7 @@ Reduce human operations:
 
 ## Versions
 
-- Go: 1.21
+- Go: 1.24.0
 
 ## Components
 
@@ -145,7 +145,7 @@ Reduce human operations:
 
 ## With GCP Secret Manager
 
-Instead of writing raw password in `MySQL.Spec.AdminPassword`, you can get the password for root user from an external secret manager (e.g. GCP) (ref: [Authenticate to Google Cloud using a service account](https://cloud.google.com/kubernetes-engine/docs/tutorials/authenticating-to-cloud-platform))
+Instead of writing raw password in `MySQL.Spec.AdminPassword`, you can get the password for root user from an external secret manager (e.g. GCP) (ref: [Authenticate to Google Cloud using a service account](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity))
 
 1. Create `SecretManager`
     ```
