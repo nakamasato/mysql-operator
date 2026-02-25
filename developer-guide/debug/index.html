@@ -1,0 +1,1134 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../testing/">
+      
+      
+        <link rel="next" href="../versions/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Debug - MySQL Operator</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-9NTB93RVPJ"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-9NTB93RVPJ",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-9NTB93RVPJ",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="cyan" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#debug" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MySQL Operator" class="md-header__button md-logo" aria-label="MySQL Operator" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MySQL Operator
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Debug
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/nakamasato/mysql-operator" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../api-resources/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../usage/install-with-helm/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Usage
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MySQL Operator" class="md-nav__button md-logo" aria-label="MySQL Operator" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    MySQL Operator
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/nakamasato/mysql-operator" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Resources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reconciliation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reconciliation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debug
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debug
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-failed-cannot-connect-to-the-docker-daemon-at-unixvarrundockersock-check-if-docker-is-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Failed. Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Check if docker is running.
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-rejected-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server rejected event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dial-tcp-lookup-mysqldefault-on-109601053-no-such-host-it-takes-130-to-create-secret-since-mysql-recovers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dial tcp: lookup mysql.default on 10.96.0.10:53: no such host (it takes 1:30 to create Secret since MySQL recovers.)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../versions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/install-with-helm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install with Helm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/gcp-secretmanager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GCP SecretManager
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/schema-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schema Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-failed-cannot-connect-to-the-docker-daemon-at-unixvarrundockersock-check-if-docker-is-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Failed. Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Check if docker is running.
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-rejected-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server rejected event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dial-tcp-lookup-mysqldefault-on-109601053-no-such-host-it-takes-130-to-create-secret-since-mysql-recovers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dial tcp: lookup mysql.default on 10.96.0.10:53: no such host (it takes 1:30 to create Secret since MySQL recovers.)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="debug">Debug</h1>
+<h2 id="errors">Errors</h2>
+<h3 id="build-failed-cannot-connect-to-the-docker-daemon-at-unixvarrundockersock-check-if-docker-is-running">Build Failed. Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Check if docker is running.</h3>
+<div class="highlight"><pre><span></span><code>sudo ln -s &quot;$HOME/.docker/run/docker.sock&quot; /var/run/docker.sock
+</code></pre></div>
+<p>or Check your docker context and use the default one (this didn't work)</p>
+<div class="highlight"><pre><span></span><code>docker context ls
+NAME                TYPE                DESCRIPTION                               DOCKER ENDPOINT                                KUBERNETES ENDPOINT   ORCHESTRATOR
+default             moby                Current DOCKER_HOST based configuration   unix:///var/run/docker.sock
+desktop-linux *     moby                Docker Desktop                            unix:///Users/yourname/.docker/run/docker.sock
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>docker context use default
+</code></pre></div>
+<p>Ref:
+1. <a href="https://github.com/GoogleContainerTools/skaffold/issues/7985">https://github.com/GoogleContainerTools/skaffold/issues/7985</a>
+1. <a href="https://github.com/docker/for-mac/issues/6529">https://github.com/docker/for-mac/issues/6529</a>
+1. <a href="https://stackoverflow.com/questions/74170319/skaffold-cannot-connect-to-the-docker-daemon-on-docker-desktop-for-macos">https://stackoverflow.com/questions/74170319/skaffold-cannot-connect-to-the-docker-daemon-on-docker-desktop-for-macos</a></p>
+<h3 id="server-rejected-event">Server rejected event</h3>
+<p>Fails:</p>
+<div class="highlight"><pre><span></span><code><span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.293Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w">   </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.293Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w">       </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.293Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">    </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.305Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Failed<span class="w"> </span>to<span class="w"> </span>connect<span class="w"> </span>to<span class="w"> </span>MySQL.<span class="w">   </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlName&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql-sample&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.reconcileHandler
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:298
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.306Z<span class="w">      </span>DEBUG<span class="w">   </span>controller-runtime.manager.events<span class="w">       </span>Warning<span class="w"> </span><span class="o">{</span><span class="s2">&quot;object&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;kind&quot;</span>:<span class="s2">&quot;MySQLUser&quot;</span>,<span class="s2">&quot;namespace&quot;</span>:<span class="s2">&quot;default&quot;</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;nakamasato&quot;</span>,<span class="s2">&quot;uid&quot;</span>:<span class="s2">&quot;947ff02f-1950-4f37-9dcd-0e2d0d11db84&quot;</span>,<span class="s2">&quot;apiVersion&quot;</span>:<span class="s2">&quot;mysql.nakamasato.com/v1alpha1&quot;</span>,<span class="s2">&quot;resourceVersion&quot;</span>:<span class="s2">&quot;572560&quot;</span><span class="o">}</span>,<span class="w"> </span><span class="s2">&quot;reason&quot;</span>:<span class="w"> </span><span class="s2">&quot;ProcessingError&quot;</span>,<span class="w"> </span><span class="s2">&quot;message&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>E1225<span class="w"> </span><span class="m">04</span>:16:33.315173<span class="w">       </span><span class="m">1</span><span class="w"> </span>event.go:264<span class="o">]</span><span class="w"> </span>Server<span class="w"> </span>rejected<span class="w"> </span>event<span class="w"> </span><span class="s1">&#39;&amp;v1.Event{TypeMeta:v1.TypeMeta{Kind:&quot;&quot;, APIVersion:&quot;&quot;}, ObjectMeta:v1.ObjectMeta{Name:&quot;nakamasato.16c3e45a191f6bd4&quot;, GenerateName:&quot;&quot;, Namespace:&quot;default&quot;, SelfLink:&quot;&quot;, UID:&quot;&quot;, ResourceVersion:&quot;&quot;, Generation:0, CreationTimestamp:v1.Time{Time:time.Time{wall:0x0, ext:0, loc:(*time.Location)(nil)}}, DeletionTimestamp:(*v1.Time)(nil), DeletionGracePeriodSeconds:(*int64)(nil), Labels:map[string]string(nil), Annotations:map[string]string(nil), OwnerReferences:[]v1.OwnerReference(nil), Finalizers:[]string(nil), ClusterName:&quot;&quot;, ManagedFields:[]v1.ManagedFieldsEntry(nil)}, InvolvedObject:v1.ObjectReference{Kind:&quot;MySQLUser&quot;, Namespace:&quot;default&quot;, Name:&quot;nakamasato&quot;, UID:&quot;947ff02f-1950-4f37-9dcd-0e2d0d11db84&quot;, APIVersion:&quot;mysql.nakamasato.com/v1alpha1&quot;, ResourceVersion:&quot;572560&quot;, FieldPath:&quot;&quot;}, Reason:&quot;ProcessingError&quot;, Message:&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;, Source:v1.EventSource{Component:&quot;mysqluser_controller&quot;, Host:&quot;&quot;}, FirstTimestamp:v1.Time{Time:time.Time{wall:0xc069c4a1366643d4, ext:64615291501, loc:(*time.Location)(0x25472e0)}}, LastTimestamp:v1.Time{Time:time.Time{wall:0xc069c4a8523b024c, ext:93043659801, loc:(*time.Location)(0x25472e0)}}, Count:15, Type:&quot;Warning&quot;, EventTime:v1.MicroTime{Time:time.Time{wall:0x0, ext:0, loc:(*time.Location)(nil)}}, Series:(*v1.EventSeries)(nil), Action:&quot;&quot;, Related:(*v1.ObjectReference)(nil), ReportingController:&quot;&quot;, ReportingInstance:&quot;&quot;}&#39;</span>:<span class="w"> </span><span class="s1">&#39;events &quot;nakamasato.16c3e45a191f6bd4&quot; is forbidden: User &quot;system:serviceaccount:mysql-operator-system:mysql-operator-controller-manager&quot; cannot patch resource &quot;events&quot; in API group &quot;&quot; in the namespace &quot;default&quot;&#39;</span><span class="w"> </span><span class="o">(</span>will<span class="w"> </span>not<span class="w"> </span>retry!<span class="o">)</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.329Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Reconciler<span class="w"> </span>error<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.329Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w">   </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.330Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w">       </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.330Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">    </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.360Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Failed<span class="w"> </span>to<span class="w"> </span>connect<span class="w"> </span>to<span class="w"> </span>MySQL.<span class="w">   </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlName&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql-sample&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.reconcileHandler
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:298
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.361Z<span class="w">      </span>DEBUG<span class="w">   </span>controller-runtime.manager.events<span class="w">       </span>Warning<span class="w"> </span><span class="o">{</span><span class="s2">&quot;object&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;kind&quot;</span>:<span class="s2">&quot;MySQLUser&quot;</span>,<span class="s2">&quot;namespace&quot;</span>:<span class="s2">&quot;default&quot;</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;nakamasato&quot;</span>,<span class="s2">&quot;uid&quot;</span>:<span class="s2">&quot;947ff02f-1950-4f37-9dcd-0e2d0d11db84&quot;</span>,<span class="s2">&quot;apiVersion&quot;</span>:<span class="s2">&quot;mysql.nakamasato.com/v1alpha1&quot;</span>,<span class="s2">&quot;resourceVersion&quot;</span>:<span class="s2">&quot;572612&quot;</span><span class="o">}</span>,<span class="w"> </span><span class="s2">&quot;reason&quot;</span>:<span class="w"> </span><span class="s2">&quot;ProcessingError&quot;</span>,<span class="w"> </span><span class="s2">&quot;message&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>E1225<span class="w"> </span><span class="m">04</span>:16:33.366899<span class="w">       </span><span class="m">1</span><span class="w"> </span>event.go:264<span class="o">]</span><span class="w"> </span>Server<span class="w"> </span>rejected<span class="w"> </span>event<span class="w"> </span><span class="s1">&#39;&amp;v1.Event{TypeMeta:v1.TypeMeta{Kind:&quot;&quot;, APIVersion:&quot;&quot;}, ObjectMeta:v1.ObjectMeta{Name:&quot;nakamasato.16c3e45a191f6bd4&quot;, GenerateName:&quot;&quot;, Namespace:&quot;default&quot;, SelfLink:&quot;&quot;, UID:&quot;&quot;, ResourceVersion:&quot;&quot;, Generation:0, CreationTimestamp:v1.Time{Time:time.Time{wall:0x0, ext:0, loc:(*time.Location)(nil)}}, DeletionTimestamp:(*v1.Time)(nil), DeletionGracePeriodSeconds:(*int64)(nil), Labels:map[string]string(nil), Annotations:map[string]string(nil), OwnerReferences:[]v1.OwnerReference(nil), Finalizers:[]string(nil), ClusterName:&quot;&quot;, ManagedFields:[]v1.ManagedFieldsEntry(nil)}, InvolvedObject:v1.ObjectReference{Kind:&quot;MySQLUser&quot;, Namespace:&quot;default&quot;, Name:&quot;nakamasato&quot;, UID:&quot;947ff02f-1950-4f37-9dcd-0e2d0d11db84&quot;, APIVersion:&quot;mysql.nakamasato.com/v1alpha1&quot;, ResourceVersion:&quot;572612&quot;, FieldPath:&quot;&quot;}, Reason:&quot;ProcessingError&quot;, Message:&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;, Source:v1.EventSource{Component:&quot;mysqluser_controller&quot;, Host:&quot;&quot;}, FirstTimestamp:v1.Time{Time:time.Time{wall:0xc069c4a1366643d4, ext:64615291501, loc:(*time.Location)(0x25472e0)}}, LastTimestamp:v1.Time{Time:time.Time{wall:0xc069c4a855820c0c, ext:93098644501, loc:(*time.Location)(0x25472e0)}}, Count:16, Type:&quot;Warning&quot;, EventTime:v1.MicroTime{Time:time.Time{wall:0x0, ext:0, loc:(*time.Location)(nil)}}, Series:(*v1.EventSeries)(nil), Action:&quot;&quot;, Related:(*v1.ObjectReference)(nil), ReportingController:&quot;&quot;, ReportingInstance:&quot;&quot;}&#39;</span>:<span class="w"> </span><span class="s1">&#39;events &quot;nakamasato.16c3e45a191f6bd4&quot; is forbidden: User &quot;system:serviceaccount:mysql-operator-system:mysql-operator-controller-manager&quot; cannot patch resource &quot;events&quot; in API group &quot;&quot; in the namespace &quot;default&quot;&#39;</span><span class="w"> </span><span class="o">(</span>will<span class="w"> </span>not<span class="w"> </span>retry!<span class="o">)</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:16:33.371Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Reconciler<span class="w"> </span>error<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+</code></pre></div>
+<p>Recovers next reconciliation loop (1min30seconds after the previous loop):</p>
+<div class="highlight"><pre><span></span><code><span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.179Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w">   </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.179Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w">       </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.179Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">    </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.183Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>mysqlClient<span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.294Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Generate<span class="w"> </span>new<span class="w"> </span>password<span class="w"> </span><span class="k">for</span><span class="w"> </span>Secret<span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;secretName&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql-mysql-sample-nakamasato&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.294Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Create<span class="w"> </span>MySQL<span class="w"> </span>user<span class="w"> </span><span class="k">if</span><span class="w"> </span>not.<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.297Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>Secret.<span class="w">  </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.320Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w">   </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.320Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w">       </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.320Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">    </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.329Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>mysqlClient<span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.329Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Create<span class="w"> </span>MySQL<span class="w"> </span>user<span class="w"> </span><span class="k">if</span><span class="w"> </span>not.<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.367Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>Secret.<span class="w">  </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.376Z<span class="w">      </span>ERROR<span class="w">   </span>util.api<span class="w">        </span>unable<span class="w"> </span>to<span class="w"> </span>update<span class="w"> </span>status<span class="w"> </span><span class="o">{</span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \&quot;nakamasato\&quot;: the object has been modified; please apply your changes to the latest version and try again&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>github.com/redhat-cop/operator-utils/pkg/util.<span class="o">(</span>*ReconcilerBase<span class="o">)</span>.ManageSuccessWithRequeue
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/github.com/redhat-cop/operator-utils@v1.2.2/pkg/util/reconciler.go:423
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>github.com/redhat-cop/operator-utils/pkg/util.<span class="o">(</span>*ReconcilerBase<span class="o">)</span>.ManageSuccess
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/github.com/redhat-cop/operator-utils@v1.2.2/pkg/util/reconciler.go:434
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>github.com/nakamasato/mysql-operator/controllers.<span class="o">(</span>*MySQLUserReconciler<span class="o">)</span>.Reconcile
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/workspace/controllers/mysqluser_controller.go:184
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.reconcileHandler
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:298
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.379Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Reconciler<span class="w"> </span>error<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;Operation cannot be fulfilled on mysqlusers.mysql.nakamasato.com \&quot;nakamasato\&quot;: the object has been modified; please apply your changes to the latest version and try again&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.379Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w">   </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.379Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w">       </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.379Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">    </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.385Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>mysqlClient<span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.385Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Create<span class="w"> </span>MySQL<span class="w"> </span>user<span class="w"> </span><span class="k">if</span><span class="w"> </span>not.<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.389Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>Secret.<span class="w">  </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.399Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w">   </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.399Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w">       </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.399Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">    </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.475Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>mysqlClient<span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.475Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Create<span class="w"> </span>MySQL<span class="w"> </span>user<span class="w"> </span><span class="k">if</span><span class="w"> </span>not.<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-25T04:17:55.477Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>Secret.<span class="w">  </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+</code></pre></div>
+<ol>
+<li>
+<p>Reproduce steps:</p>
+<ol>
+<li><code>skaffold dev</code></li>
+<li><code>kubectl delete -k config/mysql</code></li>
+<li><code>kubectl apply -k config/samples-on-k8s</code></li>
+<li><code>kubectl apply -k config/mysql</code></li>
+</ol>
+<p><a href="https://pkg.go.dev/github.com/redhat-cop/operator-utils@v1.1.4/pkg/util#ReconcilerBase.ManageSuccessWithRequeue">https://pkg.go.dev/github.com/redhat-cop/operator-utils@v1.1.4/pkg/util#ReconcilerBase.ManageSuccessWithRequeue</a></p>
+</li>
+<li>
+<p>Cause:</p>
+<div class="highlight"><pre><span></span><code><span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>E1225<span class="w"> </span><span class="m">04</span>:16:33.315173<span class="w">       </span><span class="m">1</span><span class="w"> </span>event.go:264<span class="o">]</span><span class="w"> </span>Server<span class="w"> </span>rejected<span class="w"> </span>event<span class="w"> </span><span class="s1">&#39;&amp;v1.Event{TypeMeta:v1.TypeMeta{Kind:&quot;&quot;, APIVersion:&quot;&quot;}, ObjectMeta:v1.ObjectMeta{Name:&quot;nakamasato.16c3e45a191f6bd4&quot;, GenerateName:&quot;&quot;, Namespace:&quot;default&quot;, SelfLink:&quot;&quot;, UID:&quot;&quot;, ResourceVersion:&quot;&quot;, Generation:0, CreationTimestamp:v1.Time{Time:time.Time{wall:0x0, ext:0, loc:(*time.Location)(nil)}}, DeletionTimestamp:(*v1.Time)(nil), DeletionGracePeriodSeconds:(*int64)(nil), Labels:map[string]string(nil), Annotations:map[string]string(nil), OwnerReferences:[]v1.OwnerReference(nil), Finalizers:[]string(nil), ClusterName:&quot;&quot;, ManagedFields:[]v1.ManagedFieldsEntry(nil)}, InvolvedObject:v1.ObjectReference{Kind:&quot;MySQLUser&quot;, Namespace:&quot;default&quot;, Name:&quot;nakamasato&quot;, UID:&quot;947ff02f-1950-4f37-9dcd-0e2d0d11db84&quot;, APIVersion:&quot;mysql.nakamasato.com/v1alpha1&quot;, ResourceVersion:&quot;572560&quot;, FieldPath:&quot;&quot;}, Reason:&quot;ProcessingError&quot;, Message:&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;, Source:v1.EventSource{Component:&quot;mysqluser_controller&quot;, Host:&quot;&quot;}, FirstTimestamp:v1.Time{Time:time.Time{wall:0xc069c4a1366643d4, ext:64615291501, loc:(*time.Location)(0x25472e0)}}, LastTimestamp:v1.Time{Time:time.Time{wall:0xc069c4a8523b024c, ext:93043659801, loc:(*time.Location)(0x25472e0)}}, Count:15, Type:&quot;Warning&quot;, EventTime:v1.MicroTime{Time:time.Time{wall:0x0, ext:0, loc:(*time.Location)(nil)}}, Series:(*v1.EventSeries)(nil), Action:&quot;&quot;, Related:(*v1.ObjectReference)(nil), ReportingController:&quot;&quot;, ReportingInstance:&quot;&quot;}&#39;</span>:<span class="w"> </span><span class="s1">&#39;events &quot;nakamasato.16c3e45a191f6bd4&quot; is forbidden: User &quot;system:serviceaccount:mysql-operator-system:mysql-operator-controller-manager&quot; cannot patch resource &quot;events&quot; in API group &quot;&quot; in the namespace &quot;default&quot;&#39;</span><span class="w"> </span><span class="o">(</span>will<span class="w"> </span>not<span class="w"> </span>retry!<span class="o">)</span>
+</code></pre></div>
+</li>
+<li>
+<p>Reason: <code>User "system:serviceaccount:mysql-operator-system:mysql-operator-controller-manager" cannot patch resource "events" in API group "" in the namespace "default"'</code></p>
+</li>
+<li>
+<p>Solution: Add <code>//+kubebuilder:rbac:groups=core,resources=events,verbs=create;update;patch</code> to the controller. <a href="https://github.com/nakamasato/mysql-operator/pull/87">https://github.com/nakamasato/mysql-operator/pull/87</a></p>
+</li>
+<li>
+<p>After the fix:</p>
+<div class="highlight"><pre><span></span><code>kubectl get event --field-selector involvedObject.kind=MySQLUser
+LAST SEEN   TYPE      REASON            OBJECT                 MESSAGE
+23s         Warning   ProcessingError   mysqluser/nakamasato   dial tcp: lookup mysql.default on 10.96.0.10:53: no such host
+</code></pre></div>
+</li>
+</ol>
+<h3 id="dial-tcp-lookup-mysqldefault-on-109601053-no-such-host-it-takes-130-to-create-secret-since-mysql-recovers">dial tcp: lookup mysql.default on 10.96.0.10:53: no such host (it takes 1:30 to create Secret since MySQL recovers.)</h3>
+<div class="highlight"><pre><span></span><code><span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.480Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w"> </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.481Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w"> </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.481Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.492Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Failed<span class="w"> </span>to<span class="w"> </span>connect<span class="w"> </span>to<span class="w"> </span>MySQL.<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlName&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql-sample&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.reconcileHandler
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:298
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.492Z<span class="w">      </span>DEBUG<span class="w">   </span>controller-runtime.manager.events<span class="w">       </span>Warning<span class="w"> </span><span class="o">{</span><span class="s2">&quot;object&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;kind&quot;</span>:<span class="s2">&quot;MySQLUser&quot;</span>,<span class="s2">&quot;namespace&quot;</span>:<span class="s2">&quot;default&quot;</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;nakamasato&quot;</span>,<span class="s2">&quot;uid&quot;</span>:<span class="s2">&quot;2d7b8b4a-fa11-4558-aaf2-1d4eb9edfa95&quot;</span>,<span class="s2">&quot;apiVersion&quot;</span>:<span class="s2">&quot;mysql.nakamasato.com/v1alpha1&quot;</span>,<span class="s2">&quot;resourceVersion&quot;</span>:<span class="s2">&quot;1134&quot;</span><span class="o">}</span>,<span class="w"> </span><span class="s2">&quot;reason&quot;</span>:<span class="w"> </span><span class="s2">&quot;ProcessingError&quot;</span>,<span class="w"> </span><span class="s2">&quot;message&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.503Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Reconciler<span class="w"> </span>error<span class="w">        </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.503Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w"> </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.503Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w"> </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.503Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.517Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Failed<span class="w"> </span>to<span class="w"> </span>connect<span class="w"> </span>to<span class="w"> </span>MySQL.<span class="w">     </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlName&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql-sample&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.reconcileHandler
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:298
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.518Z<span class="w">      </span>DEBUG<span class="w">   </span>controller-runtime.manager.events<span class="w">       </span>Warning<span class="w"> </span><span class="o">{</span><span class="s2">&quot;object&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;kind&quot;</span>:<span class="s2">&quot;MySQLUser&quot;</span>,<span class="s2">&quot;namespace&quot;</span>:<span class="s2">&quot;default&quot;</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;nakamasato&quot;</span>,<span class="s2">&quot;uid&quot;</span>:<span class="s2">&quot;2d7b8b4a-fa11-4558-aaf2-1d4eb9edfa95&quot;</span>,<span class="s2">&quot;apiVersion&quot;</span>:<span class="s2">&quot;mysql.nakamasato.com/v1alpha1&quot;</span>,<span class="s2">&quot;resourceVersion&quot;</span>:<span class="s2">&quot;1211&quot;</span><span class="o">}</span>,<span class="w"> </span><span class="s2">&quot;reason&quot;</span>:<span class="w"> </span><span class="s2">&quot;ProcessingError&quot;</span>,<span class="w"> </span><span class="s2">&quot;message&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:16:21.538Z<span class="w">      </span>ERROR<span class="w">   </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Reconciler<span class="w"> </span>error<span class="w">        </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;error&quot;</span>:<span class="w"> </span><span class="s2">&quot;dial tcp: lookup mysql.default on 10.96.0.10:53: no such host&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.processNextWorkItem
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:253
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span>sigs.k8s.io/controller-runtime/pkg/internal/controller.<span class="o">(</span>*Controller<span class="o">)</span>.Start.func2.2
+<span class="o">[</span>manager<span class="o">]</span><span class="w">       </span>/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.2/pkg/internal/controller/controller.go:214
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.284Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w"> </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.284Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w"> </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.284Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.289Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>mysqlClient<span class="w">        </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.402Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Generate<span class="w"> </span>new<span class="w"> </span>password<span class="w"> </span><span class="k">for</span><span class="w"> </span>Secret<span class="w">        </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;secretName&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql-mysql-sample-nakamasato&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.402Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Create<span class="w"> </span>MySQL<span class="w"> </span>user<span class="w"> </span><span class="k">if</span><span class="w"> </span>not.<span class="w">       </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.404Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>Secret.<span class="w">    </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.422Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetch<span class="w"> </span>MySQLUser<span class="w"> </span>instance.<span class="w"> </span>MySQLUser<span class="w"> </span>resource<span class="w"> </span>found.<span class="w"> </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.422Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Fetched<span class="w"> </span>MySQL<span class="w"> </span>instance.<span class="w"> </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.422Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>started<span class="w"> </span>mysqlClient.Ping<span class="o">()</span><span class="w">      </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.427Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>mysqlClient<span class="w">        </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.427Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Create<span class="w"> </span>MySQL<span class="w"> </span>user<span class="w"> </span><span class="k">if</span><span class="w"> </span>not.<span class="w">       </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;mysqlUser.Namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+<span class="o">[</span>manager<span class="o">]</span><span class="w"> </span><span class="m">2021</span>-12-26T23:17:43.431Z<span class="w">      </span>INFO<span class="w">    </span>controller-runtime.manager.controller.mysqluser<span class="w"> </span>Successfully<span class="w"> </span>created<span class="w"> </span>Secret.<span class="w">    </span><span class="o">{</span><span class="s2">&quot;reconciler group&quot;</span>:<span class="w"> </span><span class="s2">&quot;mysql.nakamasato.com&quot;</span>,<span class="w"> </span><span class="s2">&quot;reconciler kind&quot;</span>:<span class="w"> </span><span class="s2">&quot;MySQLUser&quot;</span>,<span class="w"> </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;nakamasato&quot;</span>,<span class="w"> </span><span class="s2">&quot;namespace&quot;</span>:<span class="w"> </span><span class="s2">&quot;default&quot;</span><span class="o">}</span>
+</code></pre></div>
+<ol>
+<li>Reproduce steps:<ol>
+<li><code>skaffold dev</code></li>
+<li><code>kubectl delete -k config/mysql</code></li>
+<li><code>kubectl apply -k config/samples-on-k8s</code></li>
+<li><code>kubectl apply -k config/mysql</code></li>
+</ol>
+</li>
+</ol>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["header.autohide", "navigation.instant", "navigation.tabs", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
