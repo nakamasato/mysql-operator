@@ -64,6 +64,16 @@ spec:
                 description: MySQL (CRD) name to reference to, which decides the destination
                   MySQL server
                 type: string
+              grants:
+                description: Grants for the MySQL user
+                items:
+                  type: object
+                  properties:
+                    privileges:
+                      type: string
+                    on:
+                      type: string
+                type: array
             required:
             - mysqlName
             type: object
