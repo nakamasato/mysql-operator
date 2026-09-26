@@ -89,5 +89,5 @@ type MySQLUserList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&MySQLUser{}, &MySQLUserList{})
+	objectTypes = append(objectTypes, &MySQLUser{}, &MySQLUserList{})
 }

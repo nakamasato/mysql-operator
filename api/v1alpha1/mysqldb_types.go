@@ -100,5 +100,5 @@ type SchemaMigration struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&MySQLDB{}, &MySQLDBList{})
+	objectTypes = append(objectTypes, &MySQLDB{}, &MySQLDBList{})
 }

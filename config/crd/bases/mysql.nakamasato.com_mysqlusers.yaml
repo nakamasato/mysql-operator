@@ -79,8 +79,11 @@ spec:
                     observations of a foo's current state.\n\t    // Known .status.conditions.type
                     are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
                     +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
-                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                    \   // +listMapKey=type\n\t    // +k8s:alpha(since: \"1.37\")=+k8s:optional\n\t
+                    \   // +k8s:alpha(since: \"1.37\")=+k8s:listType=map\n\t    //
+                    +k8s:alpha(since: \"1.37\")=+k8s:listMapKey=type\n\t    Conditions
+                    []metav1.Condition `json:\"conditions,omitempty\" patchStrategy:\"merge\"
+                    patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
                     \   // other fields\n\t}"
                   properties:
                     lastTransitionTime:
