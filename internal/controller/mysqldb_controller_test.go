@@ -52,6 +52,7 @@ var _ = Describe("MySQLDB controller", func() {
 			ctx, cancel := context.WithCancel(ctx)
 			stopFunc = cancel
 			go func() {
+				defer GinkgoRecover()
 				err = k8sManager.Start(ctx)
 				Expect(err).ToNot(HaveOccurred())
 			}()
