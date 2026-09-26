@@ -101,5 +101,5 @@ type Secret struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&MySQL{}, &MySQLList{})
+	objectTypes = append(objectTypes, &MySQL{}, &MySQLList{})
 }

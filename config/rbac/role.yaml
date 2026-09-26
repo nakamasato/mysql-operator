@@ -7,6 +7,14 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
   - secrets
   verbs:
   - create
@@ -14,68 +22,10 @@ rules:
   - list
   - watch
 - apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-  - update
-- apiGroups:
   - mysql.nakamasato.com
   resources:
   - mysqldbs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mysql.nakamasato.com
-  resources:
-  - mysqldbs/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mysql.nakamasato.com
-  resources:
-  - mysqldbs/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mysql.nakamasato.com
-  resources:
   - mysqls
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - mysql.nakamasato.com
-  resources:
-  - mysqls/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mysql.nakamasato.com
-  resources:
-  - mysqls/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - mysql.nakamasato.com
-  resources:
   - mysqlusers
   verbs:
   - create
@@ -88,12 +38,16 @@ rules:
 - apiGroups:
   - mysql.nakamasato.com
   resources:
+  - mysqldbs/finalizers
+  - mysqls/finalizers
   - mysqlusers/finalizers
   verbs:
   - update
 - apiGroups:
   - mysql.nakamasato.com
   resources:
+  - mysqldbs/status
+  - mysqls/status
   - mysqlusers/status
   verbs:
   - get
