@@ -6,7 +6,7 @@ toolchain go1.27.4
 
 require (
 	cloud.google.com/go/secretmanager v1.24.0
-	github.com/go-sql-driver/mysql v1.10.2
+	github.com/go-sql-driver/mysql v1.11.0
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/nakamasato/test-db-driver v0.0.0-20230330121357-46698833afb6
 	github.com/onsi/ginkgo/v2 v2.34.0
